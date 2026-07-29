@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>DealFlow SQL. 10 queries and their real output</title>
+<style>
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:#0d1117;color:#d7dee8;
+ font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+.wrap{max-width:940px;margin:0 auto;padding:48px 20px 90px}
+h1{font-family:Georgia,"Times New Roman",serif;font-weight:600;font-size:34px;
+ line-height:1.2;margin:0 0 10px;color:#f2f6fb;letter-spacing:-.01em}
+.eyebrow{text-transform:uppercase;letter-spacing:.14em;font-size:11px;
+ color:#7d8da3;margin:0 0 14px}
+.lede{font-size:17px;color:#a9b6c7;margin:0 0 26px;max-width:70ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 34px;padding:0;list-style:none}
+.meta li{font-size:12px;color:#9fb0c4;background:#161c26;border:1px solid #263042;
+ border-radius:999px;padding:5px 11px}
+.card{background:#111721;border:1px solid #222c3b;border-radius:12px;
+ padding:22px 22px 16px;margin:0 0 22px}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:#6ea8fe;
+ margin:0 0 6px;font-weight:700}
+h2 .t{color:#e6edf6;text-transform:none;letter-spacing:0;font-weight:600;font-size:16px}
+.purpose{margin:0 0 16px;color:#a9b6c7;font-size:15px;max-width:74ch}
+pre{margin:0 0 18px;padding:16px;background:#0a0e14;border:1px solid #1d2532;
+ border-radius:9px;overflow-x:auto;
+ font:13.5px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#c9d4e2}
+pre .k{color:#7aa2f7;font-weight:600}
+pre .f{color:#9ece6a}
+pre .s{color:#e0af68}
+pre .n{color:#e0af68}
+pre .c{color:#5d6b80;font-style:italic}
+.tw{overflow-x:auto;border:1px solid #1d2532;border-radius:9px;background:#0a0e14}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:9px 14px;text-align:left;white-space:nowrap;
+ border-bottom:1px solid #1a2230}
+th{background:#131a24;color:#8fa3ba;font-weight:600;font-size:12px;
+ text-transform:uppercase;letter-spacing:.06em}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:nth-child(even) td{background:#0c1119}
+td.num{text-align:right;font-variant-numeric:tabular-nums;
+ font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.rows{margin:8px 0 0;font-size:12px;color:#6f8098}
+.muted{color:#66748a}
+.note{border-left:3px solid #2d4a7c;background:#101722;padding:14px 18px;
+ border-radius:0 8px 8px 0;margin:0 0 30px;font-size:14.5px;color:#a9b6c7}
+footer{margin-top:44px;padding-top:22px;border-top:1px solid #1d2532;
+ font-size:13.5px;color:#7d8da3}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.92em;
+ background:#0a0e14;border:1px solid #1d2532;border-radius:5px;padding:1px 6px;
+ color:#c9d4e2}
+@media (max-width:600px){.wrap{padding:32px 14px 60px}h1{font-size:27px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<p class="eyebrow">SQL proof of work</p>
+<h1>DealFlow SQL</h1>
+<p class="lede">A small PostgreSQL database for a commercial property deal pipeline,
+built to show working SQL rather than describe it. Ten queries, from a plain
+SELECT to window functions. Every table on this page is the real output of the
+query printed directly above it, captured from a live run.</p>
+<ul class="meta">
+<li>PostgreSQL 16 in Docker</li>
+<li>6 brokers</li>
+<li>10 properties</li>
+<li>15 deals</li>
+<li>3 tables, 2 foreign keys, 3 indexes</li>
+<li>Generated 2026-07-29</li>
+</ul>
+<p class="note"><strong>The data is invented.</strong> Brokers, agencies, properties
+and values are synthetic seed data written for this project. No real company,
+person, client or transaction appears anywhere in it. Reproduce the whole thing
+with one command: <code>./run.sh</code></p>
+<section class="card"><h2>Q1 &nbsp;<span class="t">SELECT / WHERE / ORDER BY</span></h2><p class="purpose">Top open deals by value: the live pipeline, biggest first.</p><pre><span class="k">SELECT</span> subject, status, deal_value_zar
+<span class="k">FROM</span> deals
+<span class="k">WHERE</span> status <span class="k">IN</span> (<span class="s">&#x27;New&#x27;</span>, <span class="s">&#x27;In review&#x27;</span>, <span class="s">&#x27;Qualified&#x27;</span>)
+  <span class="k">AND</span> deal_value_zar &gt; <span class="n">0</span>
+<span class="k">ORDER</span> <span class="k">BY</span> deal_value_zar <span class="k">DESC</span>;</pre><div class="tw"><table><thead><tr><th>subject</th><th>status</th><th>deal_value_zar</th></tr></thead><tbody><tr><td class="">Century City mixed use block</td><td class="">New</td><td class="num">R96,000,000</td></tr><tr><td class="">Kempton Park land rezoning</td><td class="">In review</td><td class="num">R55,000,000</td></tr><tr><td class="">Montague Gardens warehouse disposal</td><td class="">In review</td><td class="num">R42,000,000</td></tr><tr><td class="">Northgate anchor tenant sale</td><td class="">In review</td><td class="num">R41,200,000</td></tr><tr><td class="">Riverside Heights bulk sale</td><td class="">In review</td><td class="num">R33,800,000</td></tr><tr><td class="">Sandton Exchange floor 9</td><td class="">New</td><td class="num">R31,000,000</td></tr><tr><td class="">Paarden Eiland depot mandate</td><td class="">Qualified</td><td class="num">R27,500,000</td></tr><tr><td class="">Harbour sheds portfolio</td><td class="">Qualified</td><td class="num">R23,400,000</td></tr><tr><td class="">Foreshore sublease opportunity</td><td class="">New</td><td class="num">R18,500,000</td></tr><tr><td class="">Montague Park expansion erf</td><td class="">New</td><td class="num">R12,800,000</td></tr><tr><td class="">Harbour sheds tenant buyout</td><td class="">New</td><td class="num">R9,800,000</td></tr><tr><td class="">Northgate parking lease</td><td class="">Qualified</td><td class="num">R4,600,000</td></tr></tbody></table></div><p class="rows">12 rows</p></section><section class="card"><h2>Q2 &nbsp;<span class="t">WHERE with multiple conditions + date ordering</span></h2><p class="purpose">Review queue: flagged deals with their reasons, newest first.</p><pre><span class="k">SELECT</span> subject, review_reason, deal_value_zar, received_at
+<span class="k">FROM</span> deals
+<span class="k">WHERE</span> needs_review = <span class="k">true</span>
+<span class="k">ORDER</span> <span class="k">BY</span> received_at <span class="k">DESC</span>;</pre><div class="tw"><table><thead><tr><th>subject</th><th>review_reason</th><th>deal_value_zar</th><th>received_at</th></tr></thead><tbody><tr><td class="">Foreshore naming rights query</td><td class="">No deal value stated in mail</td><td class="num">R0</td><td class="">2026-07-17 13:27:00</td></tr><tr><td class="">Riverside Heights bulk sale</td><td class="">Deal value above the review threshold</td><td class="num">R33,800,000</td><td class="">2026-07-12 15:08:00</td></tr><tr><td class="">Kempton Park land rezoning</td><td class="">Rezoning risk not yet verified</td><td class="num">R55,000,000</td><td class="">2026-07-09 08:55:00</td></tr><tr><td class="">Northgate anchor tenant sale</td><td class="">Deal value above the review threshold</td><td class="num">R41,200,000</td><td class="">2026-07-03 11:02:00</td></tr></tbody></table></div><p class="rows">4 rows</p></section><section class="card"><h2>Q3 &nbsp;<span class="t">INNER JOIN</span></h2><p class="purpose">Deals with the sector and province of the property they concern.</p><pre><span class="k">SELECT</span> d.subject, p.sector, p.province, d.deal_value_zar
+<span class="k">FROM</span> deals d
+<span class="k">JOIN</span> properties p <span class="k">ON</span> p.property_id = d.property_id
+<span class="k">ORDER</span> <span class="k">BY</span> d.received_at;</pre><div class="tw"><table><thead><tr><th>subject</th><th>sector</th><th>province</th><th>deal_value_zar</th></tr></thead><tbody><tr><td class="">Montague Gardens warehouse disposal</td><td class="">Industrial</td><td class="">Western Cape</td><td class="num">R42,000,000</td></tr><tr><td class="">Foreshore sublease opportunity</td><td class="">Office</td><td class="">Western Cape</td><td class="num">R18,500,000</td></tr><tr><td class="">Northgate anchor tenant sale</td><td class="">Retail</td><td class="">Gauteng</td><td class="num">R41,200,000</td></tr><tr><td class="">Paarden Eiland depot mandate</td><td class="">Industrial</td><td class="">Western Cape</td><td class="num">R27,500,000</td></tr><tr><td class="">Sandton Exchange floor 9</td><td class="">Office</td><td class="">Gauteng</td><td class="num">R31,000,000</td></tr><tr><td class="">Ridge Plaza food court rights</td><td class="">Retail</td><td class="">KwaZulu-Natal</td><td class="num">R8,200,000</td></tr><tr><td class="">Kempton Park land rezoning</td><td class="">Land</td><td class="">Gauteng</td><td class="num">R55,000,000</td></tr><tr><td class="">Century City mixed use block</td><td class="">Mixed use</td><td class="">Western Cape</td><td class="num">R96,000,000</td></tr><tr><td class="">Harbour sheds portfolio</td><td class="">Industrial</td><td class="">Eastern Cape</td><td class="num">R23,400,000</td></tr><tr><td class="">Riverside Heights bulk sale</td><td class="">Residential</td><td class="">Gauteng</td><td class="num">R33,800,000</td></tr><tr><td class="">Montague Park expansion erf</td><td class="">Industrial</td><td class="">Western Cape</td><td class="num">R12,800,000</td></tr><tr><td class="">Foreshore naming rights query</td><td class="">Office</td><td class="">Western Cape</td><td class="num">R0</td></tr><tr><td class="">Northgate parking lease</td><td class="">Retail</td><td class="">Gauteng</td><td class="num">R4,600,000</td></tr><tr><td class="">Exchange Building auction notice</td><td class="">Office</td><td class="">Gauteng</td><td class="num">R0</td></tr><tr><td class="">Harbour sheds tenant buyout</td><td class="">Industrial</td><td class="">Eastern Cape</td><td class="num">R9,800,000</td></tr></tbody></table></div><p class="rows">15 rows</p></section><section class="card"><h2>Q4 &nbsp;<span class="t">Two INNER JOINs</span></h2><p class="purpose">Full deal sheet: who brought which deal on which property.</p><pre><span class="k">SELECT</span> d.message_id, b.full_name <span class="k">AS</span> broker, b.agency,
+       p.common_name <span class="k">AS</span> property, d.deal_value_zar, d.status
+<span class="k">FROM</span> deals d
+<span class="k">JOIN</span> brokers b <span class="k">ON</span> b.broker_id = d.broker_id
+<span class="k">JOIN</span> properties p <span class="k">ON</span> p.property_id = d.property_id
+<span class="k">ORDER</span> <span class="k">BY</span> d.message_id;</pre><div class="tw"><table><thead><tr><th>message_id</th><th>broker</th><th>agency</th><th>property</th><th>deal_value_zar</th><th>status</th></tr></thead><tbody><tr><td class="">MSG-0001</td><td class="">Thandi Mokoena</td><td class="">Atlantic Properties</td><td class="">Montague Park Warehouse</td><td class="num">R42,000,000</td><td class="">In review</td></tr><tr><td class="">MSG-0002</td><td class="">Nolan Fourie</td><td class="">Cape Commercial Brokers</td><td class="">Foreshore Offices</td><td class="num">R18,500,000</td><td class="">New</td></tr><tr><td class="">MSG-0003</td><td class="">Sarah Naidoo</td><td class="">Metro Realty Group</td><td class="">Northgate Centre</td><td class="num">R41,200,000</td><td class="">In review</td></tr><tr><td class="">MSG-0004</td><td class="">James Botha</td><td class="">Southpoint Estates</td><td class="">Paarden Eiland Depot</td><td class="num">R27,500,000</td><td class="">Qualified</td></tr><tr><td class="">MSG-0005</td><td class="">Lerato Dlamini</td><td class="">Urban Yield Capital</td><td class="">Exchange Building</td><td class="num">R31,000,000</td><td class="">New</td></tr><tr><td class="">MSG-0006</td><td class="">Sarah Naidoo</td><td class="">Metro Realty Group</td><td class="">Ridge Plaza</td><td class="num">R8,200,000</td><td class="">Declined</td></tr><tr><td class="">MSG-0007</td><td class="">Nolan Fourie</td><td class="">Cape Commercial Brokers</td><td class="">Kempton Land Parcel</td><td class="num">R55,000,000</td><td class="">In review</td></tr><tr><td class="">MSG-0008</td><td class="">Thandi Mokoena</td><td class="">Atlantic Properties</td><td class="">Century City Annex</td><td class="num">R96,000,000</td><td class="">New</td></tr><tr><td class="">MSG-0009</td><td class="">James Botha</td><td class="">Southpoint Estates</td><td class="">Harbour Sheds</td><td class="num">R23,400,000</td><td class="">Qualified</td></tr><tr><td class="">MSG-0010</td><td class="">Lerato Dlamini</td><td class="">Urban Yield Capital</td><td class="">Riverside Heights</td><td class="num">R33,800,000</td><td class="">In review</td></tr><tr><td class="">MSG-0011</td><td class="">Thandi Mokoena</td><td class="">Atlantic Properties</td><td class="">Montague Park Warehouse</td><td class="num">R12,800,000</td><td class="">New</td></tr><tr><td class="">MSG-0012</td><td class="">Nolan Fourie</td><td class="">Cape Commercial Brokers</td><td class="">Foreshore Offices</td><td class="num">R0</td><td class="">New</td></tr><tr><td class="">MSG-0013</td><td class="">Sarah Naidoo</td><td class="">Metro Realty Group</td><td class="">Northgate Centre</td><td class="num">R4,600,000</td><td class="">Qualified</td></tr><tr><td class="">MSG-0014</td><td class="">Lerato Dlamini</td><td class="">Urban Yield Capital</td><td class="">Exchange Building</td><td class="num">R0</td><td class="">Closed</td></tr><tr><td class="">MSG-0015</td><td class="">James Botha</td><td class="">Southpoint Estates</td><td class="">Harbour Sheds</td><td class="num">R9,800,000</td><td class="">New</td></tr></tbody></table></div><p class="rows">15 rows</p></section><section class="card"><h2>Q5 &nbsp;<span class="t">LEFT JOIN</span></h2><p class="purpose">Broker coverage: every broker, including those with zero deals.</p><pre><span class="k">SELECT</span> b.full_name, b.agency, b.is_active,
+       <span class="f">count</span>(d.deal_id) <span class="k">AS</span> deal_count,
+       <span class="f">coalesce</span>(<span class="f">sum</span>(d.deal_value_zar), <span class="n">0</span>) <span class="k">AS</span> total_value_zar
+<span class="k">FROM</span> brokers b
+<span class="k">LEFT</span> <span class="k">JOIN</span> deals d <span class="k">ON</span> d.broker_id = b.broker_id
+<span class="k">GROUP</span> <span class="k">BY</span> b.broker_id, b.full_name, b.agency, b.is_active
+<span class="k">ORDER</span> <span class="k">BY</span> deal_count <span class="k">DESC</span>, b.full_name;</pre><div class="tw"><table><thead><tr><th>full_name</th><th>agency</th><th>is_active</th><th>deal_count</th><th>total_value_zar</th></tr></thead><tbody><tr><td class="">James Botha</td><td class="">Southpoint Estates</td><td class="">Yes</td><td class="num">3</td><td class="num">R60,700,000</td></tr><tr><td class="">Lerato Dlamini</td><td class="">Urban Yield Capital</td><td class="">Yes</td><td class="num">3</td><td class="num">R64,800,000</td></tr><tr><td class="">Nolan Fourie</td><td class="">Cape Commercial Brokers</td><td class="">Yes</td><td class="num">3</td><td class="num">R73,500,000</td></tr><tr><td class="">Sarah Naidoo</td><td class="">Metro Realty Group</td><td class="">Yes</td><td class="num">3</td><td class="num">R54,000,000</td></tr><tr><td class="">Thandi Mokoena</td><td class="">Atlantic Properties</td><td class="">Yes</td><td class="num">3</td><td class="num">R150,800,000</td></tr><tr><td class="">Michael Abrahams</td><td class="">Peninsula Property Co</td><td class="">No</td><td class="num">0</td><td class="num">R0</td></tr></tbody></table></div><p class="rows">6 rows</p></section><section class="card"><h2>Q6 &nbsp;<span class="t">GROUP BY (aggregate)</span></h2><p class="purpose">Open pipeline value by property sector.</p><pre><span class="k">SELECT</span> p.sector,
+       <span class="f">count</span>(*) <span class="k">AS</span> open_deals,
+       <span class="f">sum</span>(d.deal_value_zar) <span class="k">AS</span> pipeline_zar,
+       <span class="f">round</span>(<span class="f">avg</span>(d.deal_value_zar), <span class="n">0</span>) <span class="k">AS</span> avg_deal_zar
+<span class="k">FROM</span> deals d
+<span class="k">JOIN</span> properties p <span class="k">ON</span> p.property_id = d.property_id
+<span class="k">WHERE</span> d.status <span class="k">IN</span> (<span class="s">&#x27;New&#x27;</span>, <span class="s">&#x27;In review&#x27;</span>, <span class="s">&#x27;Qualified&#x27;</span>)
+<span class="k">GROUP</span> <span class="k">BY</span> p.sector
+<span class="k">ORDER</span> <span class="k">BY</span> pipeline_zar <span class="k">DESC</span>;</pre><div class="tw"><table><thead><tr><th>sector</th><th>open_deals</th><th>pipeline_zar</th><th>avg_deal_zar</th></tr></thead><tbody><tr><td class="">Industrial</td><td class="num">5</td><td class="num">R115,500,000</td><td class="num">R23,100,000</td></tr><tr><td class="">Mixed use</td><td class="num">1</td><td class="num">R96,000,000</td><td class="num">R96,000,000</td></tr><tr><td class="">Land</td><td class="num">1</td><td class="num">R55,000,000</td><td class="num">R55,000,000</td></tr><tr><td class="">Office</td><td class="num">3</td><td class="num">R49,500,000</td><td class="num">R16,500,000</td></tr><tr><td class="">Retail</td><td class="num">2</td><td class="num">R45,800,000</td><td class="num">R22,900,000</td></tr><tr><td class="">Residential</td><td class="num">1</td><td class="num">R33,800,000</td><td class="num">R33,800,000</td></tr></tbody></table></div><p class="rows">6 rows</p></section><section class="card"><h2>Q7 &nbsp;<span class="t">GROUP BY + HAVING</span></h2><p class="purpose">Agencies whose open pipeline exceeds R30M.</p><pre><span class="k">SELECT</span> b.agency,
+       <span class="f">count</span>(*) <span class="k">AS</span> open_deals,
+       <span class="f">sum</span>(d.deal_value_zar) <span class="k">AS</span> pipeline_zar
+<span class="k">FROM</span> deals d
+<span class="k">JOIN</span> brokers b <span class="k">ON</span> b.broker_id = d.broker_id
+<span class="k">WHERE</span> d.status <span class="k">IN</span> (<span class="s">&#x27;New&#x27;</span>, <span class="s">&#x27;In review&#x27;</span>, <span class="s">&#x27;Qualified&#x27;</span>)
+<span class="k">GROUP</span> <span class="k">BY</span> b.agency
+<span class="k">HAVING</span> <span class="f">sum</span>(d.deal_value_zar) &gt; <span class="n">30000000</span>
+<span class="k">ORDER</span> <span class="k">BY</span> pipeline_zar <span class="k">DESC</span>;</pre><div class="tw"><table><thead><tr><th>agency</th><th>open_deals</th><th>pipeline_zar</th></tr></thead><tbody><tr><td class="">Atlantic Properties</td><td class="num">3</td><td class="num">R150,800,000</td></tr><tr><td class="">Cape Commercial Brokers</td><td class="num">3</td><td class="num">R73,500,000</td></tr><tr><td class="">Urban Yield Capital</td><td class="num">2</td><td class="num">R64,800,000</td></tr><tr><td class="">Southpoint Estates</td><td class="num">3</td><td class="num">R60,700,000</td></tr><tr><td class="">Metro Realty Group</td><td class="num">2</td><td class="num">R45,800,000</td></tr></tbody></table></div><p class="rows">5 rows</p></section><section class="card"><h2>Q8 &nbsp;<span class="t">GROUP BY on a time bucket (date_trunc)</span></h2><p class="purpose">Weekly deal flow: deals received and value per week. Same pattern with date_trunc(&#x27;month&#x27;, ...) gives monthly deal flow once the data spans more than one month.</p><pre><span class="k">SELECT</span> <span class="f">date_trunc</span>(<span class="s">&#x27;week&#x27;</span>, received_at)::date <span class="k">AS</span> week_starting,
+       <span class="f">count</span>(*) <span class="k">AS</span> deals_received,
+       <span class="f">sum</span>(deal_value_zar) <span class="k">AS</span> value_received_zar
+<span class="k">FROM</span> deals
+<span class="k">GROUP</span> <span class="k">BY</span> week_starting
+<span class="k">ORDER</span> <span class="k">BY</span> week_starting;</pre><div class="tw"><table><thead><tr><th>week_starting</th><th>deals_received</th><th>value_received_zar</th></tr></thead><tbody><tr><td class="">2026-06-29</td><td class="num">4</td><td class="num">R129,200,000</td></tr><tr><td class="">2026-07-06</td><td class="num">6</td><td class="num">R247,400,000</td></tr><tr><td class="">2026-07-13</td><td class="num">3</td><td class="num">R17,400,000</td></tr><tr><td class="">2026-07-20</td><td class="num">2</td><td class="num">R9,800,000</td></tr></tbody></table></div><p class="rows">4 rows</p></section><section class="card"><h2>Q9 &nbsp;<span class="t">Subquery (NOT EXISTS)</span></h2><p class="purpose">Vacancy-style view: properties with no open deal against them, i.e. stock on the books that nothing live is happening on.</p><pre><span class="k">SELECT</span> p.common_name, p.sector, p.province
+<span class="k">FROM</span> properties p
+<span class="k">WHERE</span> <span class="k">NOT</span> <span class="k">EXISTS</span> (
+  <span class="k">SELECT</span> <span class="n">1</span>
+  <span class="k">FROM</span> deals d
+  <span class="k">WHERE</span> d.property_id = p.property_id
+    <span class="k">AND</span> d.status <span class="k">IN</span> (<span class="s">&#x27;New&#x27;</span>, <span class="s">&#x27;In review&#x27;</span>, <span class="s">&#x27;Qualified&#x27;</span>)
+)
+<span class="k">ORDER</span> <span class="k">BY</span> p.sector, p.common_name;</pre><div class="tw"><table><thead><tr><th>common_name</th><th>sector</th><th>province</th></tr></thead><tbody><tr><td class="">Ridge Plaza</td><td class="">Retail</td><td class="">KwaZulu-Natal</td></tr></tbody></table></div><p class="rows">1 row</p></section><section class="card"><h2>Q10 &nbsp;<span class="t">Window functions (RANK + share of total)</span></h2><p class="purpose">Broker leaderboard: rank by open pipeline and share of the whole book.</p><pre><span class="k">SELECT</span> <span class="f">rank</span>() <span class="k">OVER</span> (<span class="k">ORDER</span> <span class="k">BY</span> <span class="f">sum</span>(d.deal_value_zar) <span class="k">DESC</span>) <span class="k">AS</span> <span class="f">rank</span>,
+       b.full_name,
+       b.agency,
+       <span class="f">sum</span>(d.deal_value_zar) <span class="k">AS</span> pipeline_zar,
+       <span class="f">round</span>(<span class="n">100.0</span> * <span class="f">sum</span>(d.deal_value_zar)
+             / <span class="f">sum</span>(<span class="f">sum</span>(d.deal_value_zar)) <span class="k">OVER</span> (), <span class="n">1</span>) <span class="k">AS</span> pct_of_book
+<span class="k">FROM</span> deals d
+<span class="k">JOIN</span> brokers b <span class="k">ON</span> b.broker_id = d.broker_id
+<span class="k">WHERE</span> d.status <span class="k">IN</span> (<span class="s">&#x27;New&#x27;</span>, <span class="s">&#x27;In review&#x27;</span>, <span class="s">&#x27;Qualified&#x27;</span>)
+<span class="k">GROUP</span> <span class="k">BY</span> b.broker_id, b.full_name, b.agency
+<span class="k">ORDER</span> <span class="k">BY</span> <span class="f">rank</span>;</pre><div class="tw"><table><thead><tr><th>rank</th><th>full_name</th><th>agency</th><th>pipeline_zar</th><th>pct_of_book</th></tr></thead><tbody><tr><td class="num">1</td><td class="">Thandi Mokoena</td><td class="">Atlantic Properties</td><td class="num">R150,800,000</td><td class="num">38.1</td></tr><tr><td class="num">2</td><td class="">Nolan Fourie</td><td class="">Cape Commercial Brokers</td><td class="num">R73,500,000</td><td class="num">18.6</td></tr><tr><td class="num">3</td><td class="">Lerato Dlamini</td><td class="">Urban Yield Capital</td><td class="num">R64,800,000</td><td class="num">16.4</td></tr><tr><td class="num">4</td><td class="">James Botha</td><td class="">Southpoint Estates</td><td class="num">R60,700,000</td><td class="num">15.3</td></tr><tr><td class="num">5</td><td class="">Sarah Naidoo</td><td class="">Metro Realty Group</td><td class="num">R45,800,000</td><td class="num">11.6</td></tr></tbody></table></div><p class="rows">5 rows</p></section>
+<footer>
+<p><strong>How it is put together.</strong> <code>schema.sql</code> creates three
+tables (brokers and properties as lookups, deals as the fact table) with foreign
+keys, a unique message id as the dedupe key, a check constraint on the five
+allowed statuses, and three indexes. <code>load.sql</code> copies each CSV into a
+temporary staging table of text columns, then inserts into the real tables,
+resolving foreign keys by joining on broker email and property name, all inside
+one transaction. <code>run.sh</code> starts the container, waits for readiness,
+loads, and runs every query. Running it twice gives the same result.</p>
+<p>Open pipeline throughout means status New, In review or Qualified.</p>
+</footer>
+</div>
+</body>
+</html>

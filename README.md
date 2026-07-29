@@ -1,9 +1,11 @@
 # DealFlow SQL
 
-A small but real PostgreSQL project: a commercial property deals database that mirrors
-the deal intake domain I work in day to day (brokers email in deals on properties, deals
-carry a value, a status, and review flags). Seed data is 6 brokers, 10 properties, and
-15 deals from the DealFlow CRM Dataverse proof of concept seed set.
+A small but real PostgreSQL project: a commercial property deal intake database
+(brokers email in deals on properties, deals carry a value, a status, and review flags).
+
+All data is synthetic seed data written for this project: 6 invented brokers, 10 invented
+properties, 15 invented deals. No real broker, client, deal or company data appears
+anywhere in this repository.
 
 Everything below is reproducible in one command. Every query result in this README is
 the actual output of running `queries.sql` against the loaded database.
@@ -87,18 +89,18 @@ The live pipeline: every open deal with a stated value, biggest first.
 ```
                subject               |  status   | deal_value_zar 
 -------------------------------------+-----------+----------------
- Bayside anchor tenant sale          | In review |   160000000.00
- Blouberg Towers bulk sale           | In review |   110000000.00
  Century City mixed use block        | New       |    96000000.00
- Stellenbosch farmland rezoning play | In review |    55000000.00
+ Kempton Park land rezoning          | In review |    55000000.00
  Montague Gardens warehouse disposal | In review |    42000000.00
+ Northgate anchor tenant sale        | In review |    41200000.00
+ Riverside Heights bulk sale         | In review |    33800000.00
  Sandton Exchange floor 9            | New       |    31000000.00
  Paarden Eiland depot mandate        | Qualified |    27500000.00
  Harbour sheds portfolio             | Qualified |    23400000.00
- Portside sublease opportunity       | New       |    18500000.00
+ Foreshore sublease opportunity      | New       |    18500000.00
  Montague Park expansion erf         | New       |    12800000.00
  Harbour sheds tenant buyout         | New       |     9800000.00
- Bayside parking lease               | Qualified |     4600000.00
+ Northgate parking lease             | Qualified |     4600000.00
 (12 rows)
 ```
 
@@ -107,12 +109,12 @@ The live pipeline: every open deal with a stated value, biggest first.
 The review queue: deals flagged for a human, with the reason, newest first.
 
 ```
-               subject               |          review_reason           | deal_value_zar |     received_at     
--------------------------------------+----------------------------------+----------------+---------------------
- Portside naming rights query        | No deal value stated in mail     |           0.00 | 2026-07-17 13:27:00
- Blouberg Towers bulk sale           | Deal value above R100M threshold |   110000000.00 | 2026-07-12 15:08:00
- Stellenbosch farmland rezoning play | Rezoning risk not yet verified   |    55000000.00 | 2026-07-09 08:55:00
- Bayside anchor tenant sale          | Deal value above R100M threshold |   160000000.00 | 2026-07-03 11:02:00
+            subject            |             review_reason             | deal_value_zar |     received_at     
+-------------------------------+---------------------------------------+----------------+---------------------
+ Foreshore naming rights query | No deal value stated in mail          |           0.00 | 2026-07-17 13:27:00
+ Riverside Heights bulk sale   | Deal value above the review threshold |    33800000.00 | 2026-07-12 15:08:00
+ Kempton Park land rezoning    | Rezoning risk not yet verified        |    55000000.00 | 2026-07-09 08:55:00
+ Northgate anchor tenant sale  | Deal value above the review threshold |    41200000.00 | 2026-07-03 11:02:00
 (4 rows)
 ```
 
@@ -124,18 +126,18 @@ Each deal with the sector and province of the property it concerns.
                subject               |   sector    |   province    | deal_value_zar 
 -------------------------------------+-------------+---------------+----------------
  Montague Gardens warehouse disposal | Industrial  | Western Cape  |    42000000.00
- Portside sublease opportunity       | Office      | Western Cape  |    18500000.00
- Bayside anchor tenant sale          | Retail      | Western Cape  |   160000000.00
+ Foreshore sublease opportunity      | Office      | Western Cape  |    18500000.00
+ Northgate anchor tenant sale        | Retail      | Gauteng       |    41200000.00
  Paarden Eiland depot mandate        | Industrial  | Western Cape  |    27500000.00
  Sandton Exchange floor 9            | Office      | Gauteng       |    31000000.00
  Ridge Plaza food court rights       | Retail      | KwaZulu-Natal |     8200000.00
- Stellenbosch farmland rezoning play | Land        | Western Cape  |    55000000.00
+ Kempton Park land rezoning          | Land        | Gauteng       |    55000000.00
  Century City mixed use block        | Mixed use   | Western Cape  |    96000000.00
  Harbour sheds portfolio             | Industrial  | Eastern Cape  |    23400000.00
- Blouberg Towers bulk sale           | Residential | Western Cape  |   110000000.00
+ Riverside Heights bulk sale         | Residential | Gauteng       |    33800000.00
  Montague Park expansion erf         | Industrial  | Western Cape  |    12800000.00
- Portside naming rights query        | Office      | Western Cape  |           0.00
- Bayside parking lease               | Retail      | Western Cape  |     4600000.00
+ Foreshore naming rights query       | Office      | Western Cape  |           0.00
+ Northgate parking lease             | Retail      | Gauteng       |     4600000.00
  Exchange Building auction notice    | Office      | Gauteng       |           0.00
  Harbour sheds tenant buyout         | Industrial  | Eastern Cape  |     9800000.00
 (15 rows)
@@ -149,18 +151,18 @@ The full deal sheet: which broker brought which deal on which property.
  message_id |     broker     |         agency          |        property         | deal_value_zar |  status   
 ------------+----------------+-------------------------+-------------------------+----------------+-----------
  MSG-0001   | Thandi Mokoena | Atlantic Properties     | Montague Park Warehouse |    42000000.00 | In review
- MSG-0002   | Pieter van Wyk | Cape Commercial Brokers | Portside Offices        |    18500000.00 | New
- MSG-0003   | Sarah Naidoo   | Metro Realty Group      | Bayside Mall            |   160000000.00 | In review
+ MSG-0002   | Nolan Fourie   | Cape Commercial Brokers | Foreshore Offices       |    18500000.00 | New
+ MSG-0003   | Sarah Naidoo   | Metro Realty Group      | Northgate Centre        |    41200000.00 | In review
  MSG-0004   | James Botha    | Southpoint Estates      | Paarden Eiland Depot    |    27500000.00 | Qualified
  MSG-0005   | Lerato Dlamini | Urban Yield Capital     | Exchange Building       |    31000000.00 | New
  MSG-0006   | Sarah Naidoo   | Metro Realty Group      | Ridge Plaza             |     8200000.00 | Declined
- MSG-0007   | Pieter van Wyk | Cape Commercial Brokers | Vineyard Plot           |    55000000.00 | In review
- MSG-0008   | Thandi Mokoena | Atlantic Properties     | Canal Walk Annex        |    96000000.00 | New
+ MSG-0007   | Nolan Fourie   | Cape Commercial Brokers | Kempton Land Parcel     |    55000000.00 | In review
+ MSG-0008   | Thandi Mokoena | Atlantic Properties     | Century City Annex      |    96000000.00 | New
  MSG-0009   | James Botha    | Southpoint Estates      | Harbour Sheds           |    23400000.00 | Qualified
- MSG-0010   | Lerato Dlamini | Urban Yield Capital     | Blouberg Towers         |   110000000.00 | In review
+ MSG-0010   | Lerato Dlamini | Urban Yield Capital     | Riverside Heights       |    33800000.00 | In review
  MSG-0011   | Thandi Mokoena | Atlantic Properties     | Montague Park Warehouse |    12800000.00 | New
- MSG-0012   | Pieter van Wyk | Cape Commercial Brokers | Portside Offices        |           0.00 | New
- MSG-0013   | Sarah Naidoo   | Metro Realty Group      | Bayside Mall            |     4600000.00 | Qualified
+ MSG-0012   | Nolan Fourie   | Cape Commercial Brokers | Foreshore Offices       |           0.00 | New
+ MSG-0013   | Sarah Naidoo   | Metro Realty Group      | Northgate Centre        |     4600000.00 | Qualified
  MSG-0014   | Lerato Dlamini | Urban Yield Capital     | Exchange Building       |           0.00 | Closed
  MSG-0015   | James Botha    | Southpoint Estates      | Harbour Sheds           |     9800000.00 | New
 (15 rows)
@@ -174,9 +176,9 @@ Broker coverage: every broker on the books, including the one with zero deals.
     full_name     |         agency          | is_active | deal_count | total_value_zar 
 ------------------+-------------------------+-----------+------------+-----------------
  James Botha      | Southpoint Estates      | t         |          3 |     60700000.00
- Lerato Dlamini   | Urban Yield Capital     | t         |          3 |    141000000.00
- Pieter van Wyk   | Cape Commercial Brokers | t         |          3 |     73500000.00
- Sarah Naidoo     | Metro Realty Group      | t         |          3 |    172800000.00
+ Lerato Dlamini   | Urban Yield Capital     | t         |          3 |     64800000.00
+ Nolan Fourie     | Cape Commercial Brokers | t         |          3 |     73500000.00
+ Sarah Naidoo     | Metro Realty Group      | t         |          3 |     54000000.00
  Thandi Mokoena   | Atlantic Properties     | t         |          3 |    150800000.00
  Michael Abrahams | Peninsula Property Co   | f         |          0 |               0
 (6 rows)
@@ -189,12 +191,12 @@ Open pipeline value by property sector.
 ```
    sector    | open_deals | pipeline_zar | avg_deal_zar 
 -------------+------------+--------------+--------------
- Retail      |          2 | 164600000.00 |     82300000
  Industrial  |          5 | 115500000.00 |     23100000
- Residential |          1 | 110000000.00 |    110000000
  Mixed use   |          1 |  96000000.00 |     96000000
  Land        |          1 |  55000000.00 |     55000000
  Office      |          3 |  49500000.00 |     16500000
+ Retail      |          2 |  45800000.00 |     22900000
+ Residential |          1 |  33800000.00 |     33800000
 (6 rows)
 ```
 
@@ -205,11 +207,11 @@ Agencies whose open pipeline exceeds R30M.
 ```
          agency          | open_deals | pipeline_zar 
 -------------------------+------------+--------------
- Metro Realty Group      |          2 | 164600000.00
  Atlantic Properties     |          3 | 150800000.00
- Urban Yield Capital     |          2 | 141000000.00
  Cape Commercial Brokers |          3 |  73500000.00
+ Urban Yield Capital     |          2 |  64800000.00
  Southpoint Estates      |          3 |  60700000.00
+ Metro Realty Group      |          2 |  45800000.00
 (5 rows)
 ```
 
@@ -220,8 +222,8 @@ Weekly deal flow: deals and value received per week (swap week for month as the 
 ```
  week_starting | deals_received | value_received_zar 
 ---------------+----------------+--------------------
- 2026-06-29    |              4 |       248000000.00
- 2026-07-06    |              6 |       323600000.00
+ 2026-06-29    |              4 |       129200000.00
+ 2026-07-06    |              6 |       247400000.00
  2026-07-13    |              3 |        17400000.00
  2026-07-20    |              2 |         9800000.00
 (4 rows)
@@ -245,21 +247,21 @@ Broker leaderboard: rank by open pipeline plus each broker's share of the whole 
 ```
  rank |   full_name    |         agency          | pipeline_zar | pct_of_book 
 ------+----------------+-------------------------+--------------+-------------
-    1 | Sarah Naidoo   | Metro Realty Group      | 164600000.00 |        27.9
-    2 | Thandi Mokoena | Atlantic Properties     | 150800000.00 |        25.5
-    3 | Lerato Dlamini | Urban Yield Capital     | 141000000.00 |        23.9
-    4 | Pieter van Wyk | Cape Commercial Brokers |  73500000.00 |        12.4
-    5 | James Botha    | Southpoint Estates      |  60700000.00 |        10.3
+    1 | Thandi Mokoena | Atlantic Properties     | 150800000.00 |        38.1
+    2 | Nolan Fourie   | Cape Commercial Brokers |  73500000.00 |        18.6
+    3 | Lerato Dlamini | Urban Yield Capital     |  64800000.00 |        16.4
+    4 | James Botha    | Southpoint Estates      |  60700000.00 |        15.3
+    5 | Sarah Naidoo   | Metro Realty Group      |  45800000.00 |        11.6
 (5 rows)
 ```
 
 ## What the outputs say
 
-- The open book is R590.6M across 12 live deals with a stated value; two flagged deals above the R100M
-  threshold (Bayside at R160M, Blouberg at R110M) are almost half of it.
-- Retail leads sectors on value (R164.6M from 2 deals) while Industrial leads on
-  volume (5 open deals).
+- The open book is R395.6M across 13 open deals, 12 of which carry a stated value; the two
+  deals flagged on value account for R75.0M of it (Q1, Q2, Q10).
+- Industrial leads on both open value (R115.5M) and volume (5 open deals), while a single
+  Mixed use deal at R96.0M is the largest line on the book (Q6).
 - One broker (Michael Abrahams, inactive) has zero deals, which is exactly what the
   LEFT JOIN in Q5 exists to show.
 - Ridge Plaza is the only property with nothing live against it (Q9).
-- Deal flow peaked in the week of 6 July (6 deals, R323.6M) and tailed off after (Q8).
+- Deal flow peaked in the week of 6 July (6 deals, R247.4M) and tailed off after (Q8).
