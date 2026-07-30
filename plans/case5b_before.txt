@@ -3,502 +3,502 @@ SET
 Pager usage is off.
                                                                                         QUERY PLAN                                                                                        
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Finalize Aggregate  (cost=27405.91..27405.92 rows=1 width=40) (actual time=61.103..74.360 rows=1 loops=1)
-   Buffers: shared hit=665
-   ->  Gather  (cost=27405.69..27405.90 rows=2 width=40) (actual time=12.377..74.341 rows=3 loops=1)
+ Finalize Aggregate  (cost=27405.91..27405.92 rows=1 width=40) (actual time=11.912..13.827 rows=1 loops=1)
+   Buffers: shared hit=765
+   ->  Gather  (cost=27405.69..27405.90 rows=2 width=40) (actual time=11.321..13.813 rows=3 loops=1)
          Workers Planned: 2
          Workers Launched: 2
-         Buffers: shared hit=665
-         ->  Partial Aggregate  (cost=26405.69..26405.70 rows=1 width=40) (actual time=3.220..3.276 rows=1 loops=3)
-               Buffers: shared hit=665
-               ->  Parallel Append  (cost=0.00..26355.86 rows=9965 width=9) (actual time=0.194..2.566 rows=7907 loops=3)
-                     Buffers: shared hit=665
-                     ->  Seq Scan on fct_deal_stage_event_2026_08 fct_deal_stage_event_80  (cost=0.00..0.00 rows=1 width=20) (actual time=0.002..0.002 rows=0 loops=1)
+         Buffers: shared hit=765
+         ->  Partial Aggregate  (cost=26405.69..26405.70 rows=1 width=40) (actual time=3.318..3.359 rows=1 loops=3)
+               Buffers: shared hit=765
+               ->  Parallel Append  (cost=0.00..26355.86 rows=9965 width=9) (actual time=0.409..2.727 rows=7907 loops=3)
+                     Buffers: shared hit=765
+                     ->  Seq Scan on fct_deal_stage_event_2026_08 fct_deal_stage_event_80  (cost=0.00..0.00 rows=1 width=20) (actual time=0.010..0.011 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
-                     ->  Seq Scan on fct_deal_stage_event_2026_09 fct_deal_stage_event_81  (cost=0.00..0.00 rows=1 width=20) (actual time=0.001..0.001 rows=0 loops=1)
+                     ->  Seq Scan on fct_deal_stage_event_2026_09 fct_deal_stage_event_81  (cost=0.00..0.00 rows=1 width=20) (actual time=0.004..0.004 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
-                     ->  Seq Scan on fct_deal_stage_event_2026_10 fct_deal_stage_event_82  (cost=0.00..0.00 rows=1 width=20) (actual time=0.001..0.002 rows=0 loops=1)
+                     ->  Seq Scan on fct_deal_stage_event_2026_10 fct_deal_stage_event_82  (cost=0.00..0.00 rows=1 width=20) (actual time=0.005..0.005 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
-                     ->  Seq Scan on fct_deal_stage_event_2026_11 fct_deal_stage_event_83  (cost=0.00..0.00 rows=1 width=20) (actual time=0.001..0.001 rows=0 loops=1)
+                     ->  Seq Scan on fct_deal_stage_event_2026_11 fct_deal_stage_event_83  (cost=0.00..0.00 rows=1 width=20) (actual time=0.006..0.006 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
-                     ->  Seq Scan on fct_deal_stage_event_2026_12 fct_deal_stage_event_84  (cost=0.00..0.00 rows=1 width=20) (actual time=0.004..0.004 rows=0 loops=1)
+                     ->  Seq Scan on fct_deal_stage_event_2026_12 fct_deal_stage_event_84  (cost=0.00..0.00 rows=1 width=20) (actual time=0.005..0.005 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2026_06 fct_deal_stage_event_78  (cost=12.03..456.91 rows=1 width=9) (actual time=0.008..0.009 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2026_06 fct_deal_stage_event_78  (cost=12.03..456.91 rows=1 width=9) (actual time=0.287..0.288 rows=0 loops=1)
+                           Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
+                           Buffers: shared hit=55
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2026_06_event_ts_idx  (cost=0.00..12.03 rows=7013 width=0) (actual time=0.188..0.189 rows=0 loops=1)
+                                 Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
+                                 Buffers: shared hit=55
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2026_07 fct_deal_stage_event_79  (cost=12.03..445.29 rows=1 width=9) (actual time=0.011..0.011 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2026_06_event_ts_idx  (cost=0.00..12.03 rows=7013 width=0) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2026_07_event_ts_idx  (cost=0.00..12.03 rows=6829 width=0) (actual time=0.010..0.010 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2026_07 fct_deal_stage_event_79  (cost=12.03..445.29 rows=1 width=9) (actual time=0.007..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2025_03 fct_deal_stage_event_63  (cost=12.03..443.64 rows=1 width=9) (actual time=0.018..0.018 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2026_07_event_ts_idx  (cost=0.00..12.03 rows=6829 width=0) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2025_03_event_ts_idx  (cost=0.00..12.03 rows=5282 width=0) (actual time=0.017..0.017 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2025_03 fct_deal_stage_event_63  (cost=12.03..443.64 rows=1 width=9) (actual time=0.007..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2026_05 fct_deal_stage_event_77  (cost=12.03..442.94 rows=1 width=9) (actual time=0.020..0.020 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2025_03_event_ts_idx  (cost=0.00..12.03 rows=5282 width=0) (actual time=0.006..0.007 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2026_05_event_ts_idx  (cost=0.00..12.03 rows=6790 width=0) (actual time=0.018..0.018 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2026_05 fct_deal_stage_event_77  (cost=12.03..442.94 rows=1 width=9) (actual time=0.007..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2025_09 fct_deal_stage_event_69  (cost=12.03..439.49 rows=1 width=9) (actual time=0.024..0.025 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2026_05_event_ts_idx  (cost=0.00..12.03 rows=6790 width=0) (actual time=0.006..0.007 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2025_09_event_ts_idx  (cost=0.00..12.03 rows=6739 width=0) (actual time=0.023..0.024 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2025_09 fct_deal_stage_event_69  (cost=12.03..439.49 rows=1 width=9) (actual time=0.007..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2026_04 fct_deal_stage_event_76  (cost=12.03..436.06 rows=1 width=9) (actual time=0.016..0.016 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2025_09_event_ts_idx  (cost=0.00..12.03 rows=6739 width=0) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2026_04_event_ts_idx  (cost=0.00..12.03 rows=6690 width=0) (actual time=0.013..0.013 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2026_04 fct_deal_stage_event_76  (cost=12.03..436.06 rows=1 width=9) (actual time=0.008..0.009 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2025_10 fct_deal_stage_event_70  (cost=12.03..427.87 rows=1 width=9) (actual time=0.015..0.015 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2026_04_event_ts_idx  (cost=0.00..12.03 rows=6690 width=0) (actual time=0.008..0.008 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2025_10_event_ts_idx  (cost=0.00..12.03 rows=6555 width=0) (actual time=0.014..0.014 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2025_10 fct_deal_stage_event_70  (cost=12.03..427.87 rows=1 width=9) (actual time=0.006..0.007 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2026_02 fct_deal_stage_event_74  (cost=12.03..422.11 rows=1 width=9) (actual time=0.018..0.018 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2025_10_event_ts_idx  (cost=0.00..12.03 rows=6555 width=0) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2026_02_event_ts_idx  (cost=0.00..12.03 rows=6469 width=0) (actual time=0.016..0.017 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2026_02 fct_deal_stage_event_74  (cost=12.03..422.11 rows=1 width=9) (actual time=0.008..0.009 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2025_06 fct_deal_stage_event_66  (cost=12.03..415.06 rows=1 width=9) (actual time=0.017..0.018 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2026_02_event_ts_idx  (cost=0.00..12.03 rows=6469 width=0) (actual time=0.007..0.007 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2025_06_event_ts_idx  (cost=0.00..12.03 rows=6350 width=0) (actual time=0.014..0.014 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2025_06 fct_deal_stage_event_66  (cost=12.03..415.06 rows=1 width=9) (actual time=0.007..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2025_05 fct_deal_stage_event_65  (cost=12.03..407.03 rows=1 width=9) (actual time=0.018..0.019 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2025_06_event_ts_idx  (cost=0.00..12.03 rows=6350 width=0) (actual time=0.005..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2025_05_event_ts_idx  (cost=0.00..12.03 rows=6233 width=0) (actual time=0.017..0.017 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2025_05 fct_deal_stage_event_65  (cost=12.03..407.03 rows=1 width=9) (actual time=0.008..0.009 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2025_07 fct_deal_stage_event_67  (cost=12.03..404.67 rows=1 width=9) (actual time=0.014..0.014 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2025_05_event_ts_idx  (cost=0.00..12.03 rows=6233 width=0) (actual time=0.008..0.008 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2025_07_event_ts_idx  (cost=0.00..12.03 rows=6192 width=0) (actual time=0.012..0.012 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2025_07 fct_deal_stage_event_67  (cost=12.03..404.67 rows=1 width=9) (actual time=0.008..0.009 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2025_11 fct_deal_stage_event_71  (cost=12.03..399.99 rows=1 width=9) (actual time=0.015..0.015 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2025_07_event_ts_idx  (cost=0.00..12.03 rows=6192 width=0) (actual time=0.008..0.008 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2025_11_event_ts_idx  (cost=0.00..12.03 rows=6115 width=0) (actual time=0.013..0.014 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2025_11 fct_deal_stage_event_71  (cost=12.03..399.99 rows=1 width=9) (actual time=0.012..0.014 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2025_08 fct_deal_stage_event_68  (cost=12.03..399.94 rows=1 width=9) (actual time=0.105..0.106 rows=0 loops=1)
+                           Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
+                           Buffers: shared hit=49
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2025_08_event_ts_idx  (cost=0.00..12.03 rows=6110 width=0) (actual time=0.075..0.075 rows=0 loops=1)
+                                 Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
+                                 Buffers: shared hit=49
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2024_03 fct_deal_stage_event_51  (cost=12.03..398.89 rows=1 width=9) (actual time=0.013..0.013 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2025_11_event_ts_idx  (cost=0.00..12.03 rows=6115 width=0) (actual time=0.010..0.011 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2024_03_event_ts_idx  (cost=0.00..12.03 rows=6104 width=0) (actual time=0.011..0.011 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2025_08 fct_deal_stage_event_68  (cost=12.03..399.94 rows=1 width=9) (actual time=0.007..0.007 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2025_04 fct_deal_stage_event_64  (cost=12.03..398.74 rows=1 width=9) (actual time=0.012..0.012 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2025_08_event_ts_idx  (cost=0.00..12.03 rows=6110 width=0) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2025_04_event_ts_idx  (cost=0.00..12.03 rows=6087 width=0) (actual time=0.012..0.012 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2024_03 fct_deal_stage_event_51  (cost=12.03..398.89 rows=1 width=9) (actual time=0.009..0.010 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2024_10 fct_deal_stage_event_58  (cost=12.03..393.07 rows=1 width=9) (actual time=0.011..0.011 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2024_03_event_ts_idx  (cost=0.00..12.03 rows=6104 width=0) (actual time=0.006..0.006 rows=0 loops=1)
-                                 Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
-                                 Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2025_04 fct_deal_stage_event_64  (cost=12.03..398.74 rows=1 width=9) (actual time=0.009..0.011 rows=0 loops=1)
-                           Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
-                           Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2025_04_event_ts_idx  (cost=0.00..12.03 rows=6087 width=0) (actual time=0.008..0.008 rows=0 loops=1)
-                                 Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
-                                 Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2024_10 fct_deal_stage_event_58  (cost=12.03..393.07 rows=1 width=9) (actual time=0.006..0.007 rows=0 loops=1)
-                           Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
-                           Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2024_10_event_ts_idx  (cost=0.00..12.03 rows=6011 width=0) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2024_10_event_ts_idx  (cost=0.00..12.03 rows=6011 width=0) (actual time=0.009..0.009 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
                      ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2024_09 fct_deal_stage_event_57  (cost=12.03..391.89 rows=1 width=9) (actual time=0.006..0.007 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2024_09_event_ts_idx  (cost=0.00..12.03 rows=5991 width=0) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2024_09_event_ts_idx  (cost=0.00..12.03 rows=5991 width=0) (actual time=0.006..0.006 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2024_07 fct_deal_stage_event_55  (cost=12.03..391.78 rows=1 width=9) (actual time=0.006..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2024_07 fct_deal_stage_event_55  (cost=12.03..391.78 rows=1 width=9) (actual time=0.010..0.011 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2024_07_event_ts_idx  (cost=0.00..12.03 rows=5978 width=0) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2024_07_event_ts_idx  (cost=0.00..12.03 rows=5978 width=0) (actual time=0.010..0.010 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2025_02 fct_deal_stage_event_62  (cost=12.03..389.59 rows=1 width=9) (actual time=0.006..0.007 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2025_02 fct_deal_stage_event_62  (cost=12.03..389.59 rows=1 width=9) (actual time=0.011..0.011 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2025_02_event_ts_idx  (cost=0.00..12.03 rows=5957 width=0) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2025_02_event_ts_idx  (cost=0.00..12.03 rows=5957 width=0) (actual time=0.009..0.009 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2024_04 fct_deal_stage_event_52  (cost=12.03..382.61 rows=1 width=9) (actual time=0.007..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2024_04 fct_deal_stage_event_52  (cost=12.03..382.61 rows=1 width=9) (actual time=0.035..0.035 rows=0 loops=2)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2024_04_event_ts_idx  (cost=0.00..12.03 rows=5846 width=0) (actual time=0.005..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2024_04_event_ts_idx  (cost=0.00..12.03 rows=5846 width=0) (actual time=0.010..0.010 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2024_05 fct_deal_stage_event_53  (cost=12.03..380.24 rows=1 width=9) (actual time=0.007..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2024_05 fct_deal_stage_event_53  (cost=12.03..380.24 rows=1 width=9) (actual time=0.067..0.067 rows=0 loops=2)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2024_05_event_ts_idx  (cost=0.00..12.03 rows=5803 width=0) (actual time=0.006..0.007 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2024_05_event_ts_idx  (cost=0.00..12.03 rows=5803 width=0) (actual time=0.008..0.008 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2023_03 fct_deal_stage_event_39  (cost=12.03..376.82 rows=1 width=9) (actual time=0.005..0.006 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2023_03 fct_deal_stage_event_39  (cost=12.03..376.82 rows=1 width=9) (actual time=0.008..0.009 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2023_03_event_ts_idx  (cost=0.00..12.03 rows=5756 width=0) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2023_03_event_ts_idx  (cost=0.00..12.03 rows=5756 width=0) (actual time=0.007..0.007 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2023_10 fct_deal_stage_event_46  (cost=12.03..371.02 rows=1 width=9) (actual time=0.006..0.007 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2023_10 fct_deal_stage_event_46  (cost=12.03..371.02 rows=1 width=9) (actual time=0.008..0.009 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2023_10_event_ts_idx  (cost=0.00..12.03 rows=5665 width=0) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2023_10_event_ts_idx  (cost=0.00..12.03 rows=5665 width=0) (actual time=0.007..0.007 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2024_11 fct_deal_stage_event_59  (cost=12.03..369.81 rows=1 width=9) (actual time=0.007..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2024_11 fct_deal_stage_event_59  (cost=12.03..369.81 rows=1 width=9) (actual time=0.009..0.009 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2024_11_event_ts_idx  (cost=0.00..12.03 rows=5642 width=0) (actual time=0.007..0.007 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2024_11_event_ts_idx  (cost=0.00..12.03 rows=5642 width=0) (actual time=0.008..0.008 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2024_08 fct_deal_stage_event_56  (cost=12.03..369.76 rows=1 width=9) (actual time=0.006..0.007 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2024_08 fct_deal_stage_event_56  (cost=12.03..369.76 rows=1 width=9) (actual time=0.008..0.009 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2024_08_event_ts_idx  (cost=0.00..12.03 rows=5636 width=0) (actual time=0.005..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2024_08_event_ts_idx  (cost=0.00..12.03 rows=5636 width=0) (actual time=0.007..0.008 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2023_05 fct_deal_stage_event_41  (cost=12.03..367.47 rows=1 width=9) (actual time=0.007..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2023_05 fct_deal_stage_event_41  (cost=12.03..367.47 rows=1 width=9) (actual time=0.008..0.008 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2023_05_event_ts_idx  (cost=0.00..12.03 rows=5603 width=0) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2023_05_event_ts_idx  (cost=0.00..12.03 rows=5603 width=0) (actual time=0.006..0.006 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2024_02 fct_deal_stage_event_50  (cost=12.03..360.43 rows=1 width=9) (actual time=0.006..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2024_02 fct_deal_stage_event_50  (cost=12.03..360.43 rows=1 width=9) (actual time=0.008..0.008 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2024_02_event_ts_idx  (cost=0.00..12.03 rows=5485 width=0) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2024_02_event_ts_idx  (cost=0.00..12.03 rows=5485 width=0) (actual time=0.007..0.007 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2024_06 fct_deal_stage_event_54  (cost=12.03..347.68 rows=1 width=9) (actual time=0.008..0.009 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2024_06 fct_deal_stage_event_54  (cost=12.03..347.68 rows=1 width=9) (actual time=0.010..0.011 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2024_06_event_ts_idx  (cost=0.00..12.03 rows=5287 width=0) (actual time=0.007..0.007 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2024_06_event_ts_idx  (cost=0.00..12.03 rows=5287 width=0) (actual time=0.009..0.009 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2022_03 fct_deal_stage_event_27  (cost=12.03..345.33 rows=1 width=9) (actual time=0.006..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2022_03 fct_deal_stage_event_27  (cost=12.03..345.33 rows=1 width=9) (actual time=0.010..0.011 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2022_03_event_ts_idx  (cost=0.00..12.03 rows=5247 width=0) (actual time=0.005..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2022_03_event_ts_idx  (cost=0.00..12.03 rows=5247 width=0) (actual time=0.008..0.008 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2023_11 fct_deal_stage_event_47  (cost=12.03..341.95 rows=1 width=9) (actual time=0.007..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2023_11 fct_deal_stage_event_47  (cost=12.03..341.95 rows=1 width=9) (actual time=0.015..0.015 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2023_11_event_ts_idx  (cost=0.00..12.03 rows=5204 width=0) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2023_11_event_ts_idx  (cost=0.00..12.03 rows=5204 width=0) (actual time=0.014..0.014 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2023_07 fct_deal_stage_event_43  (cost=12.03..340.77 rows=1 width=9) (actual time=0.005..0.006 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2023_07 fct_deal_stage_event_43  (cost=12.03..340.77 rows=1 width=9) (actual time=0.009..0.010 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2023_07_event_ts_idx  (cost=0.00..12.03 rows=5184 width=0) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2023_07_event_ts_idx  (cost=0.00..12.03 rows=5184 width=0) (actual time=0.008..0.009 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2023_08 fct_deal_stage_event_44  (cost=12.03..338.33 rows=1 width=9) (actual time=0.008..0.009 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2023_08 fct_deal_stage_event_44  (cost=12.03..338.33 rows=1 width=9) (actual time=0.014..0.014 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
                            ->  Bitmap Index Scan on fct_deal_stage_event_2023_08_event_ts_idx  (cost=0.00..12.03 rows=5134 width=0) (actual time=0.007..0.007 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2023_09 fct_deal_stage_event_45  (cost=12.03..332.66 rows=1 width=9) (actual time=0.006..0.007 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2023_09 fct_deal_stage_event_45  (cost=12.03..332.66 rows=1 width=9) (actual time=0.014..0.014 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2023_09_event_ts_idx  (cost=0.00..12.03 rows=5058 width=0) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2023_09_event_ts_idx  (cost=0.00..12.03 rows=5058 width=0) (actual time=0.012..0.013 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2022_05 fct_deal_stage_event_29  (cost=12.03..331.44 rows=1 width=9) (actual time=0.006..0.007 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2022_05 fct_deal_stage_event_29  (cost=12.03..331.44 rows=1 width=9) (actual time=0.018..0.019 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2022_05_event_ts_idx  (cost=0.00..12.03 rows=5033 width=0) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2022_05_event_ts_idx  (cost=0.00..12.03 rows=5033 width=0) (actual time=0.013..0.013 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2023_06 fct_deal_stage_event_42  (cost=12.03..330.25 rows=1 width=9) (actual time=0.007..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2023_06 fct_deal_stage_event_42  (cost=12.03..330.25 rows=1 width=9) (actual time=0.015..0.016 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2023_06_event_ts_idx  (cost=0.00..12.03 rows=5011 width=0) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2023_06_event_ts_idx  (cost=0.00..12.03 rows=5011 width=0) (actual time=0.012..0.013 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2021_03 fct_deal_stage_event_15  (cost=12.03..329.17 rows=1 width=9) (actual time=0.005..0.006 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2021_03 fct_deal_stage_event_15  (cost=12.03..329.17 rows=1 width=9) (actual time=0.010..0.010 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2021_03_event_ts_idx  (cost=0.00..12.03 rows=5002 width=0) (actual time=0.004..0.005 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2021_03_event_ts_idx  (cost=0.00..12.03 rows=5002 width=0) (actual time=0.009..0.009 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2022_10 fct_deal_stage_event_34  (cost=12.03..329.04 rows=1 width=9) (actual time=0.006..0.007 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2022_10 fct_deal_stage_event_34  (cost=12.03..329.04 rows=1 width=9) (actual time=0.013..0.014 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2022_10_event_ts_idx  (cost=0.00..12.03 rows=4988 width=0) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2022_10_event_ts_idx  (cost=0.00..12.03 rows=4988 width=0) (actual time=0.007..0.007 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2022_08 fct_deal_stage_event_32  (cost=12.03..327.99 rows=1 width=9) (actual time=0.007..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2022_08 fct_deal_stage_event_32  (cost=12.03..327.99 rows=1 width=9) (actual time=0.016..0.016 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2022_08_event_ts_idx  (cost=0.00..12.03 rows=4982 width=0) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2022_08_event_ts_idx  (cost=0.00..12.03 rows=4982 width=0) (actual time=0.014..0.015 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2021_11 fct_deal_stage_event_23  (cost=12.03..323.77 rows=1 width=9) (actual time=0.005..0.007 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2021_11 fct_deal_stage_event_23  (cost=12.03..323.77 rows=1 width=9) (actual time=0.013..0.014 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2021_11_event_ts_idx  (cost=0.00..12.03 rows=6884 width=0) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2021_11_event_ts_idx  (cost=0.00..12.03 rows=6884 width=0) (actual time=0.012..0.012 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2023_02 fct_deal_stage_event_38  (cost=12.03..320.94 rows=1 width=9) (actual time=0.007..0.007 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2023_02 fct_deal_stage_event_38  (cost=12.03..320.94 rows=1 width=9) (actual time=0.017..0.018 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2023_02_event_ts_idx  (cost=0.00..12.03 rows=4863 width=0) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2023_02_event_ts_idx  (cost=0.00..12.03 rows=4863 width=0) (actual time=0.014..0.015 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2022_06 fct_deal_stage_event_30  (cost=12.03..320.21 rows=1 width=9) (actual time=0.006..0.007 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2022_06 fct_deal_stage_event_30  (cost=12.03..320.21 rows=1 width=9) (actual time=0.022..0.022 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2022_06_event_ts_idx  (cost=0.00..12.03 rows=6820 width=0) (actual time=0.005..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2022_06_event_ts_idx  (cost=0.00..12.03 rows=6820 width=0) (actual time=0.021..0.021 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2022_02 fct_deal_stage_event_26  (cost=12.03..320.05 rows=1 width=9) (actual time=0.006..0.007 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2022_02 fct_deal_stage_event_26  (cost=12.03..320.05 rows=1 width=9) (actual time=0.010..0.026 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2022_02_event_ts_idx  (cost=0.00..12.03 rows=6802 width=0) (actual time=0.005..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2022_02_event_ts_idx  (cost=0.00..12.03 rows=6802 width=0) (actual time=0.009..0.009 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2023_04 fct_deal_stage_event_40  (cost=12.03..317.49 rows=1 width=9) (actual time=0.008..0.009 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2023_04 fct_deal_stage_event_40  (cost=12.03..317.49 rows=1 width=9) (actual time=0.015..0.016 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2023_04_event_ts_idx  (cost=0.00..12.03 rows=4812 width=0) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2023_04_event_ts_idx  (cost=0.00..12.03 rows=4812 width=0) (actual time=0.009..0.009 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2022_04 fct_deal_stage_event_28  (cost=12.03..316.48 rows=1 width=9) (actual time=0.007..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2022_04 fct_deal_stage_event_28  (cost=12.03..316.48 rows=1 width=9) (actual time=0.019..0.019 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2022_04_event_ts_idx  (cost=0.00..12.03 rows=6737 width=0) (actual time=0.006..0.007 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2022_04_event_ts_idx  (cost=0.00..12.03 rows=6737 width=0) (actual time=0.017..0.018 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2025_12 fct_deal_stage_event_72  (cost=12.03..315.04 rows=1 width=9) (actual time=0.006..0.007 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2025_12 fct_deal_stage_event_72  (cost=12.03..315.04 rows=1 width=9) (actual time=0.061..0.061 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2025_12_event_ts_idx  (cost=0.00..12.03 rows=6688 width=0) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2025_12_event_ts_idx  (cost=0.00..12.03 rows=6688 width=0) (actual time=0.016..0.017 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2022_11 fct_deal_stage_event_35  (cost=12.03..314.01 rows=1 width=9) (actual time=0.007..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2022_11 fct_deal_stage_event_35  (cost=12.03..314.01 rows=1 width=9) (actual time=0.014..0.015 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2022_11_event_ts_idx  (cost=0.00..12.03 rows=4758 width=0) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2022_11_event_ts_idx  (cost=0.00..12.03 rows=4758 width=0) (actual time=0.012..0.013 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2021_05 fct_deal_stage_event_17  (cost=12.03..313.97 rows=1 width=9) (actual time=0.006..0.007 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2021_05 fct_deal_stage_event_17  (cost=12.03..313.97 rows=1 width=9) (actual time=0.015..0.015 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2021_05_event_ts_idx  (cost=0.00..12.03 rows=6680 width=0) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2021_05_event_ts_idx  (cost=0.00..12.03 rows=6680 width=0) (actual time=0.013..0.014 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2021_08 fct_deal_stage_event_20  (cost=12.03..313.86 rows=1 width=9) (actual time=0.005..0.006 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2021_08 fct_deal_stage_event_20  (cost=12.03..313.86 rows=1 width=9) (actual time=0.007..0.008 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2021_08_event_ts_idx  (cost=0.00..12.03 rows=6667 width=0) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2021_08_event_ts_idx  (cost=0.00..12.03 rows=6667 width=0) (actual time=0.006..0.007 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2022_07 fct_deal_stage_event_31  (cost=12.03..313.84 rows=1 width=9) (actual time=0.007..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2022_07 fct_deal_stage_event_31  (cost=12.03..313.84 rows=1 width=9) (actual time=0.010..0.010 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2022_07_event_ts_idx  (cost=0.00..12.03 rows=6665 width=0) (actual time=0.005..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2022_07_event_ts_idx  (cost=0.00..12.03 rows=6665 width=0) (actual time=0.008..0.008 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2026_01 fct_deal_stage_event_73  (cost=12.03..312.85 rows=1 width=9) (actual time=0.008..0.013 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2026_01 fct_deal_stage_event_73  (cost=12.03..312.85 rows=1 width=9) (actual time=0.016..0.017 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2026_01_event_ts_idx  (cost=0.00..12.03 rows=4739 width=0) (actual time=0.007..0.007 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2026_01_event_ts_idx  (cost=0.00..12.03 rows=4739 width=0) (actual time=0.015..0.015 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2022_09 fct_deal_stage_event_33  (cost=12.03..310.57 rows=1 width=9) (actual time=0.009..0.009 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2022_09 fct_deal_stage_event_33  (cost=12.03..310.57 rows=1 width=9) (actual time=0.021..0.022 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2022_09_event_ts_idx  (cost=0.00..12.03 rows=4708 width=0) (actual time=0.008..0.008 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2022_09_event_ts_idx  (cost=0.00..12.03 rows=4708 width=0) (actual time=0.021..0.021 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2025_01 fct_deal_stage_event_61  (cost=12.03..310.21 rows=1 width=9) (actual time=0.008..0.009 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2025_01 fct_deal_stage_event_61  (cost=12.03..310.21 rows=1 width=9) (actual time=0.024..0.025 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2025_01_event_ts_idx  (cost=0.00..12.03 rows=6594 width=0) (actual time=0.005..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2025_01_event_ts_idx  (cost=0.00..12.03 rows=6594 width=0) (actual time=0.017..0.017 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2021_10 fct_deal_stage_event_22  (cost=12.03..310.04 rows=1 width=9) (actual time=0.006..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2021_10 fct_deal_stage_event_22  (cost=12.03..310.04 rows=1 width=9) (actual time=0.031..0.032 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2021_10_event_ts_idx  (cost=0.00..12.03 rows=6574 width=0) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2021_10_event_ts_idx  (cost=0.00..12.03 rows=6574 width=0) (actual time=0.029..0.030 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2021_09 fct_deal_stage_event_21  (cost=12.03..306.31 rows=1 width=9) (actual time=0.007..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2021_09 fct_deal_stage_event_21  (cost=12.03..306.31 rows=1 width=9) (actual time=0.017..0.017 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2021_09_event_ts_idx  (cost=0.00..12.03 rows=6492 width=0) (actual time=0.005..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2021_09_event_ts_idx  (cost=0.00..12.03 rows=6492 width=0) (actual time=0.010..0.010 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2024_01 fct_deal_stage_event_49  (cost=12.03..294.06 rows=1 width=9) (actual time=0.006..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2024_01 fct_deal_stage_event_49  (cost=12.03..294.06 rows=1 width=9) (actual time=0.022..0.022 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2024_01_event_ts_idx  (cost=0.00..12.03 rows=6236 width=0) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2024_01_event_ts_idx  (cost=0.00..12.03 rows=6236 width=0) (actual time=0.014..0.015 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2021_06 fct_deal_stage_event_18  (cost=12.03..292.67 rows=1 width=9) (actual time=0.006..0.007 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2021_06 fct_deal_stage_event_18  (cost=12.03..292.67 rows=1 width=9) (actual time=0.050..0.051 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2021_06_event_ts_idx  (cost=0.00..12.03 rows=6192 width=0) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2021_06_event_ts_idx  (cost=0.00..12.03 rows=6192 width=0) (actual time=0.046..0.046 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2021_04 fct_deal_stage_event_16  (cost=12.03..291.59 rows=1 width=9) (actual time=0.006..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2021_04 fct_deal_stage_event_16  (cost=12.03..291.59 rows=1 width=9) (actual time=0.028..0.029 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2021_04_event_ts_idx  (cost=0.00..12.03 rows=6183 width=0) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2021_04_event_ts_idx  (cost=0.00..12.03 rows=6183 width=0) (actual time=0.025..0.025 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2021_07 fct_deal_stage_event_19  (cost=12.03..291.43 rows=1 width=9) (actual time=0.007..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2021_07 fct_deal_stage_event_19  (cost=12.03..291.43 rows=1 width=9) (actual time=0.033..0.034 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2021_07_event_ts_idx  (cost=0.00..12.03 rows=6165 width=0) (actual time=0.007..0.007 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2021_07_event_ts_idx  (cost=0.00..12.03 rows=6165 width=0) (actual time=0.031..0.032 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2020_11 fct_deal_stage_event_11  (cost=12.03..290.28 rows=1 width=9) (actual time=0.007..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2020_11 fct_deal_stage_event_11  (cost=12.03..290.28 rows=1 width=9) (actual time=0.021..0.021 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2020_11_event_ts_idx  (cost=0.00..12.03 rows=6148 width=0) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2020_11_event_ts_idx  (cost=0.00..12.03 rows=6148 width=0) (actual time=0.019..0.019 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2021_02 fct_deal_stage_event_14  (cost=12.03..286.61 rows=1 width=9) (actual time=0.007..0.007 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2021_02 fct_deal_stage_event_14  (cost=12.03..286.61 rows=1 width=9) (actual time=0.025..0.026 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2021_02_event_ts_idx  (cost=0.00..12.03 rows=6072 width=0) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2021_02_event_ts_idx  (cost=0.00..12.03 rows=6072 width=0) (actual time=0.014..0.014 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2020_10 fct_deal_stage_event_10  (cost=12.03..282.87 rows=1 width=9) (actual time=0.006..0.007 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2020_10 fct_deal_stage_event_10  (cost=12.03..282.87 rows=1 width=9) (actual time=0.020..0.020 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2020_10_event_ts_idx  (cost=0.00..12.03 rows=5988 width=0) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2020_10_event_ts_idx  (cost=0.00..12.03 rows=5988 width=0) (actual time=0.017..0.017 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2020_08 fct_deal_stage_event_8  (cost=12.03..280.38 rows=1 width=9) (actual time=0.007..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2020_08 fct_deal_stage_event_8  (cost=12.03..280.38 rows=1 width=9) (actual time=0.030..0.031 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2020_08_event_ts_idx  (cost=0.00..12.03 rows=5933 width=0) (actual time=0.006..0.007 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2020_08_event_ts_idx  (cost=0.00..12.03 rows=5933 width=0) (actual time=0.029..0.029 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2020_09 fct_deal_stage_event_9  (cost=12.03..277.86 rows=1 width=9) (actual time=0.007..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2020_09 fct_deal_stage_event_9  (cost=12.03..277.86 rows=1 width=9) (actual time=0.027..0.028 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2020_09_event_ts_idx  (cost=0.00..12.03 rows=5874 width=0) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2020_09_event_ts_idx  (cost=0.00..12.03 rows=5874 width=0) (actual time=0.024..0.024 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2024_12 fct_deal_stage_event_60  (cost=12.03..276.56 rows=1 width=9) (actual time=0.008..0.009 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2024_12 fct_deal_stage_event_60  (cost=12.03..276.56 rows=1 width=9) (actual time=0.013..0.014 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2024_12_event_ts_idx  (cost=0.00..12.03 rows=5840 width=0) (actual time=0.007..0.007 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2024_12_event_ts_idx  (cost=0.00..12.03 rows=5840 width=0) (actual time=0.012..0.012 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2020_06 fct_deal_stage_event_6  (cost=12.03..274.13 rows=1 width=9) (actual time=0.006..0.007 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2020_06 fct_deal_stage_event_6  (cost=12.03..274.13 rows=1 width=9) (actual time=0.011..0.012 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2020_06_event_ts_idx  (cost=0.00..12.03 rows=5791 width=0) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2020_06_event_ts_idx  (cost=0.00..12.03 rows=5791 width=0) (actual time=0.010..0.010 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2020_03 fct_deal_stage_event_3  (cost=12.03..267.83 rows=1 width=9) (actual time=0.007..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2020_03 fct_deal_stage_event_3  (cost=12.03..267.83 rows=1 width=9) (actual time=0.012..0.012 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2020_03_event_ts_idx  (cost=0.00..12.03 rows=5644 width=0) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2020_03_event_ts_idx  (cost=0.00..12.03 rows=5644 width=0) (actual time=0.010..0.010 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2023_01 fct_deal_stage_event_37  (cost=12.03..265.34 rows=1 width=9) (actual time=0.007..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2023_01 fct_deal_stage_event_37  (cost=12.03..265.34 rows=1 width=9) (actual time=0.012..0.013 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2023_01_event_ts_idx  (cost=0.00..12.03 rows=5588 width=0) (actual time=0.006..0.007 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2023_01_event_ts_idx  (cost=0.00..12.03 rows=5588 width=0) (actual time=0.011..0.011 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2020_07 fct_deal_stage_event_7  (cost=12.03..261.72 rows=1 width=9) (actual time=0.006..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2020_07 fct_deal_stage_event_7  (cost=12.03..261.72 rows=1 width=9) (actual time=0.014..0.014 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2020_07_event_ts_idx  (cost=0.00..12.03 rows=5518 width=0) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2020_07_event_ts_idx  (cost=0.00..12.03 rows=5518 width=0) (actual time=0.012..0.013 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2020_05 fct_deal_stage_event_5  (cost=12.03..256.69 rows=1 width=9) (actual time=0.007..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2020_05 fct_deal_stage_event_5  (cost=12.03..256.69 rows=1 width=9) (actual time=0.026..0.027 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2020_05_event_ts_idx  (cost=0.00..12.03 rows=5401 width=0) (actual time=0.005..0.006 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2020_05_event_ts_idx  (cost=0.00..12.03 rows=5401 width=0) (actual time=0.024..0.024 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2020_04 fct_deal_stage_event_4  (cost=12.03..249.17 rows=1 width=9) (actual time=0.009..0.010 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2020_04 fct_deal_stage_event_4  (cost=12.03..249.17 rows=1 width=9) (actual time=0.022..0.023 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2020_04_event_ts_idx  (cost=0.00..12.03 rows=5229 width=0) (actual time=0.008..0.008 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2020_04_event_ts_idx  (cost=0.00..12.03 rows=5229 width=0) (actual time=0.021..0.021 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2022_01 fct_deal_stage_event_25  (cost=12.03..239.26 rows=1 width=9) (actual time=0.007..0.009 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2022_01 fct_deal_stage_event_25  (cost=12.03..239.26 rows=1 width=9) (actual time=0.019..0.020 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2022_01_event_ts_idx  (cost=0.00..12.03 rows=5012 width=0) (actual time=0.007..0.007 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2022_01_event_ts_idx  (cost=0.00..12.03 rows=5012 width=0) (actual time=0.017..0.017 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2023_12 fct_deal_stage_event_48  (cost=12.03..230.58 rows=1 width=9) (actual time=0.009..0.010 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2023_12 fct_deal_stage_event_48  (cost=12.03..230.58 rows=1 width=9) (actual time=0.019..0.020 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2023_12_event_ts_idx  (cost=0.00..12.03 rows=4822 width=0) (actual time=0.007..0.008 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2023_12_event_ts_idx  (cost=0.00..12.03 rows=4822 width=0) (actual time=0.011..0.011 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2022_12 fct_deal_stage_event_36  (cost=12.03..219.48 rows=1 width=9) (actual time=0.008..0.008 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2022_12 fct_deal_stage_event_36  (cost=12.03..219.48 rows=1 width=9) (actual time=0.015..0.016 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2022_12_event_ts_idx  (cost=0.00..12.03 rows=4584 width=0) (actual time=0.007..0.007 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2022_12_event_ts_idx  (cost=0.00..12.03 rows=4584 width=0) (actual time=0.013..0.013 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2021_01 fct_deal_stage_event_13  (cost=12.03..213.17 rows=1 width=9) (actual time=0.008..0.009 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2021_01 fct_deal_stage_event_13  (cost=12.03..213.17 rows=1 width=9) (actual time=0.038..0.039 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2021_01_event_ts_idx  (cost=0.00..12.03 rows=4436 width=0) (actual time=0.007..0.007 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2021_01_event_ts_idx  (cost=0.00..12.03 rows=4436 width=0) (actual time=0.034..0.034 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2021_12 fct_deal_stage_event_24  (cost=12.03..204.49 rows=1 width=9) (actual time=0.009..0.010 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2021_12 fct_deal_stage_event_24  (cost=12.03..204.49 rows=1 width=9) (actual time=0.025..0.026 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2021_12_event_ts_idx  (cost=0.00..12.03 rows=4245 width=0) (actual time=0.008..0.008 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2021_12_event_ts_idx  (cost=0.00..12.03 rows=4245 width=0) (actual time=0.022..0.023 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2020_02 fct_deal_stage_event_2  (cost=12.03..198.39 rows=1 width=9) (actual time=0.009..0.011 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2020_02 fct_deal_stage_event_2  (cost=12.03..198.39 rows=1 width=9) (actual time=0.019..0.020 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2020_02_event_ts_idx  (cost=0.00..12.03 rows=4120 width=0) (actual time=0.009..0.009 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2020_02_event_ts_idx  (cost=0.00..12.03 rows=4120 width=0) (actual time=0.018..0.018 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2020_12 fct_deal_stage_event_12  (cost=12.03..185.93 rows=1 width=9) (actual time=0.133..0.134 rows=0 loops=1)
+                     ->  Parallel Bitmap Heap Scan on fct_deal_stage_event_2020_12 fct_deal_stage_event_12  (cost=12.03..185.93 rows=1 width=9) (actual time=0.368..0.368 rows=0 loops=1)
                            Recheck Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=2
-                           ->  Bitmap Index Scan on fct_deal_stage_event_2020_12_event_ts_idx  (cost=0.00..12.03 rows=3842 width=0) (actual time=0.025..0.025 rows=0 loops=1)
+                           ->  Bitmap Index Scan on fct_deal_stage_event_2020_12_event_ts_idx  (cost=0.00..12.03 rows=3842 width=0) (actual time=0.038..0.038 rows=0 loops=1)
                                  Index Cond: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                                  Buffers: shared hit=2
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2026_03 fct_deal_stage_event_75  (cost=0.00..641.29 rows=13950 width=9) (actual time=0.004..3.986 rows=23720 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2026_03 fct_deal_stage_event_75  (cost=0.00..641.29 rows=13950 width=9) (actual time=0.003..3.471 rows=23720 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared hit=432
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2020_01 fct_deal_stage_event_1  (cost=0.00..106.61 rows=1 width=9) (actual time=0.501..0.501 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2020_01 fct_deal_stage_event_1  (cost=0.00..106.61 rows=1 width=9) (actual time=0.358..0.359 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 3922
                            Buffers: shared hit=72
-                     ->  Parallel Seq Scan on fct_deal_stage_event_default fct_deal_stage_event_85  (cost=0.00..10.26 rows=1 width=9) (actual time=0.069..0.070 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_default fct_deal_stage_event_85  (cost=0.00..10.26 rows=1 width=9) (actual time=0.040..0.040 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 369
                            Buffers: shared hit=7
  Planning:
    Buffers: shared hit=100
- Planning Time: 2.862 ms
- Execution Time: 75.017 ms
+ Planning Time: 1.945 ms
+ Execution Time: 14.283 ms
 (497 rows)
 

@@ -157,6 +157,14 @@ ANALYZE tmp_submission_cast;
 -- run that died after this insert and before the watermark advanced will
 -- offer the same rows again, and they must not be logged twice or DQ-001
 -- stops reconciling.
+--
+-- LIMITATION: there is no re-drive path. Rows land here with a reason code
+-- and their original text, which is enough to diagnose and enough to
+-- reconcile, and that is where it stops. In production somebody has to
+-- correct these 3,938 rows and resubmit them, and the loop that would take
+-- a corrected row from here back into stg is not built. Saying so in the
+-- file rather than only in the README, because this is where somebody will
+-- be standing when they need to know.
 -- ---------------------------------------------------------------------
 INSERT INTO dq.reject_deal_submission
     (run_id, reason_code, source_file, raw_line_no, source_message_id,

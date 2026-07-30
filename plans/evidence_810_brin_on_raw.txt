@@ -3,22 +3,22 @@ DROP INDEX
 VACUUM
                                                                                 QUERY PLAN                                                                                
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Finalize Aggregate  (cost=29410.65..29410.66 rows=1 width=8) (actual time=64.568..68.587 rows=1 loops=1)
+ Finalize Aggregate  (cost=29412.71..29412.72 rows=1 width=8) (actual time=178.420..191.218 rows=1 loops=1)
    Buffers: shared hit=32 read=21073
-   ->  Gather  (cost=29410.43..29410.64 rows=2 width=8) (actual time=64.447..68.581 rows=3 loops=1)
+   ->  Gather  (cost=29412.49..29412.70 rows=2 width=8) (actual time=178.215..191.199 rows=3 loops=1)
          Workers Planned: 2
          Workers Launched: 2
          Buffers: shared hit=32 read=21073
-         ->  Partial Aggregate  (cost=28410.43..28410.44 rows=1 width=8) (actual time=54.463..54.464 rows=1 loops=3)
+         ->  Partial Aggregate  (cost=28412.49..28412.50 rows=1 width=8) (actual time=159.769..159.770 rows=1 loops=3)
                Buffers: shared hit=32 read=21073
-               ->  Parallel Seq Scan on raw_stage_event  (cost=0.00..28386.52 rows=9565 width=0) (actual time=42.131..53.888 rows=7907 loops=3)
+               ->  Parallel Seq Scan on raw_stage_event  (cost=0.00..28386.52 rows=10389 width=0) (actual time=146.050..159.101 rows=7907 loops=3)
                      Filter: ((ingested_at >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (ingested_at < '2026-04-01 00:00:00+02'::timestamp with time zone))
                      Rows Removed by Filter: 380441
                      Buffers: shared hit=32 read=21073
  Planning:
    Buffers: shared hit=13
- Planning Time: 0.370 ms
- Execution Time: 68.686 ms
+ Planning Time: 0.592 ms
+ Execution Time: 191.435 ms
 (16 rows)
 
 CREATE INDEX
@@ -33,20 +33,22 @@ ANALYZE
 DROP INDEX
                                                                                QUERY PLAN                                                                               
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Aggregate  (cost=22734.21..22734.22 rows=1 width=8) (actual time=17.889..17.891 rows=1 loops=1)
+ Aggregate  (cost=22732.59..22732.60 rows=1 width=8) (actual time=23.962..23.963 rows=1 loops=1)
    Buffers: shared hit=5 read=768
-   ->  Bitmap Heap Scan on raw_stage_event  (cost=18.31..22672.41 rows=24720 width=0) (actual time=1.024..16.671 rows=23720 loops=1)
+   ->  Bitmap Heap Scan on raw_stage_event  (cost=18.16..22672.26 rows=24132 width=0) (actual time=2.511..22.613 rows=23720 loops=1)
          Recheck Cond: ((ingested_at >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (ingested_at < '2026-04-01 00:00:00+02'::timestamp with time zone))
          Rows Removed by Index Recheck: 18619
          Heap Blocks: lossy=768
          Buffers: shared hit=5 read=768
-         ->  Bitmap Index Scan on ix_raw_ingested_brin  (cost=0.00..12.13 rows=28244 width=0) (actual time=0.086..0.086 rows=7680 loops=1)
+         ->  Bitmap Index Scan on ix_raw_ingested_brin  (cost=0.00..12.13 rows=28244 width=0) (actual time=0.123..0.124 rows=7680 loops=1)
                Index Cond: ((ingested_at >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (ingested_at < '2026-04-01 00:00:00+02'::timestamp with time zone))
                Buffers: shared hit=5
  Planning:
    Buffers: shared hit=12
- Planning Time: 0.178 ms
- Execution Time: 17.951 ms
+ Planning Time: 0.579 ms
+ Execution Time: 24.199 ms
 (14 rows)
 
+
+--- server notices (stderr, not in statement order) ---
 NOTICE:  index "ix_raw_ingested_btree" does not exist, skipping

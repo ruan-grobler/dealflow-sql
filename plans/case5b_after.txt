@@ -8,12 +8,12 @@ SET
 Pager usage is off.
                                                                         QUERY PLAN                                                                         
 -----------------------------------------------------------------------------------------------------------------------------------------------------------
- Aggregate  (cost=906.40..906.41 rows=1 width=40) (actual time=5.362..5.362 rows=1 loops=1)
+ Aggregate  (cost=906.40..906.41 rows=1 width=40) (actual time=4.989..4.990 rows=1 loops=1)
    Buffers: shared hit=432
-   ->  Seq Scan on fct_deal_stage_event_2026_03 fct_deal_stage_event  (cost=0.00..787.80 rows=23720 width=9) (actual time=0.004..3.503 rows=23720 loops=1)
+   ->  Seq Scan on fct_deal_stage_event_2026_03 fct_deal_stage_event  (cost=0.00..787.80 rows=23720 width=9) (actual time=0.003..3.281 rows=23720 loops=1)
          Filter: ((event_date >= '2026-03-01'::date) AND (event_date < '2026-04-01'::date))
          Buffers: shared hit=432
- Planning Time: 0.086 ms
- Execution Time: 5.386 ms
+ Planning Time: 0.054 ms
+ Execution Time: 5.016 ms
 (7 rows)
 

@@ -18,9 +18,11 @@
 --   minus the repeated timing runs.
 --
 -- HOW TO RUN
---   Whole file, by hand:
---     source .env
---     docker exec -i -e PGPASSWORD="$POSTGRES_PASSWORD" dealflow-db \
+--   Whole file, by hand. Note "-e PGPASSWORD" by NAME, not "-e PGPASSWORD=$VALUE": the
+--   second form puts the password in argv where ps(1) shows it to any local user.
+--     set -a; source .env; set +a
+--     export PGPASSWORD="$POSTGRES_PASSWORD"
+--     docker exec -i -e PGPASSWORD dealflow-db \
 --         psql -U dealflow -d dealflow -v ON_ERROR_STOP=1 < sql/06_performance.sql
 --   Measured, with medians and captured plans:
 --     python3 benchmark.py
@@ -100,9 +102,9 @@ END $$;
 --   It would work, in the sense that the error would stop. An untargeted DO NOTHING does
 --   swallow exclusion constraint violations. But think about what the lab would then hold:
 --   old rows keyed to the old surrogate numbers, silently kept, while every fact row is
---   resolved against the new ones. Case study 2 filters WHERE broker_sk = 407 and would
---   quietly be measuring a different broker. Trading a loud crash for a silent wrong
---   measurement is the worst trade available in a benchmark, so it is not taken here.
+--   resolved against the new ones. Case study 2 selects a broker, and it would quietly be
+--   measuring a different one. Trading a loud crash for a silent wrong measurement is the
+--   worst trade available in a benchmark, so it is not taken here.
 --
 -- WHY NOT JUST DROP AND REBUILD EVERY TIME
 --   Measured on this container: a full rebuild is 68 seconds, and computing the fingerprint
@@ -134,10 +136,53 @@ CREATE TABLE IF NOT EXISTS perf.fixture_provenance (
     verified_at        timestamptz NOT NULL,
     event_rows         bigint      NOT NULL,
     deal_rows          bigint      NOT NULL,
-    raw_rows           bigint      NOT NULL
+    raw_rows           bigint      NOT NULL,
+    -- Row counts for EVERY fixture table, not just the three big ones. An earlier version
+    -- checked only the three named columns above and the comment claimed it proved "the
+    -- fixture itself is still all there", which was an overclaim: a DELETE from dim_property
+    -- or dim_agency passed it untouched. relname to count, so adding a fixture table extends
+    -- the check by itself instead of needing a new column.
+    table_rows         jsonb,
+    -- Case study 2 benchmarks one broker. Which broker is resolved HERE, at fixture build
+    -- time, and recorded, rather than hardcoded as a surrogate key in the query. See the
+    -- note in section 3.
+    case2_broker_nk    text
 );
+-- Idempotent column adds so an existing lab from an earlier revision migrates rather than
+-- erroring. A NULL in either new column is treated as "not a complete record" by the gate
+-- below, which forces exactly one rebuild and then never fires again.
+ALTER TABLE perf.fixture_provenance ADD COLUMN IF NOT EXISTS table_rows      jsonb;
+ALTER TABLE perf.fixture_provenance ADD COLUMN IF NOT EXISTS case2_broker_nk text;
+
 COMMENT ON TABLE perf.fixture_provenance IS
     'What the perf fixture was built from, written only after it verified itself. The cache key for the fixture.';
+
+-- Row count of every fixture table, as one jsonb object. Dynamic on purpose: the point of the
+-- check is that it covers whatever is actually there, so a table added to the fixture later is
+-- covered without anybody remembering to extend a list.
+CREATE OR REPLACE FUNCTION perf.fn_fixture_table_rows() RETURNS jsonb
+LANGUAGE plpgsql AS $$
+DECLARE
+    r   record;
+    n   bigint;
+    acc jsonb := '{}'::jsonb;
+BEGIN
+    FOR r IN SELECT c.relname
+             FROM pg_class c
+             JOIN pg_namespace ns ON ns.oid = c.relnamespace
+             WHERE ns.nspname = 'perf'
+               AND c.relkind IN ('r', 'p')
+               AND NOT c.relispartition
+               AND c.relname <> 'fixture_provenance'
+             ORDER BY c.relname
+    LOOP
+        EXECUTE format('SELECT count(*) FROM perf.%I', r.relname) INTO n;
+        acc := acc || jsonb_build_object(r.relname, n);
+    END LOOP;
+    RETURN acc;
+END $$;
+COMMENT ON FUNCTION perf.fn_fixture_table_rows() IS
+    'Row count of every perf fixture table. Compared against the recorded counts to catch a hand DELETE.';
 
 -- One checksum over every source column the lab copies out of the warehouse.
 --
@@ -209,23 +254,25 @@ DECLARE
     v_expected   text;
     v_recorded   text;
     v_reason     text := NULL;
-    v_events     bigint;
-    v_deals      bigint;
-    v_raw        bigint;
-    v_rec_events bigint;
-    v_rec_deals  bigint;
-    v_rec_raw    bigint;
+    v_rec_tables jsonb;
+    v_now_tables jsonb;
+    v_rec_broker text;
+    v_moved      text;
     r            record;
 BEGIN
     v_expected := perf.fn_source_fingerprint();
-    SELECT source_fingerprint, event_rows, deal_rows, raw_rows
-      INTO v_recorded, v_rec_events, v_rec_deals, v_rec_raw
+    SELECT source_fingerprint, table_rows, case2_broker_nk
+      INTO v_recorded, v_rec_tables, v_rec_broker
       FROM perf.fixture_provenance WHERE fixture_id = 1;
 
     IF v_recorded IS NULL THEN
         v_reason := 'no completed build on record';
     ELSIF v_recorded <> v_expected THEN
         v_reason := 'the warehouse it was built from has changed';
+    ELSIF v_rec_tables IS NULL OR v_rec_broker IS NULL THEN
+        -- Written by an older revision that recorded neither the full table census nor the
+        -- resolved case 2 broker. Incomplete provenance is not provenance.
+        v_reason := 'the provenance record predates the current fixture contract';
     ELSIF to_regclass('perf.fct_deal_stage_event') IS NULL
        OR to_regclass('perf.fct_deal_pipeline')    IS NULL
        OR to_regclass('perf.raw_stage_event')      IS NULL THEN
@@ -233,13 +280,18 @@ BEGIN
     ELSE
         -- The checksum proves the SOURCE has not moved. This proves the fixture itself is
         -- still all there, so a hand DELETE or a truncated table rebuilds rather than
-        -- quietly benchmarking less data than the numbers were taken on.
-        SELECT count(*) INTO v_events FROM perf.fct_deal_stage_event;
-        SELECT count(*) INTO v_deals  FROM perf.fct_deal_pipeline;
-        SELECT count(*) INTO v_raw    FROM perf.raw_stage_event;
-        IF (v_events, v_deals, v_raw) IS DISTINCT FROM (v_rec_events, v_rec_deals, v_rec_raw) THEN
-            v_reason := format('fixture row counts moved since it was built (%s/%s/%s now, %s/%s/%s recorded)',
-                               v_events, v_deals, v_raw, v_rec_events, v_rec_deals, v_rec_raw);
+        -- quietly benchmarking less data than the numbers were taken on. EVERY fixture table
+        -- is counted, not a chosen three, so a DELETE from the smallest dimension is caught
+        -- the same way a truncated fact would be.
+        v_now_tables := perf.fn_fixture_table_rows();
+        IF v_now_tables IS DISTINCT FROM v_rec_tables THEN
+            SELECT string_agg(format('%s %s now, %s recorded', k,
+                                     COALESCE(v_now_tables ->> k, 'absent'),
+                                     COALESCE(v_rec_tables ->> k, 'absent')), '; ' ORDER BY k)
+              INTO v_moved
+              FROM (SELECT jsonb_object_keys(v_rec_tables || v_now_tables) AS k) s
+             WHERE (v_now_tables -> k) IS DISTINCT FROM (v_rec_tables -> k);
+            v_reason := format('fixture row counts moved since it was built (%s)', v_moved);
         END IF;
     END IF;
 
@@ -312,7 +364,12 @@ SELECT (EXTRACT(YEAR FROM d) * 10000 + EXTRACT(MONTH FROM d) * 100 + EXTRACT(DAY
        EXTRACT(QUARTER FROM d)::integer,
        EXTRACT(MONTH   FROM d)::integer,
        date_trunc('month', d)::date,
-       EXTRACT(ISODOW  FROM d)::integer,
+       -- iso_week is the ISO WEEK NUMBER (1 to 53). This read EXTRACT(ISODOW ...) for one
+       -- revision, which is ISO day of week (1 to 7), so the column silently held a weekday
+       -- number under a week heading: 2026-03-15 came out as 7 instead of 11. Nothing queried
+       -- it, so nothing was visibly wrong, which is exactly why block 140 now checks this
+       -- fixture against mart column by column rather than trusting the word "mirror".
+       EXTRACT(WEEK    FROM d)::integer,
        EXTRACT(ISODOW  FROM d) IN (6, 7),
        (EXTRACT(YEAR  FROM d - INTERVAL '1 year') * 10000
       + EXTRACT(MONTH FROM d - INTERVAL '1 year') * 100
@@ -354,14 +411,19 @@ COMMENT ON TABLE perf.dim_agency IS 'One row per broking agency. Type 1 outrigge
 INSERT INTO perf.dim_agency VALUES (-1, 'Unknown agency', 'Unknown', false)
 ON CONFLICT (agency_sk) DO NOTHING;
 
+-- OFFSET FROM THE EXISTING MAXIMUM, AND FILTER TO WHAT IS MISSING. See the note in block 050:
+-- a bare ROW_NUMBER() restarts at 1, so a half populated table would hand agency_sk = 1 to a
+-- row whose neighbour already owns it, and the ON CONFLICT (agency_name) guard cannot catch
+-- that because the collision is on the PRIMARY KEY, not on the name.
 INSERT INTO perf.dim_agency
-SELECT ROW_NUMBER() OVER (ORDER BY agency_name)::integer,
-       agency_name,
+SELECT COALESCE((SELECT max(x.agency_sk) FROM perf.dim_agency x WHERE x.agency_sk > 0), 0)
+           + ROW_NUMBER() OVER (ORDER BY a.agency_name)::integer,
+       a.agency_name,
        (ARRAY['Western Cape', 'Gauteng', 'KwaZulu-Natal', 'Eastern Cape'])
-           [1 + floor(perf.fn_u('agencyprov', agency_name) * 4)::integer],
-       perf.fn_u('national', agency_name) < 0.35
+           [1 + floor(perf.fn_u('agencyprov', a.agency_name) * 4)::integer],
+       perf.fn_u('national', a.agency_name) < 0.35
 FROM (SELECT DISTINCT agency_name FROM mart.dim_broker WHERE broker_sk <> -1) a
-ON CONFLICT (agency_name) DO NOTHING;
+WHERE NOT EXISTS (SELECT 1 FROM perf.dim_agency d WHERE d.agency_name = a.agency_name);
 
 -- @block fixture 050_dim_broker
 -- SCD Type 2. Surrogate keys are GENERATED BY DEFAULT rather than GENERATED ALWAYS because
@@ -411,7 +473,14 @@ WHERE NOT EXISTS (SELECT 1 FROM perf.dim_broker WHERE broker_sk = -1);
 -- An idempotency check has to be keyed on the same thing the constraint is keyed on, or the
 -- constraint is what tells you the check was wrong. The provenance gate in section 0 is the
 -- other half of this: it catches the renumbering itself, because keeping the old rows without
--- error would leave case study 2 filtering broker_sk = 407 against a different broker.
+-- error would leave every fact row in the lab pointing at a broker it does not belong to.
+--
+-- Blocks 040, 060 and 070 were fixed by the same reasoning, in the same revision. Each of them
+-- assigned a surrogate with a bare ROW_NUMBER() behind a guard, which restarts at 1 whenever
+-- the guard filters anything out, so a partially populated table collides on its own primary
+-- key. All three now offset from the existing maximum and match the guard on the natural key.
+-- One lesson, applied everywhere it applies, because a reviewer who finds one fixed and three
+-- not is right to ask why.
 WITH src AS (
     SELECT s.broker_sk, s.broker_nk, s.full_name,
            -- LEFT JOIN, never INNER. An inner join here would silently drop any broker whose
@@ -468,8 +537,12 @@ INSERT INTO perf.dim_property (property_sk, property_nk, sector, province, valid
 SELECT -1, 'UNKNOWN', 'Unknown', 'Unknown', '-infinity'
 WHERE NOT EXISTS (SELECT 1 FROM perf.dim_property WHERE property_sk = -1);
 
+-- Offset from the existing maximum, same reasoning as blocks 040 and 050. The WHERE NOT EXISTS
+-- below runs BEFORE the window function, so on a half populated table ROW_NUMBER would restart
+-- at 1 and collide with property_sk values already sitting in the table.
 INSERT INTO perf.dim_property (property_sk, property_nk, sector, province, valid_from)
-SELECT ROW_NUMBER() OVER (ORDER BY p.property_nk)::bigint,
+SELECT COALESCE((SELECT max(x.property_sk) FROM perf.dim_property x WHERE x.property_sk > 0), 0)
+           + ROW_NUMBER() OVER (ORDER BY p.property_nk)::bigint,
        p.property_nk, p.sector, p.province, '-infinity'
 -- The CURRENT version only. perf.dim_property is deliberately one row per property with an
 -- open window: the lab measures access paths, and reproducing the warehouse's 1,443 extra
@@ -497,13 +570,27 @@ COMMENT ON TABLE perf.dim_deal_source IS
 INSERT INTO perf.dim_deal_source VALUES (-1, 'Unknown', false, 'Unknown')
 ON CONFLICT (deal_source_sk) DO NOTHING;
 
+-- Offset from the existing maximum and matched on the natural key, same reasoning as blocks
+-- 040, 050 and 060. The old form paired a bare ROW_NUMBER() with an UNTARGETED
+-- ON CONFLICT DO NOTHING, which is the worst combination available: if the set of source
+-- channels ever changes, the numbering shifts, rows collide, and DO NOTHING swallows the
+-- collision so the fixture comes out quietly short instead of failing. Section 0 rejects that
+-- trade explicitly for dim_broker; it is rejected here for the same reason.
 INSERT INTO perf.dim_deal_source
-SELECT ROW_NUMBER() OVER (ORDER BY c.source_channel, o.is_off_market, q.submission_quality)::integer,
-       c.source_channel, o.is_off_market, q.submission_quality
-FROM (SELECT DISTINCT source_channel FROM mart.dim_deal_source WHERE deal_source_sk > 0) c
-CROSS JOIN (SELECT unnest(ARRAY[true, false]) AS is_off_market) o
-CROSS JOIN (SELECT unnest(ARRAY['clean', 'repaired', 'suspect']) AS submission_quality) q
-ON CONFLICT DO NOTHING;
+SELECT COALESCE((SELECT max(x.deal_source_sk) FROM perf.dim_deal_source x
+                  WHERE x.deal_source_sk > 0), 0)
+           + ROW_NUMBER() OVER (ORDER BY s.source_channel, s.is_off_market, s.submission_quality)::integer,
+       s.source_channel, s.is_off_market, s.submission_quality
+FROM (
+    SELECT c.source_channel, o.is_off_market, q.submission_quality
+    FROM (SELECT DISTINCT source_channel FROM mart.dim_deal_source WHERE deal_source_sk > 0) c
+    CROSS JOIN (SELECT unnest(ARRAY[true, false]) AS is_off_market) o
+    CROSS JOIN (SELECT unnest(ARRAY['clean', 'repaired', 'suspect']) AS submission_quality) q
+) s
+WHERE NOT EXISTS (SELECT 1 FROM perf.dim_deal_source d
+                   WHERE d.source_channel     = s.source_channel
+                     AND d.is_off_market      = s.is_off_market
+                     AND d.submission_quality = s.submission_quality);
 
 -- @block fixture 080_fact_ddl
 -- Foreign keys are deliberately NOT declared inline. They are added in block 100 after the
@@ -677,12 +764,18 @@ BEGIN
 END $$;
 
 -- @block fixture 110_analyze
--- ANALYZE the partitions, not the parent. RE-MEASURED on this container: ANALYZE on the
--- partitioned parent took 7,797 ms, against 145 ms and 161 ms for two single partitions, so the
--- parent costs roughly 50x one partition. The planner estimates each partition from that
--- partition's own statistics anyway, and an extended statistics object on the parent was
--- measured leaving the per partition estimate byte identical, so a parent ANALYZE belongs in a
--- weekly maintenance job and not in the load path. See PERFORMANCE.md for that measurement.
+-- ANALYZE the partitions, not the parent, IN AN INTERACTIVE SESSION. Measured on this
+-- container and captured in plans/evidence_840_analyze_cost.txt: ANALYZE on the partitioned
+-- parent took 8,527 ms, against 161 ms and 182 ms for two single partitions, so the parent
+-- costs roughly 50x one partition. The planner estimates each partition from that partition's
+-- own statistics anyway, so re-scanning all 85 to answer a question about one is waste.
+--
+-- THE LOAD PATH DOES THE OPPOSITE ON PURPOSE, AND THAT IS NOT A CONTRADICTION.
+-- sql/04_facts.sql runs ANALYZE on the parent, once, at the end of the bulk load. That is the
+-- statement that populates every child's statistics AND the per partition extended statistics
+-- objects in a single pass, which is exactly what a freshly loaded fact needs and what case
+-- study 3's estimate depends on. Nine seconds inside a seven minute build is free. The rule is
+-- about frequency, not about the statement: pay it once per load, never per interactive query.
 DO $$
 DECLARE r record;
 BEGIN
@@ -706,7 +799,11 @@ ANALYZE perf.dim_deal_source;
 -- simplification. The grain is one row per deal, but PostgreSQL requires the partition key in
 -- every unique index, so partitioning by received_date would make PRIMARY KEY (deal_nk)
 -- illegal and the stated grain unenforceable: restating a deal's received_date would insert a
--- second row for the same deal instead of updating it. At 35MB the table never needed it.
+-- second row for the same deal instead of updating it. At 35 MB the table never needed it.
+-- (35 MB heap, 47 MB with indexes, 248,702 rows. The warehouse's mart.fct_deal_pipeline is
+-- 53 MB over 248,940 rows. The mirror is smaller because it omits the 238 event-less deals
+-- and two columns. Same table, two measured numbers, two different jobs. See 02_warehouse.sql
+-- section 5.)
 CREATE TABLE IF NOT EXISTS perf.fct_deal_pipeline (
     deal_nk          text PRIMARY KEY,
     broker_sk        bigint      NOT NULL,
@@ -865,6 +962,21 @@ BEGIN
     -- defect the warehouse deliberately seeds.
     ASSERT v_default < 5000, format('DEFAULT partition holds %s rows, far more than mart does', v_default);
 
+    -- THE WORD "MIRROR" IS NOW CHECKED RATHER THAN ASSERTED.
+    -- perf.dim_date held EXTRACT(ISODOW ...) in its iso_week column for one revision, which is
+    -- day of week (1 to 7) under a heading that says week (1 to 53). Nothing queried the
+    -- column, so nothing broke and nothing caught it. This compares the fixture calendar
+    -- against mart's row for row across every column the lab copies, which is the only version
+    -- of "mirror" worth claiming.
+    PERFORM 1 FROM perf.dim_date p
+    JOIN mart.dim_date m ON m.date_sk = p.date_sk
+    WHERE (p.year_num, p.quarter_num, p.month_num, p.iso_week, p.is_weekend)
+       IS DISTINCT FROM
+          (m.year_num, m.quarter_num, m.month_num, m.iso_week, m.is_weekend)
+    LIMIT 1;
+    ASSERT NOT FOUND,
+        'perf.dim_date disagrees with mart.dim_date on at least one row, so the fixture calendar is not a mirror';
+
     RAISE NOTICE 'fixture verified against mart: % events, % deals, % raw rows, % partitions, % in DEFAULT, % on an unknown member',
                  v_events, v_deals, v_raw, v_parts, v_default, v_unknown;
 END $$;
@@ -876,18 +988,39 @@ END $$;
 -- checked itself against this warehouse". Write it any earlier and a build that died halfway
 -- would leave behind a record claiming a fixture that does not exist, which is how a benchmark
 -- ends up reporting numbers taken on half a table.
+--
+-- CASE STUDY 2's BROKER IS RESOLVED HERE, NOT HARDCODED IN THE QUERY.
+-- The rule is "the lowest numbered broker that has more than one version", which is one
+-- sentence to explain and deterministic on any rebuild. It has to be a MULTI VERSION broker
+-- because that is what makes the case honest: broker_sk on the fact is a version key, so a
+-- broker with two versions has two surrogate keys, and a query that filters one of them
+-- answers a question about ten months rather than about a career. Storing the NATURAL key is
+-- the point. A natural key is stable by definition; the surrogate is assigned by an identity
+-- sequence and moves when the warehouse is rebuilt, which is the exact fragility the gate in
+-- section 0 exists to catch.
 INSERT INTO perf.fixture_provenance
-    (fixture_id, source_fingerprint, verified_at, event_rows, deal_rows, raw_rows)
+    (fixture_id, source_fingerprint, verified_at, event_rows, deal_rows, raw_rows,
+     table_rows, case2_broker_nk)
 SELECT 1, perf.fn_source_fingerprint(), clock_timestamp(),
        (SELECT count(*) FROM perf.fct_deal_stage_event),
        (SELECT count(*) FROM perf.fct_deal_pipeline),
-       (SELECT count(*) FROM perf.raw_stage_event)
+       (SELECT count(*) FROM perf.raw_stage_event),
+       perf.fn_fixture_table_rows(),
+       (SELECT b.broker_nk
+          FROM perf.dim_broker b
+         WHERE b.broker_sk > 0
+         GROUP BY b.broker_nk
+        HAVING count(*) > 1
+         ORDER BY b.broker_nk
+         LIMIT 1)
 ON CONFLICT (fixture_id) DO UPDATE
     SET source_fingerprint = EXCLUDED.source_fingerprint,
         verified_at        = EXCLUDED.verified_at,
         event_rows         = EXCLUDED.event_rows,
         deal_rows          = EXCLUDED.deal_rows,
-        raw_rows           = EXCLUDED.raw_rows;
+        raw_rows           = EXCLUDED.raw_rows,
+        table_rows         = EXCLUDED.table_rows,
+        case2_broker_nk    = EXCLUDED.case2_broker_nk;
 
 
 -- =====================================================================================
@@ -940,14 +1073,30 @@ ORDER BY 3 DESC;
 -- @title A broker performance review has no access path
 -- @question Broker review. For one broker, across their whole history, how many stage events
 --           per year, how many of those were wins, and what value did they close?
--- @diagnosis The query is highly selective (114 of 1,165,043 rows, 0.0098 percent) but there
+-- @diagnosis The query is highly selective (1,088 of 1,165,043 rows, 0.093 percent) but there
 --           is no index on broker_sk, and the filter is not on the partition key so pruning
 --           cannot help either. The only plan available is a parallel sequential scan of
---           every partition: 21,351 buffers read to return 114 rows, against 320 after the fix.
+--           every partition to return a thousand rows.
 -- @fix A composite btree on (broker_sk, event_date), created on the partitioned parent so
 --      every partition inherits it. broker_sk leads because it is the equality predicate;
 --      event_date follows so the same index also serves the common "this broker, this
 --      period" variant without a second index.
+--
+-- ONE BROKER MEANS ALL OF THEIR VERSIONS, AND GETTING THAT WRONG IS THE POINT OF THIS NOTE.
+-- This case used to read "WHERE e.broker_sk = 407". broker_sk on a Type 2 fact is a VERSION
+-- key, not a person key: 407 was one CLOSED version of broker BRK-000270, valid from
+-- -infinity to 2020-11-01, and that broker had a second, still open version at 408. So the
+-- query held 114 of the broker's 948 events, returned a single row for the year 2020, and
+-- called that "across their whole history". The headline selectivity was an artifact of
+-- having picked a ten month stub rather than a broker.
+--
+-- The filter now resolves every version of one natural key, which is the honest form of the
+-- question and still has no access path without the index. Which broker is decided at fixture
+-- build time and recorded in perf.fixture_provenance (block 150), so nothing here depends on
+-- an identity assigned number that a warehouse rebuild can move.
+--
+-- The IN list costs one index scan on a 1,207 row dimension. It is a rounding error against a
+-- 1.17 million row fact scan, and it is measured in the before plan rather than assumed.
 -- @block before-setup case2
 DROP INDEX IF EXISTS perf.ix_fct_event_broker_date;
 -- @block before-query case2
@@ -958,7 +1107,10 @@ SELECT d.year_num,
 FROM perf.fct_deal_stage_event e
 JOIN perf.dim_date  d  ON d.date_sk   = e.event_date_sk
 JOIN perf.dim_stage ts ON ts.stage_sk = e.to_stage_sk
-WHERE e.broker_sk = 407
+WHERE e.broker_sk IN (SELECT b.broker_sk FROM perf.dim_broker b
+                       WHERE b.broker_nk = (SELECT case2_broker_nk
+                                              FROM perf.fixture_provenance
+                                             WHERE fixture_id = 1))
 GROUP BY 1
 ORDER BY 1;
 
@@ -973,7 +1125,10 @@ SELECT d.year_num,
 FROM perf.fct_deal_stage_event e
 JOIN perf.dim_date  d  ON d.date_sk   = e.event_date_sk
 JOIN perf.dim_stage ts ON ts.stage_sk = e.to_stage_sk
-WHERE e.broker_sk = 407
+WHERE e.broker_sk IN (SELECT b.broker_sk FROM perf.dim_broker b
+                       WHERE b.broker_nk = (SELECT case2_broker_nk
+                                              FROM perf.fixture_provenance
+                                             WHERE fixture_id = 1))
 GROUP BY 1
 ORDER BY 1;
 
@@ -995,8 +1150,8 @@ ORDER BY 1;
 --      its 48 MB disk sort disappears entirely: temp blocks written fall from 20,713 to
 --      8,706. This is a PARTIAL fix and it is the most honest case study in the file. The
 --      percentile_cont sort is inherent to the aggregate and cannot be indexed away, so the
---      28 MB spill remains and the wall clock gain is only 1.6x to 1.7x across three
---      consecutive runs, with a run to run spread wide enough that one earlier measurement run
+--      28 MB spill remains and the wall clock gain is only 1.3x to 1.7x across five
+--      runs, with a run to run spread wide enough that one earlier measurement run
 --      on a loaded laptop came out SLOWER. The Merge Append also trades a parallel sequential
 --      scan for random heap access: the after plan reads 1,099,256 shared buffers against the
 --      before plan's 21,221, and only wins because they are cache hits, so on a box with less
@@ -1108,12 +1263,20 @@ LIMIT 20;
 --           event_ts looks like the obvious answer, because the fact is physically ordered by
 --           event_ts and BRIN is cheap.
 -- @fix ACCEPTED AS AN INDEX, REJECTED AS THE ANSWER. The index does work: execution drops
---      because each partition's summary excludes it outright. But it adds 85 index relations
---      the planner must consider on every query against this fact, and the measured planning
---      time roughly triples, giving back much of the execution saving. Rewriting the filter
---      onto the partition key is faster than the BRIN fix and costs nothing at all. So BRIN
---      is dropped from the fact and kept only on the unpartitioned raw landing table, where
---      section 8 measures it earning its place. See PERFORMANCE.md for the numbers.
+--      because each partition's summary excludes the ranges that cannot contain March.
+--      It is rejected on the head to head in case 5b, which is the argument that reproduces:
+--      rewriting the filter onto the partition key reads 432 buffers against the BRIN's 665,
+--      touches 1 partition against 85, and costs nothing at all, because the column is already
+--      there and the index does not have to exist. So BRIN is dropped from the fact and kept
+--      only on the unpartitioned raw landing table, where section 8 measures it earning its
+--      place. See PERFORMANCE.md case 5 and 5b for the numbers.
+--
+--      AN EARLIER VERSION OF THIS NOTE ALSO CLAIMED THE BRIN "roughly triples" planning time.
+--      That is deleted rather than softened, because nothing measured it and a re-measurement
+--      did not support it: three samples each way came out 45.4 / 18.1 / 12.9 ms with the
+--      index and 64.2 / 38.1 / 19.4 ms without it, which is noise dominated by session warmth
+--      and, if anything, points the wrong way. A rejection argument that does not reproduce is
+--      worse than no argument, and case 5b already supplies one that does.
 -- @block before-setup case5
 DROP INDEX IF EXISTS perf.ix_fct_event_ts_brin;
 -- @block before-query case5
@@ -1149,10 +1312,40 @@ WHERE event_ts >= TIMESTAMPTZ '2026-03-01'
 -- @fix BEFORE is the naive event_ts filter with the BRIN in place, so the index gets its best
 --      case. AFTER is the same question filtered on event_date, the partition key, with the
 --      BRIN dropped. The winner decides what ships.
+--
+--      THE REWRITE CHANGES THE PREDICATE, SO IT HAS TO PROVE IT DID NOT CHANGE THE ANSWER.
+--      event_ts and event_date are only interchangeable because event_date is DERIVED from
+--      event_ts under a pinned reporting timezone (01_staging.sql step 0). Under an unpinned
+--      timezone the two select different rows either side of a month boundary, which is
+--      precisely why the zone is pinned on the database rather than described in a README.
+--      The assertion below runs both predicates and fails the build if they ever disagree, so
+--      the equivalence is proved on every run instead of being asserted once in prose.
 -- @block before-setup case5b
 CREATE INDEX IF NOT EXISTS ix_fct_event_ts_brin
     ON perf.fct_deal_stage_event USING brin (event_ts);
 ANALYZE perf.fct_deal_stage_event_2026_03;
+DO $$
+DECLARE
+    v_ts_events  bigint; v_ts_value  numeric;
+    v_dt_events  bigint; v_dt_value  numeric;
+BEGIN
+    SELECT count(*), COALESCE(sum(deal_value_zar), 0) INTO v_ts_events, v_ts_value
+    FROM perf.fct_deal_stage_event
+    WHERE event_ts >= TIMESTAMPTZ '2026-03-01' AND event_ts < TIMESTAMPTZ '2026-04-01';
+
+    SELECT count(*), COALESCE(sum(deal_value_zar), 0) INTO v_dt_events, v_dt_value
+    FROM perf.fct_deal_stage_event
+    WHERE event_date >= DATE '2026-03-01' AND event_date < DATE '2026-04-01';
+
+    IF (v_ts_events, v_ts_value) IS DISTINCT FROM (v_dt_events, v_dt_value) THEN
+        RAISE EXCEPTION
+            'case5b rewrite is NOT equivalent: event_ts gives % events / %, event_date gives % events / %. Check the database timezone (expected Africa/Johannesburg, got %).',
+            v_ts_events, v_ts_value, v_dt_events, v_dt_value, current_setting('TimeZone');
+    END IF;
+
+    RAISE NOTICE 'case5b predicates agree: % events, % total value (timezone %)',
+        v_ts_events, v_ts_value, current_setting('TimeZone');
+END $$;
 -- @block before-query case5b
 SELECT count(*) AS events, sum(deal_value_zar) AS total_value_zar
 FROM perf.fct_deal_stage_event
@@ -1268,6 +1461,34 @@ WHERE n.nspname = 'perf'
   AND c.relname LIKE 'fct_deal_stage_event%';
 DROP INDEX perf.ix_fct_event_ts_brin;
 
+-- @block evidence 850_workload_ranking
+-- WHERE THE TIME ACTUALLY GOES, RANKED, RATHER THAN WHERE I ASSUMED IT WENT.
+-- This is the artifact that justifies the pg_stat_statements extension in 01_staging.sql and
+-- the shared_preload_libraries flag in run.sh. Both existed for one revision with a comment
+-- promising a workload ranking that had never been built, which is a promise in a comment and
+-- nothing else. It is built here.
+--
+-- HOW TO READ IT: pg_stat_statements normalises literals to $1, so one row is one query SHAPE
+-- across every execution of it, which is what makes ranking meaningful. Counters accumulate
+-- from server start, so this covers the load, the quality battery and the analytics suite
+-- together, and total_exec_time is the column that matters. A shape with a small mean and a
+-- large total is a cheap query that runs constantly, and it is usually the better optimisation
+-- target than the slow one that runs once a day.
+--
+-- The mean is reported alongside deliberately: ranking by mean alone is how a report ends up
+-- recommending that somebody tune the monthly rebuild instead of the query the dashboard fires
+-- four hundred times an hour.
+SELECT round(s.total_exec_time::numeric)                       AS total_ms,
+       s.calls,
+       round(s.mean_exec_time::numeric, 1)                     AS mean_ms,
+       round((100.0 * s.total_exec_time
+              / NULLIF(sum(s.total_exec_time) OVER (), 0))::numeric, 1) AS pct_of_total,
+       left(regexp_replace(s.query, '\s+', ' ', 'g'), 90)      AS query_shape
+FROM pg_stat_statements s
+WHERE s.dbid = (SELECT oid FROM pg_database WHERE datname = current_database())
+ORDER BY s.total_exec_time DESC
+LIMIT 20;
+
 -- @block evidence 840_analyze_cost
 -- The measurement behind "ANALYZE the touched partitions, not the parent".
 \timing on
@@ -1301,14 +1522,33 @@ DROP INDEX IF EXISTS perf.ix_pipeline_stage_full;
 -- @block indexcheck 910_usage
 -- Partition level index usage rolls up to the index the engineer actually created, so a
 -- partitioned index is reported once rather than 85 times.
-SELECT COALESCE(parent.relname, s.indexrelname) AS index_name,
+--
+-- IT COVERS mart AS WELL AS perf, AND THAT WAS THE WHOLE PROBLEM WITH IT.
+-- This filtered schemaname = 'perf' for one revision, so plans/index_usage.txt contained not
+-- one warehouse index and the README pointed at it as proof that every index in
+-- 02_warehouse.sql had earned its place. The tool reported nothing because it was aimed at the
+-- lab rather than at the thing that shipped. Pointed at mart it immediately found three
+-- indexes with zero or near zero scans after a full load and a full analytics run, one of them
+-- 14 MB across 85 partitions with three paragraphs of justification above it. Two were
+-- deleted and the third was reclassified. An unused index is only visible if the check runs
+-- against the schema you shipped.
+--
+-- READING THIS ARTIFACT: idx_scan = 0 is a finding for an index that exists to SERVE A QUERY,
+-- and is expected for one that exists to ENFORCE A CONSTRAINT. Primary keys and unique
+-- constraint indexes are exempt: they are never chosen by the planner on a workload that does
+-- no lookups by that key, and deleting one would delete the constraint. Judge those on whether
+-- the constraint is wanted, not on the scan count. Every remaining zero in the perf schema is
+-- an index a case study creates and drops by design.
+SELECT s.schemaname,
+       COALESCE(parent.relname, s.indexrelname) AS index_name,
        count(*)          AS index_relations,
        sum(s.idx_scan)   AS idx_scan,
        sum(s.idx_tup_read)  AS idx_tup_read,
-       sum(s.idx_tup_fetch) AS idx_tup_fetch
+       sum(s.idx_tup_fetch) AS idx_tup_fetch,
+       pg_size_pretty(sum(pg_relation_size(s.indexrelid))) AS size
 FROM pg_stat_user_indexes s
 LEFT JOIN pg_inherits inh   ON inh.inhrelid = s.indexrelid
 LEFT JOIN pg_class parent   ON parent.oid = inh.inhparent
-WHERE s.schemaname = 'perf'
-GROUP BY 1
-ORDER BY 3 DESC, 1;
+WHERE s.schemaname IN ('perf', 'mart')
+GROUP BY 1, 2
+ORDER BY 4, 1, 2;

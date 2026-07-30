@@ -1,27 +1,56 @@
-                           index_name                            | index_relations | idx_scan | idx_tup_read | idx_tup_fetch 
------------------------------------------------------------------+-----------------+----------+--------------+---------------
- dim_property_pkey                                               |               1 |    78740 |        78739 |         78705
- ex_dim_property_no_overlap                                      |               1 |    12001 |        12001 |         12001
- dim_date_pkey                                                   |               1 |     8398 |         5111 |          5111
- dim_agency_pkey                                                 |               1 |     1209 |         1208 |          1208
- ex_dim_broker_no_overlap                                        |               1 |     1207 |         1207 |          1207
- ix_fct_event_deal_ts                                            |              85 |      680 |      9320344 |       9320344
- ix_fct_event_broker_date                                        |              85 |      640 |          912 |             0
- dim_agency_agency_name_key                                      |               1 |      120 |           60 |            60
- dim_deal_source_pkey                                            |               1 |       62 |           31 |            31
- dim_deal_source_source_channel_is_off_market_submission_qua_key |               1 |       30 |            0 |             0
- dim_stage_pkey                                                  |               1 |       22 |           11 |            11
- fixture_provenance_pkey                                         |               1 |       16 |           14 |            13
- dim_stage_stage_name_key                                        |               1 |        8 |           88 |            88
- ix_pipeline_open_stage                                          |               1 |        8 |        78704 |             0
- ix_pipeline_received                                            |               1 |        6 |      1492212 |             0
- dim_broker_pkey                                                 |               1 |        4 |            3 |             3
- ix_dim_broker_pit                                               |               1 |        2 |            2 |             2
- ix_raw_ingested_brin                                            |               1 |        1 |         7680 |             0
- dim_date_date_actual_key                                        |               1 |        0 |            0 |             0
- fct_deal_pipeline_pkey                                          |               1 |        0 |            0 |             0
- fct_deal_stage_event_pkey                                       |              85 |        0 |            0 |             0
- uq_dim_broker_current                                           |               1 |        0 |            0 |             0
- uq_dim_property_current                                         |               1 |        0 |            0 |             0
-(23 rows)
+ schemaname |                           index_name                            | index_relations | idx_scan | idx_tup_read | idx_tup_fetch |  size   
+------------+-----------------------------------------------------------------+-----------------+----------+--------------+---------------+---------
+ mart       | dim_stage_stage_code_key                                        |               1 |        0 |            0 |             0 | 16 kB
+ mart       | dim_stage_stage_name_key                                        |               1 |        0 |            0 |             0 | 16 kB
+ mart       | fct_deal_pipeline_deal_sk_key                                   |               1 |        0 |            0 |             0 | 5480 kB
+ mart       | uq_dim_broker_current                                           |               1 |        0 |            0 |             0 | 40 kB
+ mart       | uq_dim_deal_source                                              |               1 |        0 |            0 |             0 | 16 kB
+ mart       | uq_mv_broker_month                                              |               1 |        0 |            0 |             0 | 1976 kB
+ perf       | dim_agency_agency_name_key                                      |               1 |        0 |            0 |             0 | 16 kB
+ perf       | dim_date_date_actual_key                                        |               1 |        0 |            0 |             0 | 88 kB
+ perf       | dim_deal_source_source_channel_is_off_market_submission_qua_key |               1 |        0 |            0 |             0 | 16 kB
+ perf       | fct_deal_pipeline_pkey                                          |               1 |        0 |            0 |             0 | 9888 kB
+ perf       | fct_deal_stage_event_pkey                                       |              85 |        0 |            0 |             0 | 36 MB
+ perf       | uq_dim_broker_current                                           |               1 |        0 |            0 |             0 | 56 kB
+ perf       | uq_dim_property_current                                         |               1 |        0 |            0 |             0 | 384 kB
+ mart       | dim_date_date_actual_key                                        |               1 |        1 |            1 |             0 | 88 kB
+ mart       | ix_dim_date_month                                               |               1 |        1 |         2404 |             0 | 88 kB
+ mart       | ix_dim_property_sector                                          |               1 |        1 |        12001 |             0 | 128 kB
+ perf       | ix_raw_ingested_brin                                            |               1 |        1 |         7680 |             0 | 24 kB
+ mart       | dim_agency_agency_name_key                                      |               1 |        2 |            2 |             2 | 16 kB
+ mart       | dim_agency_pkey                                                 |               1 |        3 |            3 |             3 | 16 kB
+ mart       | uq_dim_property_current                                         |               1 |        3 |        36003 |         12001 | 384 kB
+ mart       | fct_deal_stage_event_pkey                                       |              85 |        4 |        29265 |             0 | 36 MB
+ mart       | ix_fct_pipeline_open                                            |               1 |        4 |        59728 |             0 | 192 kB
+ perf       | ix_dim_broker_pit                                               |               1 |        4 |            8 |             6 | 96 kB
+ perf       | dim_deal_source_pkey                                            |               1 |        5 |            3 |             3 | 16 kB
+ mart       | dim_date_pkey                                                   |               1 |        8 |            8 |             0 | 88 kB
+ perf       | dim_stage_stage_name_key                                        |               1 |        8 |           88 |            88 | 16 kB
+ perf       | ix_pipeline_open_stage                                          |               1 |        8 |        78704 |             0 | 728 kB
+ perf       | ix_pipeline_received                                            |               1 |       10 |      1492212 |             0 | 1712 kB
+ mart       | dim_deal_source_pkey                                            |               1 |       12 |           12 |            12 | 16 kB
+ mart       | fct_deal_pipeline_pkey                                          |               1 |       12 |           12 |            10 | 12 MB
+ mart       | ix_fct_pipeline_broker                                          |               1 |       14 |        28482 |             4 | 12 MB
+ mart       | ix_dim_property_pit                                             |               1 |       16 |           16 |             6 | 664 kB
+ mart       | ix_fct_pipeline_received                                        |               1 |       24 |       559842 |             9 | 2344 kB
+ perf       | fixture_provenance_pkey                                         |               1 |       37 |           35 |            35 | 16 kB
+ perf       | dim_broker_pkey                                                 |               1 |       38 |           37 |             1 | 56 kB
+ mart       | dim_stage_pkey                                                  |               1 |       48 |           48 |            48 | 16 kB
+ perf       | dim_stage_pkey                                                  |               1 |      134 |          123 |           123 | 16 kB
+ mart       | ix_fct_event_deal                                               |              85 |      340 |      4660172 |       4660172 | 55 MB
+ perf       | ix_fct_event_deal_ts                                            |              85 |      680 |      9320344 |       9320344 | 56 MB
+ mart       | ix_fct_event_broker                                             |              85 |     1111 |     16694913 |          5640 | 30 MB
+ perf       | dim_agency_pkey                                                 |               1 |     1212 |         1210 |          1210 | 16 kB
+ mart       | ex_dim_broker_no_overlap                                        |               1 |     1229 |         1251 |          1229 | 128 kB
+ perf       | ex_dim_broker_no_overlap                                        |               1 |     1271 |         1335 |          1207 | 96 kB
+ perf       | ix_fct_event_broker_date                                        |              85 |     1280 |         8704 |             0 | 24 MB
+ perf       | ex_dim_property_no_overlap                                      |               1 |    12001 |        12001 |         12001 | 1248 kB
+ perf       | dim_date_pkey                                                   |               1 |    30576 |        27289 |         27269 | 88 kB
+ mart       | ix_dim_broker_pit                                               |               1 |    52677 |        52299 |         52281 | 80 kB
+ mart       | ex_dim_property_no_overlap                                      |               1 |    66081 |        73657 |         73657 | 1400 kB
+ perf       | dim_property_pkey                                               |               1 |   157848 |       157846 |        157409 | 280 kB
+ mart       | uq_fct_event_nk                                                 |              85 |  1165043 |            0 |             0 | 60 MB
+ mart       | dim_property_pkey                                               |               1 |  1414003 |      1481218 |       1413983 | 312 kB
+ mart       | dim_broker_pkey                                                 |               1 |  1414012 |      1416446 |       1416424 | 48 kB
+(52 rows)
 

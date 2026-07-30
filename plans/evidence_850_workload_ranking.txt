@@ -1,0 +1,24 @@
+ total_ms | calls | mean_ms | pct_of_total |                                        query_shape                                         
+----------+-------+---------+--------------+--------------------------------------------------------------------------------------------
+  1157380 |   210 |  5511.3 |          9.2 | WITH dwell AS ( SELECT e.to_stage_sk, EXTRACT($1 FROM (e.event_ts - LAG(e.event_ts) OVER (
+   807692 |    96 |  8413.5 |          6.4 | WITH dwell AS ( SELECT e.to_stage_sk, EXTRACT($1 FROM (e.event_ts - LAG(e.event_ts) OVER (
+   559720 |    44 | 12720.9 |          4.5 | WITH dwell AS (SELECT e.to_stage_sk, EXTRACT($1 FROM (e.event_ts - LAG(e.event_ts) OVER (P
+   383088 |    34 | 11267.3 |          3.0 | DO $$ DECLARE r record; BEGIN FOR r IN SELECT c.oid::regclass AS part FROM pg_class c JOIN
+   311209 |    56 |  5557.3 |          2.5 | WITH dwell AS ( SELECT e.to_stage_sk, EXTRACT($1 FROM (e.event_ts - LAG(e.event_ts) OVER (
+   302177 |    42 |  7194.7 |          2.4 | WITH dwell AS ( SELECT e.to_stage_sk, EXTRACT($1 FROM (e.event_ts - LAG(e.event_ts) OVER (
+   296887 |    31 |  9577.0 |          2.4 | ANALYZE perf.fct_deal_stage_event
+   225271 |    32 |  7039.7 |          1.8 | DO $$ DECLARE v_have bigint; BEGIN SELECT count(*) INTO v_have FROM perf.fct_deal_stage_ev
+   180488 |    30 |  6016.3 |          1.4 | EXPLAIN (ANALYZE, BUFFERS) WITH dwell AS ( SELECT e.to_stage_sk, EXTRACT($1 FROM (e.event_
+   179523 |    66 |  2720.0 |          1.4 | CREATE INDEX IF NOT EXISTS ix_fct_event_deal_ts ON perf.fct_deal_stage_event (deal_nk, eve
+   178996 |    30 |  5966.5 |          1.4 | EXPLAIN (ANALYZE, BUFFERS) WITH dwell AS ( SELECT e.to_stage_sk, EXTRACT($1 FROM (e.event_
+   176785 |    28 |  6313.7 |          1.4 | WITH dwell AS ( SELECT e.to_stage_sk, EXTRACT($1 FROM (e.event_ts - LAG(e.event_ts) OVER (
+   135698 |     5 | 27139.6 |          1.1 | SELECT dq.fn_run_assertions($1, $2, $3)
+   125952 |     7 | 17993.1 |          1.0 | INSERT INTO int.stage_event_sequenced (event_nk, deal_nk, source_message_nk, from_stage_sk
+   118112 |     9 | 13123.5 |          0.9 | ANALYZE mart.fct_deal_stage_event
+   117933 |     3 | 39311.1 |          0.9 | INSERT INTO raw.stage_event ( ingest_run_id, ingested_at, source_file, raw_line_no, payloa
+   111027 |     3 | 37009.1 |          0.9 | SELECT util.fn_sequence_stage_events($1, $2) AS events_sequenced
+   107563 |     9 | 11951.4 |          0.9 | DO $$ DECLARE v_run_id bigint := current_setting('dealflow.run_id')::bigint; v_pass intege
+    97397 |    34 |  2864.6 |          0.8 | DO $$ DECLARE v_have bigint; BEGIN SELECT count(*) INTO v_have FROM perf.raw_stage_event; 
+    86948 |     2 | 43473.9 |          0.7 | INSERT INTO mart.fct_deal_stage_event (event_nk, deal_nk, source_message_nk, broker_sk, pr
+(20 rows)
+

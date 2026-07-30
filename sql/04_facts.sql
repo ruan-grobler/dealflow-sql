@@ -30,6 +30,17 @@
 --   run leaves the watermark where it was and the next run reprocesses the
 --   same batch. Reprocessing is safe because every write in 03 and 04 is
 --   idempotent, which is what earns the right to do it this way.
+--
+-- LIMITATION: NOTHING STOPS TWO RUNS AT ONCE.
+--   The idempotence above is about re-running SEQUENTIALLY, which is the
+--   case that matters after a failure. It says nothing about concurrency,
+--   and there is no advisory lock on the run. Two overlapping loads would
+--   interleave watermark updates, and the TRUNCATE-and-rebuild of the int
+--   working tables in 03 would be destructive to whichever run was reading
+--   them. A pg_advisory_lock around the whole pipeline, taken in 03 and
+--   released here, is the first thing to add. It is not here because it
+--   was not needed to make the single-run story true, and pretending
+--   otherwise would be the kind of claim this repository exists not to make.
 -- =====================================================================
 
 \set ON_ERROR_STOP on
@@ -78,6 +89,30 @@ BEGIN
         WHERE event_date >= DATE '2020-01-01' AND event_date < DATE '2027-01-01'
         ORDER BY 1
     LOOP
+        -- THE SHARP EDGE THAT COMES WITH A NON EMPTY DEFAULT PARTITION.
+        -- Parking the out of range rows here is the right call: they stay
+        -- visible and countable instead of being silently dropped. The price
+        -- is that a non empty DEFAULT BLOCKS the creation of any future
+        -- partition that would cover rows it is holding. Reproduced on this
+        -- database, with the 369 rows dated 2031 sitting in DEFAULT:
+        --
+        --   CREATE TABLE mart.fct_deal_stage_event_2031_01
+        --       PARTITION OF mart.fct_deal_stage_event
+        --       FOR VALUES FROM ('2031-01-01') TO ('2031-02-01');
+        --   ERROR: updated partition constraint for default partition
+        --          "fct_deal_stage_event_default" would be violated by some row
+        --
+        -- PostgreSQL has to scan DEFAULT and prove no row belongs in the new
+        -- range, and 369 rows do. The recipe when the warehouse genuinely
+        -- extends into 2031:
+        --   1. ALTER TABLE mart.fct_deal_stage_event
+        --          DETACH PARTITION mart.fct_deal_stage_event_default;
+        --   2. create the new range partition, which now succeeds;
+        --   3. INSERT the qualifying rows from the detached table back into
+        --      the parent, so they route into the new partition;
+        --   4. re-attach what is left as DEFAULT.
+        -- Step 1 takes an ACCESS EXCLUSIVE lock, so it is a maintenance
+        -- window job, not something to run at 09:00 on a Monday.
         PERFORM util.fn_ensure_month_partition(r.m, current_setting('dealflow.run_id', true)::bigint);
         v_made := v_made + 1;
     END LOOP;
@@ -124,6 +159,20 @@ SELECT util.fn_refresh_partition_stats() AS stats_objects_created;
 -- per partition extended statistics. Statistics on the parent alone were
 -- measured to leave per partition estimates byte identical, which is why
 -- the objects live on the children. See the note in 02.
+--
+-- WHY THE LOAD PATH PAYS FOR THE PARENT WHEN 06 SAYS NOT TO, AND WHY BOTH
+-- ARE RIGHT. sql/06_performance.sql block 110_analyze measures the parent
+-- against two single partitions (the figures live there and in
+-- plans/evidence_840_analyze_cost.txt, not here) and concludes that an
+-- interactive session should ANALYZE only the partitions it touched.
+-- That rule is about FREQUENCY, not about the statement. Here, exactly once
+-- per bulk load, the parent is the correct target: it is the single statement
+-- that populates every child's statistics AND every per partition extended
+-- statistics object created just above, in one pass, on a fact whose contents
+-- have just changed completely. Nine seconds inside a seven minute build is
+-- free, and the alternative is 85 statements that together cost more.
+-- Skipping it would leave the whole fact with stale statistics, which is the
+-- one thing guaranteed to produce a bad plan.
 ANALYZE mart.fct_deal_stage_event;
 
 

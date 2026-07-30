@@ -12,7 +12,10 @@
 --     (_zar_m) or 1e9 (_zar_bn) purely for legibility; the stored measure is
 --     numeric(18,2) in whole Rand.
 --   * The reporting timezone is Africa/Johannesburg, pinned on the database
---     itself rather than described in a README. See docs/ASSUMPTIONS.md.
+--     itself rather than described in a README. See docs/ASSUMPTIONS.md, which
+--     also records that no event in this dataset falls in the 00:00 to 01:59
+--     JHB window where a UTC reading would land on the previous date, so the
+--     boundary is correct by construction and never exercised by the data.
 --   * "As at" dates are pinned to the last event in the warehouse, never to
 --     now(), so a query re-run next month returns the same answer.
 --   * Deal counts come from mart.fct_deal_pipeline (one row per deal).
@@ -63,9 +66,23 @@ ORDER BY d.year_num;
 --   of deals sit in Legal for a year and drag the mean far above anything a
 --   deal desk would recognise. The median is the number a broker can plan
 --   against, and shipping the mean alongside it makes the skew visible instead
---   of hiding it. The measured gap is real: Closed won has a median of 26.68
---   days against a mean of 33.30, so the mean overstates the typical deal by
---   about a quarter.
+--   of hiding it. The measured gap is real: Legal has a median of 26.11 days
+--   against a mean of 43.18, so the mean overstates the typical deal by about
+--   two thirds.
+--
+--   WHICH STAGES CAN HAVE A DWELL TIME AT ALL. Because dwell is attributed by
+--   from_stage_sk (see below), a terminal stage has none: no event ever LEAVES
+--   Closed won, Lost or Stalled, so median_days_in_stage is correctly NULL on
+--   those three rows. Quoting a Closed won dwell time would be quoting a
+--   statistic this query provably cannot produce, which is why the example
+--   above is Legal.
+--
+--   WHAT THE FUNNEL BASE IS. pct_of_all_received is a share of the deals that
+--   recorded a Received event, which is 248,189. Q01 reports 248,940 deals
+--   because it counts mart.fct_deal_pipeline, the deal grain. The 751 deal gap
+--   is deals whose Received event was quarantined or never arrived at all, and
+--   the two numbers are different on purpose rather than by accident: this
+--   query is answering an event question and Q01 is answering a deal question.
 --
 --   WHY TWO GROUPINGS: days_in_prev_stage on an event ENTERING stage N is the
 --   time the deal spent in stage N minus 1. So "deals that reached a stage"
@@ -183,16 +200,24 @@ ORDER BY m.year_num, m.quarter_num;
 --   side of the current row. RANGE counts LOGICAL VALUES of the ORDER BY
 --   expression, so with an interval offset it counts CALENDAR DISTANCE.
 --
---   On a dense monthly series the two agree and the distinction looks academic.
---   This series is deliberately not dense: a single broker closes nothing in
---   many months, so those months have no row at all. ROWS BETWEEN 2 PRECEDING
---   averages the last three ROWS THAT EXIST, happily reaching back across a six
---   month gap and calling the result a three month average. RANGE BETWEEN
---   INTERVAL '2 months' PRECEDING averages only what genuinely falls inside the
---   three calendar month window, and returns the current month alone when the
---   two before it were silent. The rows_in_frame and range_in_frame columns
---   expose the two frame sizes side by side so the divergence is visible rather
---   than asserted.
+--   ROWS BETWEEN 2 PRECEDING averages the last three ROWS THAT EXIST, happily
+--   reaching back across a six month gap and calling the result a three month
+--   average. RANGE BETWEEN INTERVAL '2 months' PRECEDING averages only what
+--   genuinely falls inside the three calendar month window, and returns the
+--   current month alone when the two before it were silent. The rows_in_frame
+--   and range_in_frame columns expose the two frame sizes side by side.
+--
+--   HONEST NOTE ON WHAT THIS DATA ACTUALLY SHOWS. On this warehouse the top
+--   broker's won series is completely dense: 76 rows across the 76 calendar
+--   months from 2020-04 to 2026-07, with no silent month anywhere. So
+--   rows_in_frame and range_in_frame agree on every row and the divergence this
+--   query exists to demonstrate is NOT visible here. That is the honest
+--   reading, and it is more useful than a staged gap. The distinction still
+--   decides the code: the moment this runs against a thinner book, or against a
+--   broker outside the top of the leaderboard, ROWS starts quietly averaging
+--   across gaps and RANGE does not, and by then the report is already
+--   published. The frame is chosen for the case that breaks, not the case that
+--   happens to be dense today.
 --
 --   RULE OF THUMB: a cumulative total wants ROWS UNBOUNDED PRECEDING, because
 --   "everything up to here" is a row concept. Any time based average wants
@@ -217,12 +242,22 @@ WITH top_broker AS (
     LIMIT 1
 ),
 monthly AS (
+    -- BOUNDED TO THE WAREHOUSE HORIZON ON PURPOSE. The generator injects a
+    -- small number of deliberately out of range close dates (25 won deals land
+    -- in 2031), which ASSERT-STG-018 and DQ-012 both catch and report. They
+    -- still reach the fact, where 04_facts.sql parks them in the DEFAULT
+    -- partition. Without this bound they also reach THIS report, and a manager
+    -- reads that the top broker closed R16.81m in September 2031. Known bad
+    -- data must not be allowed to walk into a business answer just because it
+    -- was correctly flagged somewhere upstream, so the horizon that bounds the
+    -- partition range (04_facts.sql) bounds the report too.
     SELECT date_trunc('month', p.closed_won_ts)::date AS won_month,
            count(*)                                  AS deals_won,
            sum(p.deal_value_zar)                     AS won_value_zar
     FROM mart.fct_deal_pipeline p
     JOIN top_broker t ON t.broker_sk = p.broker_sk
     WHERE p.is_won
+      AND p.closed_won_ts < DATE '2027-01-01'
     GROUP BY 1
 )
 SELECT m.won_month,
@@ -271,11 +306,41 @@ ORDER BY m.won_month;
 --   quartiles describe the whole population and not just the visible rows.
 --   Window functions run after WHERE and GROUP BY but before LIMIT, which is
 --   exactly why this works.
+--
+--   THE TWO HOP JOIN, AND THE BUG IT FIXES. broker_sk on the fact is a VERSION
+--   key, not a person key: the loader resolves it to whichever dim_broker row
+--   was in force on the day of the deal. So "JOIN dim_broker ON broker_sk AND
+--   is_current" is not a filter, it is an inner join that silently DELETES
+--   every deal attributed to a superseded version. Measured on this warehouse,
+--   49,049 of 248,940 pipeline rows carry a non current broker_sk, and that one
+--   word took the leaderboard from 766 broker versions down to 736 and dropped
+--   772 deals. Worse, pct_of_total_won_value is a sum() OVER () evaluated after
+--   the join, so every published share was a share of an already truncated
+--   book. The fix is the pattern Q14 uses: hop to the historic version by
+--   surrogate key, then hop back out through the natural key to the current
+--   row. That is what actually pins the leaderboard to today's org chart, which
+--   is the right choice for "who do I congratulate", without throwing history
+--   away to do it.
 -- =====================================================================
 WITH broker_book AS (
-    -- Grain: one row per broker. Restricted to the current reporting year,
-    -- which prunes to a subset of the received_date index.
-    SELECT p.broker_sk,
+    -- Grain: one row per PERSON, keyed by the current version of the broker.
+    -- Aggregating after the two hop resolution is deliberate: a broker who
+    -- changed tier or agency mid year has two surrogate keys in the fact, and
+    -- grouping on the raw surrogate would list them twice on a leaderboard with
+    -- their year split in half. 24 of this year's 740 named brokers are in
+    -- exactly that position. (741 including the UNKNOWN member, which the
+    -- broker_sk > 0 filter below removes.)
+    --
+    -- Restricted to the latest reporting year present in the data rather than
+    -- to a literal, so the leaderboard follows the warehouse instead of the
+    -- calendar and does not silently go empty the first time it runs in a year
+    -- the data has not reached.
+    --
+    -- This filter is served by ix_fct_pipeline_received as a range scan. There
+    -- is no partition pruning here: mart.fct_deal_pipeline is deliberately NOT
+    -- partitioned (see section 5 of 02_warehouse.sql), and calling an index
+    -- range scan "pruning" confuses two different mechanisms.
+    SELECT curr.broker_sk                                     AS broker_sk,
            count(*)                                          AS deals,
            count(*) FILTER (WHERE p.is_won)                   AS deals_won,
            COALESCE(sum(p.deal_value_zar)
@@ -283,8 +348,18 @@ WITH broker_book AS (
            COALESCE(sum(p.deal_value_zar)
                     FILTER (WHERE p.is_open), 0)              AS open_value_zar
     FROM mart.fct_deal_pipeline p
-    WHERE p.received_date >= '2026-01-01'
-    GROUP BY p.broker_sk
+    -- Hop one: the version of the broker that was in force at deal time.
+    JOIN mart.dim_broker hist ON hist.broker_sk = p.broker_sk
+    -- Hop two: back out through the natural key to today's row.
+    JOIN mart.dim_broker curr ON curr.broker_nk = hist.broker_nk
+                             AND curr.is_current
+    WHERE p.received_date >= date_trunc('year',
+              (SELECT max(received_date) FROM mart.fct_deal_pipeline))
+      -- The warehouse's UNKNOWN placeholder is is_current by design, so it
+      -- would otherwise rank third on a list of human beings. A leaderboard
+      -- names people. Same convention as Q13's agency_sk > 0.
+      AND curr.broker_sk > 0
+    GROUP BY curr.broker_sk
 )
 SELECT b.broker_nk,
        b.full_name,
@@ -302,9 +377,10 @@ SELECT b.broker_nk,
              / NULLIF(sum(bb.won_value_zar) OVER (), 0), 2)              AS pct_of_total_won_value,
        ntile(4) OVER w                                                   AS wins_quartile
 FROM broker_book bb
--- is_current pins the leaderboard to today's org chart, which is the right
--- choice for "who do I congratulate". Q14 does the opposite on purpose.
-JOIN mart.dim_broker b ON b.broker_sk = bb.broker_sk AND b.is_current
+-- bb.broker_sk is already the CURRENT version, resolved by the two hop join in
+-- the CTE, so this is a plain lookup and cannot drop a row. Q14 shows the same
+-- two hop pattern used for the opposite purpose: attribution as it was.
+JOIN mart.dim_broker b ON b.broker_sk = bb.broker_sk
 WINDOW w AS (ORDER BY bb.deals_won DESC)
 ORDER BY rank_by_wins, bb.won_value_zar DESC
 LIMIT 20;
@@ -370,12 +446,24 @@ ORDER BY deals DESC;
 -- TECHNIQUE: WIDTH_BUCKET for fixed width bucketing, plus PERCENTILE_CONT and
 --   STDDEV_SAMP for the shape.
 --
---   WHY BUCKET log10 AND NOT RAND: deal value is log-normal, spanning R50
---   thousand to R2.1 billion, which is four and a half orders of magnitude.
+--   WHY BUCKET log10 AND NOT RAND: deal value is log-normal, spanning a
+--   measured R328.82 to R4,116,545,082.02, which is seven orders of magnitude.
 --   WIDTH_BUCKET on raw Rand would put well over 90% of deals in bucket one and
 --   show a single spike. Bucketing log10 of the value gives evenly spaced
 --   half decades and the underlying bell shape becomes visible. Choosing the
 --   scale to match the distribution is the whole job here.
+--
+--   WHAT WIDTH_BUCKET DOES OUTSIDE ITS BOUNDS, and why that matters. Given
+--   width_bucket(x, lo, hi, n) it returns 0 for x below lo and n+1 for x at or
+--   above hi. Those two buckets are UNBOUNDED on one side, so any band label
+--   computed arithmetically from the bucket number is a fabrication for them:
+--   bucket 0 would print a lower edge that most of its own contents sit below.
+--   An earlier version of this query used bounds 4.5 to 9.5 and asserted that
+--   nothing fell outside them. That was false, 603 deals sat in bucket 0 and 3
+--   in bucket 11, and both printed invented bands. Two things fix it and both
+--   are here: the bounds now sit outside the measured range, and the band
+--   labels are still guarded so that if a future load moves the range the
+--   out of range edge comes back NULL rather than made up.
 --
 --   WHY STDDEV_SAMP AND NOT STDDEV_POP: these deals are a sample of the market,
 --   not the entire population of it, so the sample estimator with its n minus 1
@@ -393,17 +481,25 @@ WITH valued AS (
     WHERE p.deal_value_zar > 0
 ),
 bucketed AS (
-    -- Bounds 4.5 to 9.5 in log10 terms, ten buckets of half a decade each,
-    -- chosen from the measured range (log10 min 4.70, log10 max 9.33) so no
-    -- deal lands in the out of range buckets 0 or 11.
+    -- Bounds 2.5 to 10.0 in log10 terms, fifteen buckets of half a decade each.
+    -- The measured range is log10 2.5169582 (R328.82) to log10 9.6145329
+    -- (R4,116,545,082.02), so both bounds sit outside the data and every deal
+    -- lands in buckets 1 through 15. Verified: buckets 0 and 16 are empty.
     SELECT v.deal_value_zar,
            v.log_value,
-           width_bucket(v.log_value, 4.5, 9.5, 10) AS log_bucket
+           width_bucket(v.log_value, 2.5, 10.0, 15) AS log_bucket
     FROM valued v
 )
 SELECT b.log_bucket,
-       round(power(10, 4.5 + (b.log_bucket - 1) * 0.5)::numeric / 1e6, 3)  AS band_from_zar_m,
-       round(power(10, 4.5 + b.log_bucket * 0.5)::numeric / 1e6, 3)        AS band_to_zar_m,
+       -- The CASE guards are not decoration. Bucket 0 has no lower edge and
+       -- bucket 16 has no upper edge, so the arithmetic label is only valid for
+       -- 1 through 15. NULL is the honest answer for an unbounded side.
+       CASE WHEN b.log_bucket = 0 THEN NULL
+            ELSE round(power(10, 2.5 + (b.log_bucket - 1) * 0.5)::numeric / 1e6, 3)
+       END                                                                 AS band_from_zar_m,
+       CASE WHEN b.log_bucket = 16 THEN NULL
+            ELSE round(power(10, 2.5 + b.log_bucket * 0.5)::numeric / 1e6, 3)
+       END                                                                 AS band_to_zar_m,
        count(*)                                                           AS deals,
        round(100.0 * count(*) / sum(count(*)) OVER (), 2)                  AS pct_of_deals,
        -- Scaled to the tallest bucket so the shape is readable in a terminal.
@@ -447,12 +543,41 @@ ORDER BY b.log_bucket;
 --   The as at date is the newest event in the warehouse, which is also the
 --   honest statement of how current the answer can possibly be.
 --
+--   AND WHY IT IS ALSO BOUNDED. Pinning to max(event_date) with nothing else is
+--   not enough, and this query proved it. The generator injects 369 deliberately
+--   out of range events dated 2031, which ASSERT-STG-018 and DQ-012 both flag
+--   and which 04_facts.sql parks in the DEFAULT partition. max(event_date) over
+--   the whole fact therefore returned 2031-12-30, five years past the real
+--   warehouse horizon, so every "days silent" figure was inflated by about
+--   1,978 days. The minimum silence across the entire open book came out at 143
+--   days, which is more than twice the largest SLA, so EVERY stage reported
+--   exactly 100 percent at risk and the report told a manager nothing. Bounding
+--   as_at to the same horizon the partition range enforces (04_facts.sql) fixes
+--   it: the stages now separate cleanly, from 24.5 percent of the Due diligence
+--   book at risk to 80.2 percent of Triaged. A single unbounded max() is how a
+--   correctly flagged data quality problem walks into a business answer anyway.
+--
+--   ONE GRAIN FOR THE RATIO. pct_of_stage_open_book used to divide a numerator
+--   counted from the EVENT fact by a denominator counted from the PIPELINE
+--   fact's current_stage_sk column. Those are two different grains and they
+--   disagree: 238 open deals exist in fct_deal_pipeline with no rows at all in
+--   fct_deal_stage_event, which is why Received alone came out at 85.4 percent
+--   while every other stage sat at exactly 100.0. Both sides are now counted
+--   from last_touch, so the ratio is a share of the same population it is drawn
+--   from. This is the file header's warning about mixing grains, caught in the
+--   file's own code.
+--
 --   DISTINCT ON is Postgres specific and does in one pass what a portable query
 --   needs ROW_NUMBER plus an outer filter to do. Q09 shows the portable form,
 --   which is the one to reach for when the SQL has to run elsewhere too.
 -- =====================================================================
 WITH as_at AS (
-    SELECT max(event_date) AS as_at_date FROM mart.fct_deal_stage_event
+    -- DATE '2027-01-01' is the warehouse horizon, the same bound that closes
+    -- the last named partition in 04_facts.sql. Anything at or beyond it is
+    -- known bad data sitting in the DEFAULT partition on purpose.
+    SELECT max(f.event_date) AS as_at_date
+    FROM mart.fct_deal_stage_event f
+    WHERE f.event_date < DATE '2027-01-01'
 ),
 last_touch AS (
     SELECT DISTINCT ON (f.deal_nk)
@@ -462,29 +587,43 @@ last_touch AS (
            f.broker_sk,
            f.deal_value_zar
     FROM mart.fct_deal_stage_event f
+    WHERE f.event_date < DATE '2027-01-01'
     ORDER BY f.deal_nk, f.event_ts DESC, f.deal_event_sk DESC
+),
+open_touch AS (
+    -- The population this query is about: open deals, each reduced to its most
+    -- recent event. Every number below, numerator and denominator, comes from
+    -- here so the ratio cannot mix grains.
+    SELECT lt.*
+    FROM last_touch lt
+    JOIN mart.fct_deal_pipeline p ON p.deal_nk = lt.deal_nk AND p.is_open
+),
+open_by_stage AS (
+    SELECT ot.current_stage_sk,
+           count(*) AS open_in_stage
+    FROM open_touch ot
+    GROUP BY ot.current_stage_sk
 )
 SELECT s.stage_name,
        s.target_days_in_stage                                     AS sla_days,
        s.target_days_in_stage * 2                                 AS at_risk_after_days,
        count(*)                                                   AS open_deals_at_risk,
-       round(sum(lt.deal_value_zar) / 1e9, 2)                     AS value_at_risk_zar_bn,
-       round(avg(a.as_at_date - lt.last_event_date), 1)           AS avg_days_silent,
-       max(a.as_at_date - lt.last_event_date)                     AS max_days_silent,
-       count(DISTINCT lt.broker_sk)                               AS brokers_involved,
-       -- Semi additive check: the share of this stage's open book that is at
-       -- risk, which is the number that tells a manager where to intervene.
-       round(100.0 * count(*)
-             / (SELECT count(*) FROM mart.fct_deal_pipeline p2
-                WHERE p2.is_open AND p2.current_stage_sk = s.stage_sk), 1)
-                                                                  AS pct_of_stage_open_book
-FROM last_touch lt
-JOIN mart.fct_deal_pipeline p ON p.deal_nk = lt.deal_nk AND p.is_open
-JOIN mart.dim_stage s         ON s.stage_sk = lt.current_stage_sk
+       obs.open_in_stage                                          AS open_deals_in_stage,
+       round(sum(ot.deal_value_zar) / 1e9, 2)                     AS value_at_risk_zar_bn,
+       round(avg(a.as_at_date - ot.last_event_date), 1)           AS avg_days_silent,
+       max(a.as_at_date - ot.last_event_date)                     AS max_days_silent,
+       count(DISTINCT ot.broker_sk)                               AS brokers_involved,
+       -- The share of this stage's open book that is at risk, which is the
+       -- number that tells a manager where to intervene. Numerator and
+       -- denominator are both counted from open_touch.
+       round(100.0 * count(*) / obs.open_in_stage, 1)             AS pct_of_stage_open_book
+FROM open_touch ot
+JOIN mart.dim_stage s     ON s.stage_sk = ot.current_stage_sk
+JOIN open_by_stage obs    ON obs.current_stage_sk = ot.current_stage_sk
 CROSS JOIN as_at a
 WHERE s.target_days_in_stage IS NOT NULL
-  AND (a.as_at_date - lt.last_event_date) > s.target_days_in_stage * 2
-GROUP BY s.stage_name, s.stage_order, s.stage_sk, s.target_days_in_stage
+  AND (a.as_at_date - ot.last_event_date) > s.target_days_in_stage * 2
+GROUP BY s.stage_name, s.stage_order, s.target_days_in_stage, obs.open_in_stage
 ORDER BY value_at_risk_zar_bn DESC;
 
 
@@ -509,8 +648,10 @@ ORDER BY value_at_risk_zar_bn DESC;
 --   breaks any tie on the timestamp so the result is deterministic; without a
 --   unique tiebreaker the same query can return different rows on different
 --   runs, which is a genuinely nasty class of bug because it passes every count
---   based test. This is real work here, not a demonstration: 43,643 reopened
---   entries are suppressed.
+--   based test. This is real work here, not a demonstration: 95,550 reopened
+--   entries are suppressed, 8.2 percent of the 1,165,043 event rows. The
+--   suppressed_reentries column below sums to exactly that figure, so the claim
+--   is checkable against the output printed underneath it.
 --
 --   NOTHING IS DELETED. The suppressed rows stay in the fact and the count of
 --   them is reported, so the reopen rate remains an answerable question.
@@ -568,14 +709,35 @@ ORDER BY s.stage_order;
 --   rather than a number invented for this report. Above 1,500 is conventionally
 --   treated as moderately concentrated and above 2,500 as highly concentrated,
 --   so the figure can be compared against something external.
+--
+--   NULLS LAST IS LOAD BEARING, and this query shipped without it. DESC in
+--   PostgreSQL defaults to NULLS FIRST, which is the same trap Q04 documents.
+--   1.168 percent of deals (2,907 of 248,940) carry a NULL deal_value_zar, and
+--   they produced 16 (sector, broker) groups whose open_value_zar summed to
+--   NULL. Those groups sorted to broker_rank 1, so the ranks that this report
+--   reads off were pointing at placeholders. Measured by re-running the broken
+--   form against this warehouse: largest_single_broker_pct came back NULL for
+--   SEVEN of nine sectors and top3_share_pct for three. top5_share_pct was
+--   worse than NULL, because by rank 5 at least one real broker had entered the
+--   cumulative sum: it came back silently UNDERSTATED for every sector, since
+--   ranks 1 through 4 were placeholders contributing nothing. Retail published
+--   5.18 percent against a true 14.18, Industrial 10.96 against 16.95,
+--   Healthcare 13.09 against 18.26. A concentration report that understates the
+--   top 5 share by nine points is worse than no report, because it reads as a
+--   plausible number rather than as an error. Two lines fix it and both are
+--   below: NULLS LAST on the window ORDER BY, and COALESCE on the aggregate so
+--   a broker with no priced deals ranks at zero instead of at NULL. Same policy
+--   as Q04, one lesson.
 -- =====================================================================
 WITH open_book AS (
     -- Grain: one row per sector per broker. Open deals only, since a closed
-    -- deal carries no forward risk.
+    -- deal carries no forward risk. COALESCE to 0 so that a broker whose open
+    -- deals are all unpriced carries a real zero rather than a NULL that can
+    -- poison a cumulative window downstream.
     SELECT pr.sector,
            p.broker_sk,
-           sum(p.deal_value_zar) AS open_value_zar,
-           count(*)              AS open_deals
+           COALESCE(sum(p.deal_value_zar), 0) AS open_value_zar,
+           count(*)                           AS open_deals
     FROM mart.fct_deal_pipeline p
     JOIN mart.dim_property pr ON pr.property_sk = p.property_sk
     WHERE p.is_open
@@ -592,7 +754,8 @@ ranked AS (
            sum(o.open_value_zar) OVER (w ROWS BETWEEN UNBOUNDED PRECEDING
                                                   AND CURRENT ROW) AS cum_value
     FROM open_book o
-    WINDOW w AS (PARTITION BY o.sector ORDER BY o.open_value_zar DESC, o.broker_sk)
+    WINDOW w AS (PARTITION BY o.sector ORDER BY o.open_value_zar DESC NULLS LAST,
+                                                o.broker_sk)
 ),
 shares AS (
     SELECT r.*,
@@ -634,6 +797,15 @@ ORDER BY top5_share_pct DESC;
 --   The grid manufactures every (cohort, offset) cell that COULD be observed,
 --   then LEFT JOINs the activity onto it, so silence arrives as an explicit 0.0.
 --
+--   WHAT THE GRID ACTUALLY DID ON THIS DATA: nothing. All 377 cells have a
+--   matching activity row, the COALESCE never fires, and silent_quarters is 0
+--   for all 26 cohorts. Saying otherwise would be claiming a save that did not
+--   happen. The grid stays anyway, and that is a design argument rather than a
+--   measurement: the guarantee that silence is visible must not depend on
+--   whether this particular load happens to contain any. One silent quarter in
+--   a future load would otherwise vanish from the triangle, and nobody would
+--   know to look for it.
+--
 --   ZERO AND NULL MEAN DIFFERENT THINGS HERE, and conflating them is the
 --   commonest cohort reporting error:
 --     0.0  the cohort existed, the quarter has happened, nobody submitted.
@@ -644,6 +816,20 @@ ORDER BY top5_share_pct DESC;
 --   q0 is 100.0 by construction, since a cohort is DEFINED by its first deal.
 --   That is a useful sanity check, not a finding: if any q0 came back below
 --   100.0 the cohort assignment would be broken.
+--
+--   THE FIRST COHORT IS LEFT CENSORED, and the triangle cannot be read without
+--   knowing it. A cohort here is the quarter of a broker's first deal INSIDE
+--   THE WAREHOUSE WINDOW, and the window opens on 2020-01-01. Every broker who
+--   was already working before that date therefore lands in 2020-Q1 regardless
+--   of when they actually started, which is 753 of 1,132 brokers, 66.5 percent
+--   of the population. 2020-Q1 is the only cohort large enough to read: 25 of
+--   the 26 cohorts hold fewer than 30 brokers and the smallest holds 8, where a
+--   single broker moves the retention figure by 12.5 points. So the decay down
+--   the 2020-Q1 row (q0 100.0, q1 97.7, q2 95.5, q3 90.8, q4 90.8, q6 87.9,
+--   q8 83.3, q12 76.9, q16 70.7) is the signal, and the small cohorts below it
+--   are noise that happens to be
+--   arranged in a triangle. Fixing this properly needs a broker start date from
+--   the source system, which this warehouse does not receive.
 -- =====================================================================
 WITH broker_first AS (
     -- Cohort = the quarter of the broker's first ever submission.
@@ -744,16 +930,44 @@ ORDER BY c.cohort_quarter;
 --   instantly. The DISTINCT in broker_month guarantees one row per month per
 --   broker so no tie can arise in the first place.
 --
---   This is real on this data, not a set piece: 800 brokers resolve into 2,704
---   islands, so the average broker's history is broken into more than three
---   separate runs.
+--   THE GROUPING KEY MUST BE THE PERSON, NOT THE VERSION. This query originally
+--   grouped by the raw broker_sk from the fact, which is a Type 2 VERSION key.
+--   A broker who changed agency in 2023 has two surrogate keys, so an unbroken
+--   run of activity from 2020 to 2026 was cut into two streaks by a change in a
+--   dimension attribute, not by any gap in the broker's actual behaviour. That
+--   is precisely the wrong answer to "who has submitted every single month
+--   without a break". Measured over the same population of people, so the two
+--   sides are comparable: grouping by VERSION spreads those people across 1,131
+--   surrogate keys and produces 8,035 islands, grouping by PERSON gives 800
+--   brokers and 7,801 islands. So 234 island boundaries were dimension attribute
+--   changes rather than real gaps in anybody's behaviour. (Over the whole fact,
+--   including the UNKNOWN member, version grouping gives 8,036 islands across
+--   1,132 surrogate keys.)
+--
+--   The display join had the same defect in a more visible form:
+--   "JOIN dim_broker ON broker_sk AND is_current" is an inner join that dropped
+--   every streak belonging to a superseded version outright. Both are fixed by
+--   resolving to the natural key first, the same two hop that Q05 and Q14 use.
+--
+--   This is real on this data, not a set piece: 800 named brokers resolve into
+--   7,801 islands, so the average broker's history is broken into just under
+--   ten separate runs.
 -- =====================================================================
 WITH broker_month AS (
     -- DISTINCT collapses many deals in a month to a single activity marker,
     -- which is what makes ROW_NUMBER dense and the arithmetic valid.
-    SELECT DISTINCT p.broker_sk,
+    --
+    -- The two hop resolution happens HERE, before the islands are built, so a
+    -- version change cannot masquerade as a gap. curr.broker_sk > 0 drops the
+    -- UNKNOWN placeholder, because the closing line of this report is "who
+    -- needs a call this week" and nobody can call Unknown broker.
+    SELECT DISTINCT curr.broker_sk AS broker_sk,
            date_trunc('month', p.received_date)::date AS active_month
     FROM mart.fct_deal_pipeline p
+    JOIN mart.dim_broker hist ON hist.broker_sk = p.broker_sk
+    JOIN mart.dim_broker curr ON curr.broker_nk = hist.broker_nk
+                             AND curr.is_current
+    WHERE curr.broker_sk > 0
 ),
 sequenced AS (
     SELECT bm.broker_sk,
@@ -799,7 +1013,9 @@ SELECT b.broker_nk,
        END::integer                                                AS months_since_streak_ended,
        b.is_active                                                 AS broker_still_on_the_books
 FROM streaks st
-JOIN mart.dim_broker b ON b.broker_sk = st.broker_sk AND b.is_current
+-- st.broker_sk is already the CURRENT version, resolved in broker_month, so
+-- this is a plain lookup and cannot drop a streak.
+JOIN mart.dim_broker b ON b.broker_sk = st.broker_sk
 CROSS JOIN last_month lm
 ORDER BY st.streak_months DESC, b.broker_nk
 LIMIT 20;
@@ -833,6 +1049,15 @@ LIMIT 20;
 --   path repeats and stops descending. Shipping a recursive query over
 --   user maintained hierarchy data without a cycle guard is how a scheduled
 --   report takes a server down at 3am.
+--
+--   WHY THERE IS NO LIMIT. There was one, LIMIT 25 with ORDER BY root_agency_name,
+--   and it answered the stated question for 2 of the 20 groups: the output
+--   stopped part way into the third alphabetically named group and 18 groups
+--   were invisible. A rollup query whose whole point is "what does each entire
+--   group contribute" cannot be truncated alphabetically. The tree is 60 nodes
+--   across 20 roots, which is a whole screen, not a data dump, so every node
+--   prints and the ORDER BY leads with the group total so the biggest group is
+--   at the top.
 -- =====================================================================
 WITH RECURSIVE agency_tree AS (
     -- Anchor: the national groups. No parent, and the unknown member at -1 is
@@ -896,8 +1121,13 @@ SELECT t.root_agency_name,
        t.is_cycle                                                        AS cycle_detected
 FROM agency_tree t
 LEFT JOIN agency_book ab ON ab.agency_sk = t.agency_sk
-ORDER BY t.root_agency_name, t.depth, COALESCE(ab.won_value_zar, 0) DESC
-LIMIT 25;
+-- Groups are ranked by what the whole group won, then the tree is walked from
+-- the root down inside each group. Ordering by the group total first is what
+-- makes the top of the output the answer to the business question.
+ORDER BY sum(COALESCE(ab.won_value_zar, 0)) OVER (PARTITION BY t.root_agency_sk) DESC,
+         t.root_agency_name,
+         t.depth,
+         COALESCE(ab.won_value_zar, 0) DESC;
 
 
 -- =====================================================================

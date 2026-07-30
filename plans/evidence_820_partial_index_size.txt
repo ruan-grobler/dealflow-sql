@@ -7,4 +7,6 @@ CREATE INDEX
 (2 rows)
 
 DROP INDEX
+
+--- server notices (stderr, not in statement order) ---
 NOTICE:  relation "ix_pipeline_open_stage" already exists, skipping

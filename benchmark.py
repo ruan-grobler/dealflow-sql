@@ -40,9 +40,9 @@ MEASUREMENT METHOD
     ANALYZE, about 1.5x. The separation is kept because the bias only ever goes one way.
 
     Run to run variance on a laptop container is much larger than that, and it is the reason
-    PERFORMANCE.md quotes a range across three consecutive runs rather than a point estimate:
-    over those runs the case 1 speedup moved between 7.7x and 24x while every partition count in
-    every plan stayed identical. Trust the plan facts; treat the milliseconds as indicative.
+    PERFORMANCE.md quotes a range across five runs rather than a point estimate: over those
+    runs the case 1 speedup moved between 7.7x and 24x while every partition count in every
+    plan stayed identical. Trust the plan facts; treat the milliseconds as indicative.
 
 WHY psql AND NOT psycopg
     No third party driver is needed, so the suite runs anywhere Docker runs. Every repetition
@@ -206,7 +206,12 @@ def parse_sql(path: Path) -> Script:
 # Talking to PostgreSQL
 # --------------------------------------------------------------------------------------
 def load_password() -> str:
-    """Read the password from the environment or .env. It is never printed or logged."""
+    """Read the password from the environment or .env.
+
+    It is passed to docker by environment NAME, never on the command line, so it does
+    not appear in ps(1) output. generate_data.py and build_results.py already did it
+    this way; this module did not, which made its own docstring untrue.
+    """
     if os.environ.get("POSTGRES_PASSWORD"):
         return os.environ["POSTGRES_PASSWORD"]
     if not ENV_FILE.exists():
@@ -222,22 +227,36 @@ class Psql:
     """Runs a SQL payload in the container and returns stdout."""
 
     def __init__(self, password: str) -> None:
-        self._password = password
+        # The value lives in this process's environment and is handed to docker by name.
+        # "-e PGPASSWORD=<value>" would put the literal password in argv for the whole
+        # length of a benchmark run, which is minutes of exposure to any local user
+        # running ps.
+        self._env = {**os.environ, "PGPASSWORD": password}
         if shutil.which("docker") is None:
             sys.exit("docker is not on PATH, cannot reach the database container")
 
     def run(self, sql: str, *, stop_on_error: bool = True) -> str:
         cmd = [
             "docker", "exec", "-i",
-            "-e", f"PGPASSWORD={self._password}",
+            "-e", "PGPASSWORD",
             CONTAINER, "psql", "-U", DB_USER, "-d", DB_NAME,
         ]
         if stop_on_error:
             cmd += ["-v", "ON_ERROR_STOP=1"]
         completed = subprocess.run(
-            cmd, input=sql, capture_output=True, text=True, timeout=1800, check=False
+            cmd, input=sql, capture_output=True, text=True, timeout=1800, check=False,
+            env=self._env,
         )
-        out = completed.stdout + completed.stderr
+        # stdout and stderr are captured separately, so concatenating them puts every server
+        # NOTICE after all the query output rather than where it happened. In an evidence file
+        # that reads as a notice describing the statement above it, which it usually is not:
+        # evidence_820 ended CREATE, CREATE, table, DROP, then "relation already exists,
+        # skipping", apparently describing an index created three statements earlier. The
+        # separator says out of band explicitly instead of leaving a reader to know that.
+        out = completed.stdout
+        if completed.stderr.strip():
+            out += "\n--- server notices (stderr, not in statement order) ---\n"
+            out += completed.stderr
         if stop_on_error and completed.returncode != 0:
             raise RuntimeError(f"psql failed:\n{out.strip()[-4000:]}")
         return out
@@ -319,6 +338,11 @@ def time_query(psql: Psql, query: str, runs: int) -> Timing:
     ]
     for _ in range(runs):
         lines.append(f"{stripped} \\g /dev/null")
+    # Two extra docker exec round trips per measurement, and they are paid deliberately
+    # OUTSIDE the timed session: the timed statements all run inside the single psql
+    # invocation below, so these calls cannot appear in any sample. They exist to catch the
+    # case where something else was hammering the container while a case was being measured,
+    # which on a laptop is the likeliest explanation for an outlier.
     rivals_before = count_rival_backends(psql)
     out = psql.run("\n".join(lines) + "\n")
     rivals_after = count_rival_backends(psql)
@@ -372,9 +396,12 @@ def plan_facts(plan: str) -> dict[str, str]:
                                r"fct_deal_stage_event_(?!\S*_idx\b)\S+", plan))
     if partitions:
         facts["Fact partitions in plan"] = str(partitions)
-    hit = sum(int(m) for m in re.findall(r"shared hit=(\d+)", plan))
-    read = sum(int(m) for m in re.findall(r"shared read=(\d+)", plan))
-    if hit or read:
+    # A presence test, not a sum. This used to total every "shared hit=" and "shared read="
+    # in the plan and then throw both numbers away, using them only for truthiness before
+    # calling _top_level_buffers, which re-parses the plan anyway. On the case 3 after-plan
+    # that was a regex sweep and a sum over more than a million buffers of accounting to get a
+    # boolean.
+    if "Buffers: shared" in plan:
         facts["Top level buffers"] = _top_level_buffers(plan)
     return facts
 

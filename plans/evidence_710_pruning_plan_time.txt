@@ -1,21 +1,21 @@
                                                                             QUERY PLAN                                                                             
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Aggregate  (cost=2477.58..2477.59 rows=1 width=40) (actual time=21.260..21.262 rows=1 loops=1)
+ Aggregate  (cost=2477.58..2477.59 rows=1 width=40) (actual time=21.488..21.490 rows=1 loops=1)
    Buffers: shared hit=1044
-   ->  Append  (cost=0.00..2190.86 rows=57343 width=9) (actual time=0.015..16.858 rows=57343 loops=1)
+   ->  Append  (cost=0.00..2190.86 rows=57343 width=9) (actual time=0.044..17.473 rows=57343 loops=1)
          Buffers: shared hit=1044
-         ->  Seq Scan on fct_deal_stage_event_2026_01 fct_deal_stage_event_1  (cost=0.00..472.25 rows=14217 width=9) (actual time=0.014..4.123 rows=14217 loops=1)
+         ->  Seq Scan on fct_deal_stage_event_2026_01 fct_deal_stage_event_1  (cost=0.00..472.25 rows=14217 width=9) (actual time=0.044..5.437 rows=14217 loops=1)
                Filter: ((event_date >= '2026-01-01'::date) AND (event_date < '2026-04-01'::date))
                Buffers: shared hit=259
-         ->  Seq Scan on fct_deal_stage_event_2026_02 fct_deal_stage_event_2  (cost=0.00..644.09 rows=19406 width=9) (actual time=0.016..4.359 rows=19406 loops=1)
+         ->  Seq Scan on fct_deal_stage_event_2026_02 fct_deal_stage_event_2  (cost=0.00..644.09 rows=19406 width=9) (actual time=0.019..4.480 rows=19406 loops=1)
                Filter: ((event_date >= '2026-01-01'::date) AND (event_date < '2026-04-01'::date))
                Buffers: shared hit=353
-         ->  Seq Scan on fct_deal_stage_event_2026_03 fct_deal_stage_event_3  (cost=0.00..787.80 rows=23720 width=9) (actual time=0.025..3.707 rows=23720 loops=1)
+         ->  Seq Scan on fct_deal_stage_event_2026_03 fct_deal_stage_event_3  (cost=0.00..787.80 rows=23720 width=9) (actual time=0.030..3.278 rows=23720 loops=1)
                Filter: ((event_date >= '2026-01-01'::date) AND (event_date < '2026-04-01'::date))
                Buffers: shared hit=432
  Planning:
-   Buffers: shared hit=726 read=1
- Planning Time: 2.098 ms
- Execution Time: 21.310 ms
+   Buffers: shared hit=714 read=3
+ Planning Time: 2.492 ms
+ Execution Time: 21.545 ms
 (17 rows)
 

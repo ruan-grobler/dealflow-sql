@@ -2,30 +2,30 @@ SET
 PREPARE
                                                                                      QUERY PLAN                                                                                      
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Finalize Aggregate  (cost=32524.37..32524.38 rows=1 width=40) (actual time=39.923..46.002 rows=1 loops=1)
+ Finalize Aggregate  (cost=32524.37..32524.38 rows=1 width=40) (actual time=9.829..11.180 rows=1 loops=1)
    Buffers: shared hit=1044
-   ->  Gather  (cost=32524.14..32524.35 rows=2 width=40) (actual time=18.206..45.988 rows=3 loops=1)
+   ->  Gather  (cost=32524.14..32524.35 rows=2 width=40) (actual time=9.713..11.172 rows=3 loops=1)
          Workers Planned: 2
          Workers Launched: 2
          Buffers: shared hit=1044
-         ->  Partial Aggregate  (cost=31524.14..31524.15 rows=1 width=40) (actual time=7.045..7.047 rows=1 loops=3)
+         ->  Partial Aggregate  (cost=31524.14..31524.15 rows=1 width=40) (actual time=5.676..5.677 rows=1 loops=3)
                Buffers: shared hit=1044
-               ->  Parallel Append  (cost=0.00..31511.96 rows=2436 width=9) (actual time=0.009..5.380 rows=19114 loops=3)
+               ->  Parallel Append  (cost=0.00..31511.96 rows=2436 width=9) (actual time=0.014..4.285 rows=19114 loops=3)
                      Buffers: shared hit=1044
                      Subplans Removed: 82
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2026_03 fct_deal_stage_event_3  (cost=0.00..641.29 rows=70 width=9) (actual time=0.008..2.489 rows=11860 loops=2)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2026_03 fct_deal_stage_event_3  (cost=0.00..641.29 rows=70 width=9) (actual time=0.005..1.108 rows=7907 loops=3)
                            Filter: ((event_date >= $1) AND (event_date < $2))
                            Buffers: shared hit=432
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2026_02 fct_deal_stage_event_2  (cost=0.00..524.23 rows=57 width=9) (actual time=0.003..3.235 rows=19406 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2026_02 fct_deal_stage_event_2  (cost=0.00..524.23 rows=57 width=9) (actual time=0.007..1.350 rows=9703 loops=2)
                            Filter: ((event_date >= $1) AND (event_date < $2))
                            Buffers: shared hit=353
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2026_01 fct_deal_stage_event_1  (cost=0.00..384.44 rows=42 width=9) (actual time=0.015..3.112 rows=14217 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2026_01 fct_deal_stage_event_1  (cost=0.00..384.44 rows=42 width=9) (actual time=0.024..2.537 rows=14217 loops=1)
                            Filter: ((event_date >= $1) AND (event_date < $2))
                            Buffers: shared hit=259
  Planning:
-   Buffers: shared hit=7706 read=92 dirtied=1
- Planning Time: 40.097 ms
- Execution Time: 46.668 ms
+   Buffers: shared hit=7537 read=78
+ Planning Time: 12.992 ms
+ Execution Time: 11.673 ms
 (24 rows)
 
 DEALLOCATE

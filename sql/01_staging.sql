@@ -42,7 +42,16 @@
 -- The SET makes it true for this session as well, because ALTER DATABASE
 -- alone does not affect a connection that is already open.
 -- ---------------------------------------------------------------------
-ALTER DATABASE dealflow SET timezone = 'Africa/Johannesburg';
+-- current_database() rather than a literal name. .env, run.sh and all three
+-- Python scripts read POSTGRES_DB from the environment, so hardcoding
+-- "dealflow" here made this the single place a renamed database would break,
+-- on the first statement of the first file, with an error that never
+-- mentions .env.
+DO $$
+BEGIN
+    EXECUTE format('ALTER DATABASE %I SET timezone = %L',
+                   current_database(), 'Africa/Johannesburg');
+END $$;
 SET timezone = 'Africa/Johannesburg';
 
 DO $$
@@ -58,8 +67,11 @@ END $$;
 -- test inside one GiST index. Without it that constraint cannot be built.
 CREATE EXTENSION IF NOT EXISTS btree_gist;
 
--- Workload ranking evidence for the README. Already preloaded on this
--- container via shared_preload_libraries.
+-- Ranks the real workload by total execution time, which is what block
+-- 850_workload_ranking in sql/06_performance.sql reads to produce
+-- plans/evidence_850_workload_ranking.txt. Already preloaded on this
+-- container via shared_preload_libraries, because the counters have to be
+-- collected from server start and no session can turn that on afterwards.
 CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
 
 DROP SCHEMA IF EXISTS raw  CASCADE;
@@ -727,19 +739,28 @@ COMMENT ON COLUMN raw.property_register.register_event_type IS
 -- ingest order, so ingested_at is almost perfectly correlated with
 -- physical position. That is the exact condition BRIN is built for: it
 -- stores one min/max pair per block range instead of one entry per row.
--- MEASURED on the 1,165,043 row landing table in the performance lab,
--- which mirrors this shape exactly: BRIN 24 kB against 25 MB for the
--- equivalent btree, about 1,060x smaller, and the planner CHOSE it
--- (Bitmap Index Scan on ix_raw_ingested_brin). Evidence in
--- plans/evidence_810_brin_on_raw.txt, discussion in PERFORMANCE.md.
+-- MEASURED ON THIS TABLE, WHICH IS NOT THE SAME AS THE LAB MIRROR, AND THE
+-- DIFFERENCE IS WORTH KNOWING. BRIN is 24 kB here. The equivalent btree is
+-- an order of magnitude smaller than the lab mirror's, because ingested_at
+-- on THIS table is a real batch stamp: a whole file arrives and every row
+-- in it carries the same timestamp, so there are 79 distinct values across
+-- 1.2 million rows and btree deduplication collapses them into posting
+-- lists. The lab mirror fills ingested_at from the event timestamp, making
+-- it near unique, which is the case where a btree is largest. Both
+-- measurements, both ratios and the reason for the gap are in PERFORMANCE.md
+-- case 5, which is the one place they live. Evidence for the planner
+-- actually choosing the BRIN (Bitmap Index Scan on ix_raw_ingested_brin) is
+-- in plans/evidence_810_brin_on_raw.txt.
 --
 -- WHY THE DEFAULT pages_per_range: 128 already produced 24 kB. A smaller
 -- range would only be justified by a measurement showing the summary was
 -- too coarse, and there is none, so the default stands rather than an
 -- unexplained magic number.
 --
--- WHY THERE IS NO BRIN ON THE FACT: see the note in 02. It was built,
--- measured and deleted because the planner never chose it there.
+-- WHY THERE IS NO BRIN ON THE FACT: see the note in 02. It was built and
+-- measured there, the planner DID choose it and it DID help, and it was
+-- deleted anyway because rewriting the query onto the partition key beat it
+-- and cost nothing.
 -- ---------------------------------------------------------------------
 CREATE INDEX ix_raw_deal_submission_brin   ON raw.deal_submission   USING brin (ingested_at);
 CREATE INDEX ix_raw_stage_event_brin       ON raw.stage_event       USING brin (ingested_at);

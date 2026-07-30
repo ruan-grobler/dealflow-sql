@@ -68,7 +68,7 @@ the database by <code>build_results.py</code> and is not transcribed.</p>
 <div class="stat"><div class="v">1,207</div><div class="l">SCD2 broker versions</div></div>
 <div class="stat"><div class="v">13,444</div><div class="l">SCD2 property versions</div></div>
 <div class="stat"><div class="v">12 / 12</div><div class="l">Quality gates passing</div></div>
-<div class="stat"><div class="v">494 MB</div><div class="l">Star schema size</div></div></div>
+<div class="stat"><div class="v">481 MB</div><div class="l">Star schema size</div></div></div>
 
 <section class="q">
   <div class="qid">Q01</div>
@@ -106,7 +106,7 @@ the database by <code>build_results.py</code> and is not transcribed.</p>
   <h2>DEAL FUNNEL WITH TIME IN STAGE</h2>
   <div class="meta">
     <b>Business question</b><p>Where in the pipeline do deals die, and how long does a deal sit in each stage before it moves?</p>
-    <b>Technique</b><p>Two different grains resolved in one answer, plus PERCENTILE_CONT rather than AVG for the central tendency. WHY PERCENTILE_CONT AND NOT AVG: time in stage is right skewed. A handful of deals sit in Legal for a year and drag the mean far above anything a deal desk would recognise. The median is the number a broker can plan against, and shipping the mean alongside it makes the skew visible instead of hiding it. The measured gap is real: Closed won has a median of 26.68 days against a mean of 33.30, so the mean overstates the typical deal by about a quarter.</p>
+    <b>Technique</b><p>Two different grains resolved in one answer, plus PERCENTILE_CONT rather than AVG for the central tendency. WHY PERCENTILE_CONT AND NOT AVG: time in stage is right skewed. A handful of deals sit in Legal for a year and drag the mean far above anything a deal desk would recognise. The median is the number a broker can plan against, and shipping the mean alongside it makes the skew visible instead of hiding it. The measured gap is real: Legal has a median of 26.11 days against a mean of 43.18, so the mean overstates the typical deal by about two thirds. WHICH STAGES CAN HAVE A DWELL TIME AT ALL. Because dwell is attributed by from_stage_sk (see below), a terminal stage has none: no event ever LEAVES Closed won, Lost or Stalled, so median_days_in_stage is correctly NULL on those three rows. Quoting a Closed won dwell time would be quoting a statistic this query provably cannot produce, which is why the example above is Legal. WHAT THE FUNNEL BASE IS. pct_of_all_received is a share of the deals that recorded a Received event, which is 248,189. Q01 reports 248,940 deals because it counts mart.fct_deal_pipeline, the deal grain. The 751 deal gap is deals whose Received event was quarantined or never arrived at all, and the two numbers are different on purpose rather than by accident: this query is answering an event question and Q01 is answering a deal question.</p>
   </div>
   <pre><span class="k">WITH</span> entered <span class="k">AS</span> (
     <span class="c">-- Grain: one row per stage. COUNT DISTINCT because a reopened deal enters</span>
@@ -242,7 +242,7 @@ movement <span class="k">AS</span> (
   <h2>TOP CLOSER MOMENTUM: RUNNING TOTAL AND MOVING AVERAGE</h2>
   <div class="meta">
     <b>Business question</b><p>For our single highest earning broker, what is their cumulative won value over time and what is the smoothed three month trend?</p>
-    <b>Technique</b><p>Two window frames on one ordered series, chosen deliberately. ROWS VERSUS RANGE, THE ACTUAL DIFFERENCE: ROWS counts PHYSICAL ROWS either side of the current row. RANGE counts LOGICAL VALUES of the ORDER BY expression, so with an interval offset it counts CALENDAR DISTANCE. On a dense monthly series the two agree and the distinction looks academic. This series is deliberately not dense: a single broker closes nothing in many months, so those months have no row at all. ROWS BETWEEN 2 PRECEDING averages the last three ROWS THAT EXIST, happily reaching back across a six month gap and calling the result a three month average. RANGE BETWEEN INTERVAL &#x27;2 months&#x27; PRECEDING averages only what genuinely falls inside the three calendar month window, and returns the current month alone when the two before it were silent. The rows_in_frame and range_in_frame columns expose the two frame sizes side by side so the divergence is visible rather than asserted.</p>
+    <b>Technique</b><p>Two window frames on one ordered series, chosen deliberately. ROWS VERSUS RANGE, THE ACTUAL DIFFERENCE: ROWS counts PHYSICAL ROWS either side of the current row. RANGE counts LOGICAL VALUES of the ORDER BY expression, so with an interval offset it counts CALENDAR DISTANCE. ROWS BETWEEN 2 PRECEDING averages the last three ROWS THAT EXIST, happily reaching back across a six month gap and calling the result a three month average. RANGE BETWEEN INTERVAL &#x27;2 months&#x27; PRECEDING averages only what genuinely falls inside the three calendar month window, and returns the current month alone when the two before it were silent. The rows_in_frame and range_in_frame columns expose the two frame sizes side by side. HONEST NOTE ON WHAT THIS DATA ACTUALLY SHOWS. On this warehouse the top broker&#x27;s won series is completely dense: 76 rows across the 76 calendar months from 2020-04 to 2026-07, with no silent month anywhere. So rows_in_frame and range_in_frame agree on every row and the divergence this query exists to demonstrate is NOT visible here. That is the honest reading, and it is more useful than a staged gap. The distinction still decides the code: the moment this runs against a thinner book, or against a broker outside the top of the leaderboard, ROWS starts quietly averaging across gaps and RANGE does not, and by then the report is already published. The frame is chosen for the case that breaks, not the case that happens to be dense today.</p>
   </div>
   <pre><span class="k">WITH</span> top_broker <span class="k">AS</span> (
     <span class="c">-- Chosen by measured won value rather than hardcoded, so the query survives</span>
@@ -262,12 +262,22 @@ movement <span class="k">AS</span> (
     <span class="k">LIMIT</span> 1
 ),
 monthly <span class="k">AS</span> (
+    <span class="c">-- BOUNDED TO THE WAREHOUSE HORIZON ON PURPOSE. The generator injects a</span>
+    <span class="c">-- small number of deliberately out of range close dates (25 won deals land</span>
+    <span class="c">-- in 2031), which ASSERT-STG-018 and DQ-012 both catch and report. They</span>
+    <span class="c">-- still reach the fact, where 04_facts.sql parks them in the DEFAULT</span>
+    <span class="c">-- partition. Without this bound they also reach THIS report, and a manager</span>
+    <span class="c">-- reads that the top broker closed R16.81m in September 2031. Known bad</span>
+    <span class="c">-- data must not be allowed to walk into a business answer just because it</span>
+    <span class="c">-- was correctly flagged somewhere upstream, so the horizon that bounds the</span>
+    <span class="c">-- partition range (04_facts.sql) bounds the report too.</span>
     <span class="k">SELECT</span> <span class="f">date_trunc</span>(<span class="s">&#x27;month&#x27;</span>, p.closed_won_ts)::<span class="k">date</span> <span class="k">AS</span> won_month,
            <span class="f">count</span>(*)                                  <span class="k">AS</span> deals_won,
            <span class="f">sum</span>(p.deal_value_zar)                     <span class="k">AS</span> won_value_zar
     <span class="k">FROM</span> mart.fct_deal_pipeline p
     <span class="k">JOIN</span> top_broker t <span class="k">ON</span> t.broker_sk = p.broker_sk
     <span class="k">WHERE</span> p.is_won
+      <span class="k">AND</span> p.closed_won_ts &lt; <span class="k">DATE</span> <span class="s">&#x27;2027-01-01&#x27;</span>
     <span class="k">GROUP</span> <span class="k">BY</span> 1
 )
 <span class="k">SELECT</span> m.won_month,
@@ -320,19 +330,34 @@ monthly <span class="k">AS</span> (
 <tr><td>2022-08-01</td><td class="n">12</td><td class="n">433.25</td><td class="n">13476.72</td><td class="n">702.95</td><td class="n">702.95</td><td class="n">3</td><td class="n">3</td></tr>
 <tr><td>2022-09-01</td><td class="n">14</td><td class="n">428.84</td><td class="n">13905.56</td><td class="n">816.11</td><td class="n">816.11</td><td class="n">3</td><td class="n">3</td></tr>
 </tbody></table></div>
-  <p class="note">Showing the first 30 of 77 rows.</p>
+  <p class="note">Showing the first 30 of 76 rows.</p>
 </section>
 <section class="q">
   <div class="qid">Q05</div>
   <h2>BROKER LEADERBOARD FOR THE CURRENT YEAR</h2>
   <div class="meta">
     <b>Business question</b><p>Who are the top performers this year, what share of the book does each hold, and which quartile does every broker fall into?</p>
-    <b>Technique</b><p>Four window functions over one shared WINDOW clause. RANK VERSUS DENSE_RANK: both are here because they answer different questions and the difference only shows up on ties. Ranking by an integer deal count produces plenty of ties. RANK leaves gaps, so after two brokers tie at 3 the next is 5, which is what you want when the question is &quot;how many brokers are ahead of me&quot;. DENSE_RANK does not skip, so the next is 4, which is what you want when the question is &quot;how many distinct performance levels are above me&quot;. Publishing one and calling it the other is a reporting bug that is almost impossible to spot downstream. tied_peers uses RANGE BETWEEN CURRENT ROW AND CURRENT ROW, which in RANGE mode means &quot;every row with the same ORDER BY value&quot;, so it returns the size of the tie group. That is the crispest available demonstration that RANGE is about values and ROWS is about positions: the identical clause under ROWS would always return 1. NTILE(4) is computed over EVERY broker before the LIMIT applies, so the quartiles describe the whole population and not just the visible rows. Window functions run after WHERE and GROUP BY but before LIMIT, which is exactly why this works.</p>
+    <b>Technique</b><p>Four window functions over one shared WINDOW clause. RANK VERSUS DENSE_RANK: both are here because they answer different questions and the difference only shows up on ties. Ranking by an integer deal count produces plenty of ties. RANK leaves gaps, so after two brokers tie at 3 the next is 5, which is what you want when the question is &quot;how many brokers are ahead of me&quot;. DENSE_RANK does not skip, so the next is 4, which is what you want when the question is &quot;how many distinct performance levels are above me&quot;. Publishing one and calling it the other is a reporting bug that is almost impossible to spot downstream. tied_peers uses RANGE BETWEEN CURRENT ROW AND CURRENT ROW, which in RANGE mode means &quot;every row with the same ORDER BY value&quot;, so it returns the size of the tie group. That is the crispest available demonstration that RANGE is about values and ROWS is about positions: the identical clause under ROWS would always return 1. NTILE(4) is computed over EVERY broker before the LIMIT applies, so the quartiles describe the whole population and not just the visible rows. Window functions run after WHERE and GROUP BY but before LIMIT, which is exactly why this works. THE TWO HOP JOIN, AND THE BUG IT FIXES. broker_sk on the fact is a VERSION key, not a person key: the loader resolves it to whichever dim_broker row was in force on the day of the deal. So &quot;JOIN dim_broker ON broker_sk AND is_current&quot; is not a filter, it is an inner join that silently DELETES every deal attributed to a superseded version. Measured on this warehouse, 49,049 of 248,940 pipeline rows carry a non current broker_sk, and that one word took the leaderboard from 766 broker versions down to 736 and dropped 772 deals. Worse, pct_of_total_won_value is a sum() OVER () evaluated after the join, so every published share was a share of an already truncated book. The fix is the pattern Q14 uses: hop to the historic version by surrogate key, then hop back out through the natural key to the current row. That is what actually pins the leaderboard to today&#x27;s org chart, which is the right choice for &quot;who do I congratulate&quot;, without throwing history away to do it.</p>
   </div>
   <pre><span class="k">WITH</span> broker_book <span class="k">AS</span> (
-    <span class="c">-- Grain: one row per broker. Restricted to the current reporting year,</span>
-    <span class="c">-- which prunes to a subset of the received_date index.</span>
-    <span class="k">SELECT</span> p.broker_sk,
+    <span class="c">-- Grain: one row per PERSON, keyed by the current version of the broker.</span>
+    <span class="c">-- Aggregating after the two hop resolution is deliberate: a broker who</span>
+    <span class="c">-- changed tier or agency mid year has two surrogate keys in the fact, and</span>
+    <span class="c">-- grouping on the raw surrogate would list them twice on a leaderboard with</span>
+    <span class="c">-- their year split in half. 24 of this year&#x27;s 740 named brokers are in</span>
+    <span class="c">-- exactly that position. (741 including the UNKNOWN member, which the</span>
+    <span class="c">-- broker_sk &gt; 0 filter below removes.)</span>
+    <span class="c">--</span>
+    <span class="c">-- Restricted to the latest reporting year present in the data rather than</span>
+    <span class="c">-- to a literal, so the leaderboard follows the warehouse instead of the</span>
+    <span class="c">-- calendar and does not silently go empty the first time it runs in a year</span>
+    <span class="c">-- the data has not reached.</span>
+    <span class="c">--</span>
+    <span class="c">-- This filter is served by ix_fct_pipeline_received as a range scan. There</span>
+    <span class="c">-- is no partition pruning here: mart.fct_deal_pipeline is deliberately NOT</span>
+    <span class="c">-- partitioned (see section 5 of 02_warehouse.sql), and calling an index</span>
+    <span class="c">-- range scan &quot;pruning&quot; confuses two different mechanisms.</span>
+    <span class="k">SELECT</span> curr.broker_sk                                     <span class="k">AS</span> broker_sk,
            <span class="f">count</span>(*)                                          <span class="k">AS</span> deals,
            <span class="f">count</span>(*) <span class="k">FILTER</span> (<span class="k">WHERE</span> p.is_won)                   <span class="k">AS</span> deals_won,
            <span class="f">COALESCE</span>(<span class="f">sum</span>(p.deal_value_zar)
@@ -340,8 +365,18 @@ monthly <span class="k">AS</span> (
            <span class="f">COALESCE</span>(<span class="f">sum</span>(p.deal_value_zar)
                     <span class="k">FILTER</span> (<span class="k">WHERE</span> p.is_open), 0)              <span class="k">AS</span> open_value_zar
     <span class="k">FROM</span> mart.fct_deal_pipeline p
-    <span class="k">WHERE</span> p.received_date &gt;= <span class="s">&#x27;2026-01-01&#x27;</span>
-    <span class="k">GROUP</span> <span class="k">BY</span> p.broker_sk
+    <span class="c">-- Hop one: the version of the broker that was in force at deal time.</span>
+    <span class="k">JOIN</span> mart.dim_broker hist <span class="k">ON</span> hist.broker_sk = p.broker_sk
+    <span class="c">-- Hop two: back out through the natural key to today&#x27;s row.</span>
+    <span class="k">JOIN</span> mart.dim_broker curr <span class="k">ON</span> curr.broker_nk = hist.broker_nk
+                             <span class="k">AND</span> curr.is_current
+    <span class="k">WHERE</span> p.received_date &gt;= <span class="f">date_trunc</span>(<span class="s">&#x27;year&#x27;</span>,
+              (<span class="k">SELECT</span> <span class="f">max</span>(received_date) <span class="k">FROM</span> mart.fct_deal_pipeline))
+      <span class="c">-- The warehouse&#x27;s UNKNOWN placeholder is is_current by design, so it</span>
+      <span class="c">-- would otherwise rank third on a list of human beings. A leaderboard</span>
+      <span class="c">-- names people. Same convention as Q13&#x27;s agency_sk &gt; 0.</span>
+      <span class="k">AND</span> curr.broker_sk &gt; 0
+    <span class="k">GROUP</span> <span class="k">BY</span> curr.broker_sk
 )
 <span class="k">SELECT</span> b.broker_nk,
        b.full_name,
@@ -359,33 +394,34 @@ monthly <span class="k">AS</span> (
              / <span class="f">NULLIF</span>(<span class="f">sum</span>(bb.won_value_zar) <span class="k">OVER</span> (), 0), 2)              <span class="k">AS</span> pct_of_total_won_value,
        <span class="f">ntile</span>(4) <span class="k">OVER</span> w                                                   <span class="k">AS</span> wins_quartile
 <span class="k">FROM</span> broker_book bb
-<span class="c">-- is_current pins the leaderboard to today&#x27;s org chart, which is the right</span>
-<span class="c">-- choice for &quot;who do I congratulate&quot;. Q14 does the opposite on purpose.</span>
-<span class="k">JOIN</span> mart.dim_broker b <span class="k">ON</span> b.broker_sk = bb.broker_sk <span class="k">AND</span> b.is_current
+<span class="c">-- bb.broker_sk is already the CURRENT version, resolved by the two hop join in</span>
+<span class="c">-- the CTE, so this is a plain lookup and cannot drop a row. Q14 shows the same</span>
+<span class="c">-- two hop pattern used for the opposite purpose: attribution as it was.</span>
+<span class="k">JOIN</span> mart.dim_broker b <span class="k">ON</span> b.broker_sk = bb.broker_sk
 <span class="k">WINDOW</span> w <span class="k">AS</span> (<span class="k">ORDER</span> <span class="k">BY</span> bb.deals_won <span class="k">DESC</span>)
 <span class="k">ORDER</span> <span class="k">BY</span> rank_by_wins, bb.won_value_zar <span class="k">DESC</span>
 <span class="k">LIMIT</span> 20;</pre>
   <div class="scroll"><table><thead><tr><th>broker_nk</th><th>full_name</th><th>agency_name</th><th>broker_tier</th><th>deals</th><th>deals_won</th><th>won_zar_m</th><th>open_zar_m</th><th>rank_by_wins</th><th>dense_rank_by_wins</th><th>tied_peers</th><th>pct_of_total_won_value</th><th>wins_quartile</th></tr></thead><tbody>
-<tr><td>BRK-000067</td><td>Broker BRK-000067</td><td>Agency 026</td><td>Junior</td><td class="n">1774</td><td class="n">21</td><td class="n">625.10</td><td class="n">34089.20</td><td class="n">1</td><td class="n">1</td><td class="n">1</td><td class="n">4.52</td><td class="n">1</td></tr>
-<tr><td>BRK-000167</td><td>Broker BRK-000167</td><td>Agency 052</td><td>Mid</td><td class="n">1051</td><td class="n">9</td><td class="n">451.88</td><td class="n">24715.97</td><td class="n">2</td><td class="n">2</td><td class="n">1</td><td class="n">3.27</td><td class="n">1</td></tr>
-<tr><td>BRK-000138</td><td>Broker BRK-000138</td><td>Agency 030</td><td>Senior</td><td class="n">318</td><td class="n">6</td><td class="n">446.64</td><td class="n">5595.84</td><td class="n">3</td><td class="n">3</td><td class="n">5</td><td class="n">3.23</td><td class="n">1</td></tr>
-<tr><td>UNKNOWN</td><td>Unknown broker</td><td>Unknown agency</td><td>Unknown</td><td class="n">265</td><td class="n">6</td><td class="n">400.75</td><td class="n">5822.82</td><td class="n">3</td><td class="n">3</td><td class="n">5</td><td class="n">2.90</td><td class="n">1</td></tr>
-<tr><td>BRK-000556</td><td>Broker BRK-000556</td><td>Agency 019</td><td>Mid</td><td class="n">637</td><td class="n">6</td><td class="n">380.41</td><td class="n">9321.88</td><td class="n">3</td><td class="n">3</td><td class="n">5</td><td class="n">2.75</td><td class="n">1</td></tr>
-<tr><td>BRK-000721</td><td>Broker BRK-000721</td><td>Agency 012</td><td>Senior</td><td class="n">226</td><td class="n">6</td><td class="n">301.44</td><td class="n">4381.28</td><td class="n">3</td><td class="n">3</td><td class="n">5</td><td class="n">2.18</td><td class="n">1</td></tr>
-<tr><td>BRK-000766</td><td>Broker BRK-000766</td><td>Agency 029</td><td>Mid</td><td class="n">426</td><td class="n">6</td><td class="n">209.89</td><td class="n">7132.85</td><td class="n">3</td><td class="n">3</td><td class="n">5</td><td class="n">1.52</td><td class="n">1</td></tr>
-<tr><td>BRK-000506</td><td>Broker BRK-000506</td><td>Agency 024</td><td>Junior</td><td class="n">530</td><td class="n">5</td><td class="n">619.39</td><td class="n">11793.14</td><td class="n">8</td><td class="n">4</td><td class="n">3</td><td class="n">4.48</td><td class="n">1</td></tr>
-<tr><td>BRK-000101</td><td>Broker BRK-000101</td><td>Agency 020</td><td>Mid</td><td class="n">223</td><td class="n">5</td><td class="n">183.61</td><td class="n">4310.61</td><td class="n">8</td><td class="n">4</td><td class="n">3</td><td class="n">1.33</td><td class="n">1</td></tr>
-<tr><td>BRK-000355</td><td>Broker BRK-000355</td><td>Agency 056</td><td>Junior</td><td class="n">329</td><td class="n">5</td><td class="n">104.43</td><td class="n">6536.16</td><td class="n">8</td><td class="n">4</td><td class="n">3</td><td class="n">0.76</td><td class="n">1</td></tr>
-<tr><td>BRK-000798</td><td>Broker BRK-000798</td><td>Agency 008</td><td>Senior</td><td class="n">146</td><td class="n">4</td><td class="n">249.10</td><td class="n">3356.92</td><td class="n">11</td><td class="n">5</td><td class="n">4</td><td class="n">1.80</td><td class="n">1</td></tr>
-<tr><td>BRK-000752</td><td>Broker BRK-000752 (corrected)</td><td>Agency 028</td><td>Mid</td><td class="n">177</td><td class="n">4</td><td class="n">127.65</td><td class="n">3375.44</td><td class="n">11</td><td class="n">5</td><td class="n">4</td><td class="n">0.92</td><td class="n">1</td></tr>
-<tr><td>BRK-000326</td><td>Broker BRK-000326 (corrected)</td><td>Agency 057</td><td>Mid</td><td class="n">81</td><td class="n">4</td><td class="n">108.86</td><td class="n">1330.99</td><td class="n">11</td><td class="n">5</td><td class="n">4</td><td class="n">0.79</td><td class="n">1</td></tr>
-<tr><td>BRK-000121</td><td>Broker BRK-000121</td><td>Agency 016</td><td>Mid</td><td class="n">281</td><td class="n">4</td><td class="n">42.79</td><td class="n">5557.66</td><td class="n">11</td><td class="n">5</td><td class="n">4</td><td class="n">0.31</td><td class="n">1</td></tr>
-<tr><td>BRK-000313</td><td>Broker BRK-000313</td><td>Agency 028</td><td>Junior</td><td class="n">264</td><td class="n">3</td><td class="n">226.04</td><td class="n">5213.29</td><td class="n">15</td><td class="n">6</td><td class="n">10</td><td class="n">1.64</td><td class="n">1</td></tr>
-<tr><td>BRK-000276</td><td>Broker BRK-000276</td><td>Agency 012</td><td>Mid</td><td class="n">393</td><td class="n">3</td><td class="n">195.42</td><td class="n">6736.00</td><td class="n">15</td><td class="n">6</td><td class="n">10</td><td class="n">1.41</td><td class="n">1</td></tr>
-<tr><td>BRK-000775</td><td>Broker BRK-000775</td><td>Agency 026</td><td>Senior</td><td class="n">46</td><td class="n">3</td><td class="n">103.47</td><td class="n">647.52</td><td class="n">15</td><td class="n">6</td><td class="n">10</td><td class="n">0.75</td><td class="n">1</td></tr>
-<tr><td>BRK-000674</td><td>Broker BRK-000674</td><td>Agency 013</td><td>Mid</td><td class="n">227</td><td class="n">3</td><td class="n">81.52</td><td class="n">4244.18</td><td class="n">15</td><td class="n">6</td><td class="n">10</td><td class="n">0.59</td><td class="n">1</td></tr>
-<tr><td>BRK-000306</td><td>Broker BRK-000306</td><td>Agency 049</td><td>Principal</td><td class="n">99</td><td class="n">3</td><td class="n">76.52</td><td class="n">2213.61</td><td class="n">15</td><td class="n">6</td><td class="n">10</td><td class="n">0.55</td><td class="n">1</td></tr>
-<tr><td>BRK-000422</td><td>Broker BRK-000422</td><td>Agency 025</td><td>Senior</td><td class="n">155</td><td class="n">3</td><td class="n">69.88</td><td class="n">3164.94</td><td class="n">15</td><td class="n">6</td><td class="n">10</td><td class="n">0.51</td><td class="n">1</td></tr>
+<tr><td>BRK-000067</td><td>Broker BRK-000067</td><td>Agency 026</td><td>Junior</td><td class="n">1774</td><td class="n">21</td><td class="n">625.10</td><td class="n">34089.20</td><td class="n">1</td><td class="n">1</td><td class="n">1</td><td class="n">4.38</td><td class="n">1</td></tr>
+<tr><td>BRK-000167</td><td>Broker BRK-000167</td><td>Agency 052</td><td>Mid</td><td class="n">1051</td><td class="n">9</td><td class="n">451.88</td><td class="n">24715.97</td><td class="n">2</td><td class="n">2</td><td class="n">1</td><td class="n">3.17</td><td class="n">1</td></tr>
+<tr><td>BRK-000378</td><td>Broker BRK-000378</td><td>Agency 024</td><td>Senior</td><td class="n">825</td><td class="n">7</td><td class="n">274.33</td><td class="n">14224.80</td><td class="n">3</td><td class="n">3</td><td class="n">1</td><td class="n">1.92</td><td class="n">1</td></tr>
+<tr><td>BRK-000138</td><td>Broker BRK-000138</td><td>Agency 030</td><td>Senior</td><td class="n">318</td><td class="n">6</td><td class="n">446.64</td><td class="n">5595.84</td><td class="n">4</td><td class="n">4</td><td class="n">4</td><td class="n">3.13</td><td class="n">1</td></tr>
+<tr><td>BRK-000556</td><td>Broker BRK-000556</td><td>Agency 019</td><td>Mid</td><td class="n">637</td><td class="n">6</td><td class="n">380.41</td><td class="n">9321.88</td><td class="n">4</td><td class="n">4</td><td class="n">4</td><td class="n">2.67</td><td class="n">1</td></tr>
+<tr><td>BRK-000721</td><td>Broker BRK-000721</td><td>Agency 012</td><td>Senior</td><td class="n">226</td><td class="n">6</td><td class="n">301.44</td><td class="n">4381.28</td><td class="n">4</td><td class="n">4</td><td class="n">4</td><td class="n">2.11</td><td class="n">1</td></tr>
+<tr><td>BRK-000766</td><td>Broker BRK-000766</td><td>Agency 029</td><td>Mid</td><td class="n">426</td><td class="n">6</td><td class="n">209.89</td><td class="n">7132.85</td><td class="n">4</td><td class="n">4</td><td class="n">4</td><td class="n">1.47</td><td class="n">1</td></tr>
+<tr><td>BRK-000506</td><td>Broker BRK-000506</td><td>Agency 024</td><td>Junior</td><td class="n">530</td><td class="n">5</td><td class="n">619.39</td><td class="n">11793.14</td><td class="n">8</td><td class="n">5</td><td class="n">3</td><td class="n">4.34</td><td class="n">1</td></tr>
+<tr><td>BRK-000101</td><td>Broker BRK-000101</td><td>Agency 020</td><td>Mid</td><td class="n">223</td><td class="n">5</td><td class="n">183.61</td><td class="n">4310.61</td><td class="n">8</td><td class="n">5</td><td class="n">3</td><td class="n">1.29</td><td class="n">1</td></tr>
+<tr><td>BRK-000355</td><td>Broker BRK-000355</td><td>Agency 056</td><td>Junior</td><td class="n">329</td><td class="n">5</td><td class="n">104.43</td><td class="n">6536.16</td><td class="n">8</td><td class="n">5</td><td class="n">3</td><td class="n">0.73</td><td class="n">1</td></tr>
+<tr><td>BRK-000798</td><td>Broker BRK-000798</td><td>Agency 008</td><td>Senior</td><td class="n">146</td><td class="n">4</td><td class="n">249.10</td><td class="n">3356.92</td><td class="n">11</td><td class="n">6</td><td class="n">4</td><td class="n">1.75</td><td class="n">1</td></tr>
+<tr><td>BRK-000752</td><td>Broker BRK-000752 (corrected)</td><td>Agency 028</td><td>Mid</td><td class="n">177</td><td class="n">4</td><td class="n">127.65</td><td class="n">3375.44</td><td class="n">11</td><td class="n">6</td><td class="n">4</td><td class="n">0.90</td><td class="n">1</td></tr>
+<tr><td>BRK-000326</td><td>Broker BRK-000326 (corrected)</td><td>Agency 057</td><td>Mid</td><td class="n">81</td><td class="n">4</td><td class="n">108.86</td><td class="n">1330.99</td><td class="n">11</td><td class="n">6</td><td class="n">4</td><td class="n">0.76</td><td class="n">1</td></tr>
+<tr><td>BRK-000121</td><td>Broker BRK-000121</td><td>Agency 016</td><td>Mid</td><td class="n">281</td><td class="n">4</td><td class="n">42.79</td><td class="n">5557.66</td><td class="n">11</td><td class="n">6</td><td class="n">4</td><td class="n">0.30</td><td class="n">1</td></tr>
+<tr><td>BRK-000313</td><td>Broker BRK-000313</td><td>Agency 028</td><td>Junior</td><td class="n">264</td><td class="n">3</td><td class="n">226.04</td><td class="n">5213.29</td><td class="n">15</td><td class="n">7</td><td class="n">11</td><td class="n">1.59</td><td class="n">1</td></tr>
+<tr><td>BRK-000276</td><td>Broker BRK-000276</td><td>Agency 012</td><td>Mid</td><td class="n">393</td><td class="n">3</td><td class="n">195.42</td><td class="n">6736.00</td><td class="n">15</td><td class="n">7</td><td class="n">11</td><td class="n">1.37</td><td class="n">1</td></tr>
+<tr><td>BRK-000775</td><td>Broker BRK-000775</td><td>Agency 026</td><td>Senior</td><td class="n">46</td><td class="n">3</td><td class="n">103.47</td><td class="n">647.52</td><td class="n">15</td><td class="n">7</td><td class="n">11</td><td class="n">0.73</td><td class="n">1</td></tr>
+<tr><td>BRK-000674</td><td>Broker BRK-000674</td><td>Agency 013</td><td>Mid</td><td class="n">227</td><td class="n">3</td><td class="n">81.52</td><td class="n">4244.18</td><td class="n">15</td><td class="n">7</td><td class="n">11</td><td class="n">0.57</td><td class="n">1</td></tr>
+<tr><td>BRK-000306</td><td>Broker BRK-000306</td><td>Agency 049</td><td>Principal</td><td class="n">99</td><td class="n">3</td><td class="n">76.52</td><td class="n">2213.61</td><td class="n">15</td><td class="n">7</td><td class="n">11</td><td class="n">0.54</td><td class="n">1</td></tr>
+<tr><td>BRK-000422</td><td>Broker BRK-000422</td><td>Agency 025</td><td>Senior</td><td class="n">155</td><td class="n">3</td><td class="n">69.88</td><td class="n">3164.94</td><td class="n">15</td><td class="n">7</td><td class="n">11</td><td class="n">0.49</td><td class="n">1</td></tr>
 </tbody></table></div>
   
 </section>
@@ -438,7 +474,7 @@ monthly <span class="k">AS</span> (
   <h2>DEAL VALUE DISTRIBUTION AND HISTOGRAM</h2>
   <div class="meta">
     <b>Business question</b><p>What does our deal size distribution actually look like, and is the average deal value a number anyone should be quoting?</p>
-    <b>Technique</b><p>WIDTH_BUCKET for fixed width bucketing, plus PERCENTILE_CONT and STDDEV_SAMP for the shape. WHY BUCKET log10 AND NOT RAND: deal value is log-normal, spanning R50 thousand to R2.1 billion, which is four and a half orders of magnitude. WIDTH_BUCKET on raw Rand would put well over 90% of deals in bucket one and show a single spike. Bucketing log10 of the value gives evenly spaced half decades and the underlying bell shape becomes visible. Choosing the scale to match the distribution is the whole job here. WHY STDDEV_SAMP AND NOT STDDEV_POP: these deals are a sample of the market, not the entire population of it, so the sample estimator with its n minus 1 denominator is the correct one. At this row count the two agree to several decimal places, but picking the right one on purpose is the point. The mean sitting far above the median in every bucket is not a data defect, it is what right skew looks like, and it is the direct evidence that average deal value is the wrong headline number.</p>
+    <b>Technique</b><p>WIDTH_BUCKET for fixed width bucketing, plus PERCENTILE_CONT and STDDEV_SAMP for the shape. WHY BUCKET log10 AND NOT RAND: deal value is log-normal, spanning a measured R328.82 to R4,116,545,082.02, which is seven orders of magnitude. WIDTH_BUCKET on raw Rand would put well over 90% of deals in bucket one and show a single spike. Bucketing log10 of the value gives evenly spaced half decades and the underlying bell shape becomes visible. Choosing the scale to match the distribution is the whole job here. WHAT WIDTH_BUCKET DOES OUTSIDE ITS BOUNDS, and why that matters. Given width_bucket(x, lo, hi, n) it returns 0 for x below lo and n+1 for x at or above hi. Those two buckets are UNBOUNDED on one side, so any band label computed arithmetically from the bucket number is a fabrication for them: bucket 0 would print a lower edge that most of its own contents sit below. An earlier version of this query used bounds 4.5 to 9.5 and asserted that nothing fell outside them. That was false, 603 deals sat in bucket 0 and 3 in bucket 11, and both printed invented bands. Two things fix it and both are here: the bounds now sit outside the measured range, and the band labels are still guarded so that if a future load moves the range the out of range edge comes back NULL rather than made up. WHY STDDEV_SAMP AND NOT STDDEV_POP: these deals are a sample of the market, not the entire population of it, so the sample estimator with its n minus 1 denominator is the correct one. At this row count the two agree to several decimal places, but picking the right one on purpose is the point. The mean sitting far above the median in every bucket is not a data defect, it is what right skew looks like, and it is the direct evidence that average deal value is the wrong headline number.</p>
   </div>
   <pre><span class="k">WITH</span> valued <span class="k">AS</span> (
     <span class="k">SELECT</span> p.deal_value_zar,
@@ -447,17 +483,25 @@ monthly <span class="k">AS</span> (
     <span class="k">WHERE</span> p.deal_value_zar &gt; 0
 ),
 bucketed <span class="k">AS</span> (
-    <span class="c">-- Bounds 4.5 to 9.5 in log10 terms, ten buckets of half a decade each,</span>
-    <span class="c">-- chosen from the measured range (log10 min 4.70, log10 max 9.33) so no</span>
-    <span class="c">-- deal lands in the out of range buckets 0 or 11.</span>
+    <span class="c">-- Bounds 2.5 to 10.0 in log10 terms, fifteen buckets of half a decade each.</span>
+    <span class="c">-- The measured range is log10 2.5169582 (R328.82) to log10 9.6145329</span>
+    <span class="c">-- (R4,116,545,082.02), so both bounds sit outside the data and every deal</span>
+    <span class="c">-- lands in buckets 1 through 15. Verified: buckets 0 and 16 are empty.</span>
     <span class="k">SELECT</span> v.deal_value_zar,
            v.log_value,
-           <span class="f">width_bucket</span>(v.log_value, 4.5, 9.5, 10) <span class="k">AS</span> log_bucket
+           <span class="f">width_bucket</span>(v.log_value, 2.5, 10.0, 15) <span class="k">AS</span> log_bucket
     <span class="k">FROM</span> valued v
 )
 <span class="k">SELECT</span> b.log_bucket,
-       <span class="f">round</span>(power(10, 4.5 + (b.log_bucket - 1) * 0.5)::numeric / 1e6, 3)  <span class="k">AS</span> band_from_zar_m,
-       <span class="f">round</span>(power(10, 4.5 + b.log_bucket * 0.5)::numeric / 1e6, 3)        <span class="k">AS</span> band_to_zar_m,
+       <span class="c">-- The CASE guards are not decoration. Bucket 0 has no lower edge and</span>
+       <span class="c">-- bucket 16 has no upper edge, so the arithmetic label is only valid for</span>
+       <span class="c">-- 1 through 15. NULL is the honest answer for an unbounded side.</span>
+       <span class="k">CASE</span> <span class="k">WHEN</span> b.log_bucket = 0 <span class="k">THEN</span> <span class="k">NULL</span>
+            <span class="k">ELSE</span> <span class="f">round</span>(power(10, 2.5 + (b.log_bucket - 1) * 0.5)::numeric / 1e6, 3)
+       <span class="k">END</span>                                                                 <span class="k">AS</span> band_from_zar_m,
+       <span class="k">CASE</span> <span class="k">WHEN</span> b.log_bucket = 16 <span class="k">THEN</span> <span class="k">NULL</span>
+            <span class="k">ELSE</span> <span class="f">round</span>(power(10, 2.5 + b.log_bucket * 0.5)::numeric / 1e6, 3)
+       <span class="k">END</span>                                                                 <span class="k">AS</span> band_to_zar_m,
        <span class="f">count</span>(*)                                                           <span class="k">AS</span> deals,
        <span class="f">round</span>(100.0 * <span class="f">count</span>(*) / <span class="f">sum</span>(<span class="f">count</span>(*)) <span class="k">OVER</span> (), 2)                  <span class="k">AS</span> pct_of_deals,
        <span class="c">-- Scaled to the tallest bucket so the shape is readable in a terminal.</span>
@@ -479,18 +523,21 @@ bucketed <span class="k">AS</span> (
 <span class="k">GROUP</span> <span class="k">BY</span> b.log_bucket
 <span class="k">ORDER</span> <span class="k">BY</span> b.log_bucket;</pre>
   <div class="scroll"><table><thead><tr><th>log_bucket</th><th>band_from_zar_m</th><th>band_to_zar_m</th><th>deals</th><th>pct_of_deals</th><th>shape</th><th>median_zar_m</th><th>p90_zar_m</th><th>mean_zar_m</th><th>stddev_zar_m</th><th>mean_over_median</th></tr></thead><tbody>
-<tr><td class="n">0</td><td class="n">0.010</td><td class="n">0.032</td><td class="n">603</td><td class="n">0.25</td><td class="null">null</td><td class="n">0.01</td><td class="n">0.03</td><td class="n">0.01</td><td class="n">0.01</td><td class="n">1.124</td></tr>
-<tr><td class="n">1</td><td class="n">0.032</td><td class="n">0.100</td><td class="n">298</td><td class="n">0.12</td><td class="null">null</td><td class="n">0.05</td><td class="n">0.08</td><td class="n">0.06</td><td class="n">0.02</td><td class="n">1.097</td></tr>
-<tr><td class="n">2</td><td class="n">0.100</td><td class="n">0.316</td><td class="n">163</td><td class="n">0.07</td><td class="null">null</td><td class="n">0.19</td><td class="n">0.31</td><td class="n">0.20</td><td class="n">0.07</td><td class="n">1.047</td></tr>
-<tr><td class="n">3</td><td class="n">0.316</td><td class="n">1.000</td><td class="n">1207</td><td class="n">0.49</td><td>#</td><td class="n">0.74</td><td class="n">0.96</td><td class="n">0.72</td><td class="n">0.19</td><td class="n">0.973</td></tr>
-<tr><td class="n">4</td><td class="n">1.000</td><td class="n">3.162</td><td class="n">10,923</td><td class="n">4.44</td><td>######</td><td class="n">2.27</td><td class="n">3.00</td><td class="n">2.22</td><td class="n">0.60</td><td class="n">0.976</td></tr>
-<tr><td class="n">5</td><td class="n">3.162</td><td class="n">10.000</td><td class="n">46,969</td><td class="n">19.09</td><td>##########################</td><td class="n">6.52</td><td class="n">9.27</td><td class="n">6.55</td><td class="n">1.95</td><td class="n">1.004</td></tr>
-<tr><td class="n">6</td><td class="n">10.000</td><td class="n">31.623</td><td class="n">89,001</td><td class="n">36.17</td><td>##################################################</td><td class="n">18.32</td><td class="n">28.29</td><td class="n">19.13</td><td class="n">6.10</td><td class="n">1.044</td></tr>
-<tr><td class="n">7</td><td class="n">31.623</td><td class="n">100.000</td><td class="n">70,453</td><td class="n">28.64</td><td>########################################</td><td class="n">51.30</td><td class="n">84.63</td><td class="n">55.56</td><td class="n">18.44</td><td class="n">1.083</td></tr>
-<tr><td class="n">8</td><td class="n">100.000</td><td class="n">316.228</td><td class="n">23,069</td><td class="n">9.38</td><td>#############</td><td class="n">144.39</td><td class="n">244.49</td><td class="n">160.43</td><td class="n">53.22</td><td class="n">1.111</td></tr>
-<tr><td class="n">9</td><td class="n">316.228</td><td class="n">1000.000</td><td class="n">3142</td><td class="n">1.28</td><td>##</td><td class="n">418.77</td><td class="n">701.85</td><td class="n">471.39</td><td class="n">151.69</td><td class="n">1.126</td></tr>
-<tr><td class="n">10</td><td class="n">1000.000</td><td class="n">3162.278</td><td class="n">202</td><td class="n">0.08</td><td class="null">null</td><td class="n">1260.23</td><td class="n">2031.39</td><td class="n">1413.19</td><td class="n">414.11</td><td class="n">1.121</td></tr>
-<tr><td class="n">11</td><td class="n">3162.278</td><td class="n">10000.000</td><td class="n">3</td><td class="n">0.00</td><td class="null">null</td><td class="n">3655.86</td><td class="n">4024.41</td><td class="n">3702.80</td><td class="n">392.39</td><td class="n">1.013</td></tr>
+<tr><td class="n">1</td><td class="n">0.000</td><td class="n">0.001</td><td class="n">4</td><td class="n">0.00</td><td class="null">null</td><td class="n">0.00</td><td class="n">0.00</td><td class="n">0.00</td><td class="n">0.00</td><td class="n">0.937</td></tr>
+<tr><td class="n">2</td><td class="n">0.001</td><td class="n">0.003</td><td class="n">54</td><td class="n">0.02</td><td class="null">null</td><td class="n">0.00</td><td class="n">0.00</td><td class="n">0.00</td><td class="n">0.00</td><td class="n">1.050</td></tr>
+<tr><td class="n">3</td><td class="n">0.003</td><td class="n">0.010</td><td class="n">196</td><td class="n">0.08</td><td class="null">null</td><td class="n">0.01</td><td class="n">0.01</td><td class="n">0.01</td><td class="n">0.00</td><td class="n">1.014</td></tr>
+<tr><td class="n">4</td><td class="n">0.010</td><td class="n">0.032</td><td class="n">349</td><td class="n">0.14</td><td class="null">null</td><td class="n">0.02</td><td class="n">0.03</td><td class="n">0.02</td><td class="n">0.01</td><td class="n">1.072</td></tr>
+<tr><td class="n">5</td><td class="n">0.032</td><td class="n">0.100</td><td class="n">298</td><td class="n">0.12</td><td class="null">null</td><td class="n">0.05</td><td class="n">0.08</td><td class="n">0.06</td><td class="n">0.02</td><td class="n">1.097</td></tr>
+<tr><td class="n">6</td><td class="n">0.100</td><td class="n">0.316</td><td class="n">163</td><td class="n">0.07</td><td class="null">null</td><td class="n">0.19</td><td class="n">0.31</td><td class="n">0.20</td><td class="n">0.07</td><td class="n">1.047</td></tr>
+<tr><td class="n">7</td><td class="n">0.316</td><td class="n">1.000</td><td class="n">1207</td><td class="n">0.49</td><td>#</td><td class="n">0.74</td><td class="n">0.96</td><td class="n">0.72</td><td class="n">0.19</td><td class="n">0.973</td></tr>
+<tr><td class="n">8</td><td class="n">1.000</td><td class="n">3.162</td><td class="n">10,923</td><td class="n">4.44</td><td>######</td><td class="n">2.27</td><td class="n">3.00</td><td class="n">2.22</td><td class="n">0.60</td><td class="n">0.976</td></tr>
+<tr><td class="n">9</td><td class="n">3.162</td><td class="n">10.000</td><td class="n">46,969</td><td class="n">19.09</td><td>##########################</td><td class="n">6.52</td><td class="n">9.27</td><td class="n">6.55</td><td class="n">1.95</td><td class="n">1.004</td></tr>
+<tr><td class="n">10</td><td class="n">10.000</td><td class="n">31.623</td><td class="n">89,001</td><td class="n">36.17</td><td>##################################################</td><td class="n">18.32</td><td class="n">28.29</td><td class="n">19.13</td><td class="n">6.10</td><td class="n">1.044</td></tr>
+<tr><td class="n">11</td><td class="n">31.623</td><td class="n">100.000</td><td class="n">70,453</td><td class="n">28.64</td><td>########################################</td><td class="n">51.30</td><td class="n">84.63</td><td class="n">55.56</td><td class="n">18.44</td><td class="n">1.083</td></tr>
+<tr><td class="n">12</td><td class="n">100.000</td><td class="n">316.228</td><td class="n">23,069</td><td class="n">9.38</td><td>#############</td><td class="n">144.39</td><td class="n">244.49</td><td class="n">160.43</td><td class="n">53.22</td><td class="n">1.111</td></tr>
+<tr><td class="n">13</td><td class="n">316.228</td><td class="n">1000.000</td><td class="n">3142</td><td class="n">1.28</td><td>##</td><td class="n">418.77</td><td class="n">701.85</td><td class="n">471.39</td><td class="n">151.69</td><td class="n">1.126</td></tr>
+<tr><td class="n">14</td><td class="n">1000.000</td><td class="n">3162.278</td><td class="n">202</td><td class="n">0.08</td><td class="null">null</td><td class="n">1260.23</td><td class="n">2031.39</td><td class="n">1413.19</td><td class="n">414.11</td><td class="n">1.121</td></tr>
+<tr><td class="n">15</td><td class="n">3162.278</td><td class="n">10000.000</td><td class="n">3</td><td class="n">0.00</td><td class="null">null</td><td class="n">3655.86</td><td class="n">4024.41</td><td class="n">3702.80</td><td class="n">392.39</td><td class="n">1.013</td></tr>
 </tbody></table></div>
   
 </section>
@@ -499,10 +546,15 @@ bucketed <span class="k">AS</span> (
   <h2>OPEN DEALS AT RISK OF STALLING</h2>
   <div class="meta">
     <b>Business question</b><p>Which deals are still open but have gone quiet for longer than their stage allows, and how much value is exposed?</p>
-    <b>Technique</b><p>A per deal last touch via DISTINCT ON, a date difference against a pinned as at date, and a threshold read from the dimension. THE THRESHOLD IS DATA, NOT CODE. dim_stage.target_days_in_stage carries each stage&#x27;s SLA, and the rule is &quot;silent for more than twice its own SLA&quot;. Changing the business definition of at risk is then an UPDATE to eleven rows in a dimension, not an edit to a query that has been copied into six dashboards. Hardcoding 90 days here would also be wrong on its face: Received allows one day and Legal allows thirty, so one global number cannot be right for both. WHY as_at IS PINNED TO THE DATA. Using CURRENT_DATE would make the answer drift every night and make the committed output impossible to reproduce. The as at date is the newest event in the warehouse, which is also the honest statement of how current the answer can possibly be. DISTINCT ON is Postgres specific and does in one pass what a portable query needs ROW_NUMBER plus an outer filter to do. Q09 shows the portable form, which is the one to reach for when the SQL has to run elsewhere too.</p>
+    <b>Technique</b><p>A per deal last touch via DISTINCT ON, a date difference against a pinned as at date, and a threshold read from the dimension. THE THRESHOLD IS DATA, NOT CODE. dim_stage.target_days_in_stage carries each stage&#x27;s SLA, and the rule is &quot;silent for more than twice its own SLA&quot;. Changing the business definition of at risk is then an UPDATE to eleven rows in a dimension, not an edit to a query that has been copied into six dashboards. Hardcoding 90 days here would also be wrong on its face: Received allows one day and Legal allows thirty, so one global number cannot be right for both. WHY as_at IS PINNED TO THE DATA. Using CURRENT_DATE would make the answer drift every night and make the committed output impossible to reproduce. The as at date is the newest event in the warehouse, which is also the honest statement of how current the answer can possibly be. AND WHY IT IS ALSO BOUNDED. Pinning to max(event_date) with nothing else is not enough, and this query proved it. The generator injects 369 deliberately out of range events dated 2031, which ASSERT-STG-018 and DQ-012 both flag and which 04_facts.sql parks in the DEFAULT partition. max(event_date) over the whole fact therefore returned 2031-12-30, five years past the real warehouse horizon, so every &quot;days silent&quot; figure was inflated by about 1,978 days. The minimum silence across the entire open book came out at 143 days, which is more than twice the largest SLA, so EVERY stage reported exactly 100 percent at risk and the report told a manager nothing. Bounding as_at to the same horizon the partition range enforces (04_facts.sql) fixes it: the stages now separate cleanly, from 24.5 percent of the Due diligence book at risk to 80.2 percent of Triaged. A single unbounded max() is how a correctly flagged data quality problem walks into a business answer anyway. ONE GRAIN FOR THE RATIO. pct_of_stage_open_book used to divide a numerator counted from the EVENT fact by a denominator counted from the PIPELINE fact&#x27;s current_stage_sk column. Those are two different grains and they disagree: 238 open deals exist in fct_deal_pipeline with no rows at all in fct_deal_stage_event, which is why Received alone came out at 85.4 percent while every other stage sat at exactly 100.0. Both sides are now counted from last_touch, so the ratio is a share of the same population it is drawn from. This is the file header&#x27;s warning about mixing grains, caught in the file&#x27;s own code. DISTINCT ON is Postgres specific and does in one pass what a portable query needs ROW_NUMBER plus an outer filter to do. Q09 shows the portable form, which is the one to reach for when the SQL has to run elsewhere too.</p>
   </div>
   <pre><span class="k">WITH</span> as_at <span class="k">AS</span> (
-    <span class="k">SELECT</span> <span class="f">max</span>(event_date) <span class="k">AS</span> as_at_date <span class="k">FROM</span> mart.fct_deal_stage_event
+    <span class="c">-- DATE &#x27;2027-01-01&#x27; is the warehouse horizon, the same bound that closes</span>
+    <span class="c">-- the last named partition in 04_facts.sql. Anything at or beyond it is</span>
+    <span class="c">-- known bad data sitting in the DEFAULT partition on purpose.</span>
+    <span class="k">SELECT</span> <span class="f">max</span>(f.event_date) <span class="k">AS</span> as_at_date
+    <span class="k">FROM</span> mart.fct_deal_stage_event f
+    <span class="k">WHERE</span> f.event_date &lt; <span class="k">DATE</span> <span class="s">&#x27;2027-01-01&#x27;</span>
 ),
 last_touch <span class="k">AS</span> (
     <span class="k">SELECT</span> <span class="k">DISTINCT</span> <span class="k">ON</span> (f.deal_nk)
@@ -512,38 +564,52 @@ last_touch <span class="k">AS</span> (
            f.broker_sk,
            f.deal_value_zar
     <span class="k">FROM</span> mart.fct_deal_stage_event f
+    <span class="k">WHERE</span> f.event_date &lt; <span class="k">DATE</span> <span class="s">&#x27;2027-01-01&#x27;</span>
     <span class="k">ORDER</span> <span class="k">BY</span> f.deal_nk, f.event_ts <span class="k">DESC</span>, f.deal_event_sk <span class="k">DESC</span>
+),
+open_touch <span class="k">AS</span> (
+    <span class="c">-- The population this query is about: open deals, each reduced to its most</span>
+    <span class="c">-- recent event. Every number below, numerator and denominator, comes from</span>
+    <span class="c">-- here so the ratio cannot mix grains.</span>
+    <span class="k">SELECT</span> lt.*
+    <span class="k">FROM</span> last_touch lt
+    <span class="k">JOIN</span> mart.fct_deal_pipeline p <span class="k">ON</span> p.deal_nk = lt.deal_nk <span class="k">AND</span> p.is_open
+),
+open_by_stage <span class="k">AS</span> (
+    <span class="k">SELECT</span> ot.current_stage_sk,
+           <span class="f">count</span>(*) <span class="k">AS</span> open_in_stage
+    <span class="k">FROM</span> open_touch ot
+    <span class="k">GROUP</span> <span class="k">BY</span> ot.current_stage_sk
 )
 <span class="k">SELECT</span> s.stage_name,
        s.target_days_in_stage                                     <span class="k">AS</span> sla_days,
        s.target_days_in_stage * 2                                 <span class="k">AS</span> at_risk_after_days,
        <span class="f">count</span>(*)                                                   <span class="k">AS</span> open_deals_at_risk,
-       <span class="f">round</span>(<span class="f">sum</span>(lt.deal_value_zar) / 1e9, 2)                     <span class="k">AS</span> value_at_risk_zar_bn,
-       <span class="f">round</span>(<span class="f">avg</span>(a.as_at_date - lt.last_event_date), 1)           <span class="k">AS</span> avg_days_silent,
-       <span class="f">max</span>(a.as_at_date - lt.last_event_date)                     <span class="k">AS</span> max_days_silent,
-       <span class="f">count</span>(<span class="k">DISTINCT</span> lt.broker_sk)                               <span class="k">AS</span> brokers_involved,
-       <span class="c">-- Semi additive check: the share of this stage&#x27;s open book that is at</span>
-       <span class="c">-- risk, which is the number that tells a manager where to intervene.</span>
-       <span class="f">round</span>(100.0 * <span class="f">count</span>(*)
-             / (<span class="k">SELECT</span> <span class="f">count</span>(*) <span class="k">FROM</span> mart.fct_deal_pipeline p2
-                <span class="k">WHERE</span> p2.is_open <span class="k">AND</span> p2.current_stage_sk = s.stage_sk), 1)
-                                                                  <span class="k">AS</span> pct_of_stage_open_book
-<span class="k">FROM</span> last_touch lt
-<span class="k">JOIN</span> mart.fct_deal_pipeline p <span class="k">ON</span> p.deal_nk = lt.deal_nk <span class="k">AND</span> p.is_open
-<span class="k">JOIN</span> mart.dim_stage s         <span class="k">ON</span> s.stage_sk = lt.current_stage_sk
+       obs.open_in_stage                                          <span class="k">AS</span> open_deals_in_stage,
+       <span class="f">round</span>(<span class="f">sum</span>(ot.deal_value_zar) / 1e9, 2)                     <span class="k">AS</span> value_at_risk_zar_bn,
+       <span class="f">round</span>(<span class="f">avg</span>(a.as_at_date - ot.last_event_date), 1)           <span class="k">AS</span> avg_days_silent,
+       <span class="f">max</span>(a.as_at_date - ot.last_event_date)                     <span class="k">AS</span> max_days_silent,
+       <span class="f">count</span>(<span class="k">DISTINCT</span> ot.broker_sk)                               <span class="k">AS</span> brokers_involved,
+       <span class="c">-- The share of this stage&#x27;s open book that is at risk, which is the</span>
+       <span class="c">-- number that tells a manager where to intervene. Numerator and</span>
+       <span class="c">-- denominator are both counted from open_touch.</span>
+       <span class="f">round</span>(100.0 * <span class="f">count</span>(*) / obs.open_in_stage, 1)             <span class="k">AS</span> pct_of_stage_open_book
+<span class="k">FROM</span> open_touch ot
+<span class="k">JOIN</span> mart.dim_stage s     <span class="k">ON</span> s.stage_sk = ot.current_stage_sk
+<span class="k">JOIN</span> open_by_stage obs    <span class="k">ON</span> obs.current_stage_sk = ot.current_stage_sk
 <span class="k">CROSS</span> <span class="k">JOIN</span> as_at a
 <span class="k">WHERE</span> s.target_days_in_stage <span class="k">IS</span> <span class="k">NOT</span> <span class="k">NULL</span>
-  <span class="k">AND</span> (a.as_at_date - lt.last_event_date) &gt; s.target_days_in_stage * 2
-<span class="k">GROUP</span> <span class="k">BY</span> s.stage_name, s.stage_order, s.stage_sk, s.target_days_in_stage
+  <span class="k">AND</span> (a.as_at_date - ot.last_event_date) &gt; s.target_days_in_stage * 2
+<span class="k">GROUP</span> <span class="k">BY</span> s.stage_name, s.stage_order, s.target_days_in_stage, obs.open_in_stage
 <span class="k">ORDER</span> <span class="k">BY</span> value_at_risk_zar_bn <span class="k">DESC</span>;</pre>
-  <div class="scroll"><table><thead><tr><th>stage_name</th><th>sla_days</th><th>at_risk_after_days</th><th>open_deals_at_risk</th><th>value_at_risk_zar_bn</th><th>avg_days_silent</th><th>max_days_silent</th><th>brokers_involved</th><th>pct_of_stage_open_book</th></tr></thead><tbody>
-<tr><td>Qualified</td><td class="n">10</td><td class="n">20</td><td class="n">3583</td><td class="n">158.99</td><td class="n">2063.9</td><td class="n">4340</td><td class="n">688</td><td class="n">100.0</td></tr>
-<tr><td>Triaged</td><td class="n">3</td><td class="n">6</td><td class="n">3469</td><td class="n">157.80</td><td class="n">2092.7</td><td class="n">4369</td><td class="n">696</td><td class="n">100.0</td></tr>
-<tr><td>Underwriting</td><td class="n">14</td><td class="n">28</td><td class="n">2925</td><td class="n">134.86</td><td class="n">2064.2</td><td class="n">4332</td><td class="n">657</td><td class="n">100.0</td></tr>
-<tr><td>Offer</td><td class="n">21</td><td class="n">42</td><td class="n">1408</td><td class="n">69.26</td><td class="n">2049.1</td><td class="n">4204</td><td class="n">507</td><td class="n">100.0</td></tr>
-<tr><td>Received</td><td class="n">1</td><td class="n">2</td><td class="n">1387</td><td class="n">62.72</td><td class="n">2057.5</td><td class="n">4348</td><td class="n">482</td><td class="n">85.4</td></tr>
-<tr><td>Due diligence</td><td class="n">30</td><td class="n">60</td><td class="n">1257</td><td class="n">54.04</td><td class="n">2052.9</td><td class="n">4145</td><td class="n">476</td><td class="n">100.0</td></tr>
-<tr><td>Legal</td><td class="n">30</td><td class="n">60</td><td class="n">665</td><td class="n">29.48</td><td class="n">2144.6</td><td class="n">4208</td><td class="n">321</td><td class="n">100.0</td></tr>
+  <div class="scroll"><table><thead><tr><th>stage_name</th><th>sla_days</th><th>at_risk_after_days</th><th>open_deals_at_risk</th><th>open_deals_in_stage</th><th>value_at_risk_zar_bn</th><th>avg_days_silent</th><th>max_days_silent</th><th>brokers_involved</th><th>pct_of_stage_open_book</th></tr></thead><tbody>
+<tr><td>Triaged</td><td class="n">3</td><td class="n">6</td><td class="n">2785</td><td class="n">3472</td><td class="n">126.49</td><td class="n">148.9</td><td class="n">2391</td><td class="n">662</td><td class="n">80.2</td></tr>
+<tr><td>Qualified</td><td class="n">10</td><td class="n">20</td><td class="n">1988</td><td class="n">3577</td><td class="n">85.34</td><td class="n">157.3</td><td class="n">2362</td><td class="n">592</td><td class="n">55.6</td></tr>
+<tr><td>Underwriting</td><td class="n">14</td><td class="n">28</td><td class="n">1452</td><td class="n">2927</td><td class="n">69.24</td><td class="n">169.8</td><td class="n">2354</td><td class="n">510</td><td class="n">49.6</td></tr>
+<tr><td>Received</td><td class="n">1</td><td class="n">2</td><td class="n">968</td><td class="n">1384</td><td class="n">43.99</td><td class="n">132.2</td><td class="n">2370</td><td class="n">403</td><td class="n">69.9</td></tr>
+<tr><td>Offer</td><td class="n">21</td><td class="n">42</td><td class="n">413</td><td class="n">1406</td><td class="n">21.09</td><td class="n">239.3</td><td class="n">2226</td><td class="n">247</td><td class="n">29.4</td></tr>
+<tr><td>Due diligence</td><td class="n">30</td><td class="n">60</td><td class="n">309</td><td class="n">1260</td><td class="n">12.92</td><td class="n">233.7</td><td class="n">2167</td><td class="n">196</td><td class="n">24.5</td></tr>
+<tr><td>Legal</td><td class="n">30</td><td class="n">60</td><td class="n">192</td><td class="n">665</td><td class="n">8.45</td><td class="n">526.9</td><td class="n">2230</td><td class="n">139</td><td class="n">28.9</td></tr>
 </tbody></table></div>
   
 </section>
@@ -552,7 +618,7 @@ last_touch <span class="k">AS</span> (
   <h2>ONE DEFINITIVE ROW PER DEAL PER STAGE</h2>
   <div class="meta">
     <b>Business question</b><p>The stage entry report must show each deal once per stage. Deals get reopened and re-enter stages they have already been through, so which entry is the one of record?</p>
-    <b>Technique</b><p>ROW_NUMBER inside a CTE, filtered OUTSIDE it. This is the portable equivalent of Snowflake and BigQuery&#x27;s QUALIFY clause, which Postgres does not have. WHY THE FILTER CANNOT GO INSIDE. Window functions are evaluated AFTER WHERE, so &quot;WHERE row_number() OVER (...) = 1&quot; is not just disallowed, it is logically impossible: at the time WHERE runs, the window has not been computed. The value must be projected in one query level and filtered in the next. In Snowflake QUALIFY rn = 1 is sugar for exactly this extra level. WHY THE BEST ROW IS THE LATEST. The business rule is that a reopened deal&#x27;s most recent entry into a stage supersedes the earlier one. deal_event_sk breaks any tie on the timestamp so the result is deterministic; without a unique tiebreaker the same query can return different rows on different runs, which is a genuinely nasty class of bug because it passes every count based test. This is real work here, not a demonstration: 43,643 reopened entries are suppressed. NOTHING IS DELETED. The suppressed rows stay in the fact and the count of them is reported, so the reopen rate remains an answerable question.</p>
+    <b>Technique</b><p>ROW_NUMBER inside a CTE, filtered OUTSIDE it. This is the portable equivalent of Snowflake and BigQuery&#x27;s QUALIFY clause, which Postgres does not have. WHY THE FILTER CANNOT GO INSIDE. Window functions are evaluated AFTER WHERE, so &quot;WHERE row_number() OVER (...) = 1&quot; is not just disallowed, it is logically impossible: at the time WHERE runs, the window has not been computed. The value must be projected in one query level and filtered in the next. In Snowflake QUALIFY rn = 1 is sugar for exactly this extra level. WHY THE BEST ROW IS THE LATEST. The business rule is that a reopened deal&#x27;s most recent entry into a stage supersedes the earlier one. deal_event_sk breaks any tie on the timestamp so the result is deterministic; without a unique tiebreaker the same query can return different rows on different runs, which is a genuinely nasty class of bug because it passes every count based test. This is real work here, not a demonstration: 95,550 reopened entries are suppressed, 8.2 percent of the 1,165,043 event rows. The suppressed_reentries column below sums to exactly that figure, so the claim is checkable against the output printed underneath it. NOTHING IS DELETED. The suppressed rows stay in the fact and the count of them is reported, so the reopen rate remains an answerable question.</p>
   </div>
   <pre><span class="k">WITH</span> ranked_entry <span class="k">AS</span> (
     <span class="k">SELECT</span> f.deal_nk,
@@ -606,11 +672,13 @@ deduped <span class="k">AS</span> (
   </div>
   <pre><span class="k">WITH</span> open_book <span class="k">AS</span> (
     <span class="c">-- Grain: one row per sector per broker. Open deals only, since a closed</span>
-    <span class="c">-- deal carries no forward risk.</span>
+    <span class="c">-- deal carries no forward risk. COALESCE to 0 so that a broker whose open</span>
+    <span class="c">-- deals are all unpriced carries a real zero rather than a NULL that can</span>
+    <span class="c">-- poison a cumulative window downstream.</span>
     <span class="k">SELECT</span> pr.sector,
            p.broker_sk,
-           <span class="f">sum</span>(p.deal_value_zar) <span class="k">AS</span> open_value_zar,
-           <span class="f">count</span>(*)              <span class="k">AS</span> open_deals
+           <span class="f">COALESCE</span>(<span class="f">sum</span>(p.deal_value_zar), 0) <span class="k">AS</span> open_value_zar,
+           <span class="f">count</span>(*)                           <span class="k">AS</span> open_deals
     <span class="k">FROM</span> mart.fct_deal_pipeline p
     <span class="k">JOIN</span> mart.dim_property pr <span class="k">ON</span> pr.property_sk = p.property_sk
     <span class="k">WHERE</span> p.is_open
@@ -627,7 +695,8 @@ ranked <span class="k">AS</span> (
            <span class="f">sum</span>(o.open_value_zar) <span class="k">OVER</span> (w <span class="k">ROWS</span> <span class="k">BETWEEN</span> <span class="k">UNBOUNDED</span> <span class="k">PRECEDING</span>
                                                   <span class="k">AND</span> <span class="k">CURRENT</span> <span class="k">ROW</span>) <span class="k">AS</span> cum_value
     <span class="k">FROM</span> open_book o
-    <span class="k">WINDOW</span> w <span class="k">AS</span> (<span class="k">PARTITION</span> <span class="k">BY</span> o.sector <span class="k">ORDER</span> <span class="k">BY</span> o.open_value_zar <span class="k">DESC</span>, o.broker_sk)
+    <span class="k">WINDOW</span> w <span class="k">AS</span> (<span class="k">PARTITION</span> <span class="k">BY</span> o.sector <span class="k">ORDER</span> <span class="k">BY</span> o.open_value_zar <span class="k">DESC</span> <span class="k">NULLS</span> <span class="k">LAST</span>,
+                                                o.broker_sk)
 ),
 shares <span class="k">AS</span> (
     <span class="k">SELECT</span> r.*,
@@ -653,14 +722,14 @@ shares <span class="k">AS</span> (
 <span class="k">ORDER</span> <span class="k">BY</span> top5_share_pct <span class="k">DESC</span>;</pre>
   <div class="scroll"><table><thead><tr><th>sector</th><th>brokers_active</th><th>open_value_zar_bn</th><th>top3_share_pct</th><th>top5_share_pct</th><th>top10_share_pct</th><th>largest_single_broker_pct</th><th>brokers_to_half_the_book</th><th>hhi</th><th>hhi_verdict</th></tr></thead><tbody>
 <tr><td>Unknown</td><td class="n">127</td><td class="n">5.48</td><td class="n">20.29</td><td class="n">27.48</td><td class="n">40.14</td><td class="n">9.02</td><td class="n">15</td><td class="n">263</td><td>competitive</td></tr>
+<tr><td>Healthcare</td><td class="n">357</td><td class="n">38.43</td><td class="n">13.09</td><td class="n">18.26</td><td class="n">27.29</td><td class="n">6.25</td><td class="n">39</td><td class="n">125</td><td>competitive</td></tr>
+<tr><td>Hospitality</td><td class="n">401</td><td class="n">51.55</td><td class="n">12.56</td><td class="n">18.15</td><td class="n">26.45</td><td class="n">4.75</td><td class="n">39</td><td class="n">118</td><td>competitive</td></tr>
+<tr><td>Industrial</td><td class="n">659</td><td class="n">83.29</td><td class="n">13.19</td><td class="n">16.95</td><td class="n">23.65</td><td class="n">6.13</td><td class="n">54</td><td class="n">108</td><td>competitive</td></tr>
 <tr><td>Office</td><td class="n">631</td><td class="n">97.53</td><td class="n">13.94</td><td class="n">16.86</td><td class="n">22.54</td><td class="n">6.43</td><td class="n">59</td><td class="n">111</td><td>competitive</td></tr>
-<tr><td>Land</td><td class="n">547</td><td class="n">35.58</td><td class="n">10.00</td><td class="n">13.87</td><td class="n">21.90</td><td class="null">null</td><td class="n">47</td><td class="n">107</td><td>competitive</td></tr>
-<tr><td>Healthcare</td><td class="n">357</td><td class="n">38.43</td><td class="n">6.25</td><td class="n">13.09</td><td class="n">24.17</td><td class="null">null</td><td class="n">39</td><td class="n">125</td><td>competitive</td></tr>
-<tr><td>Mixed use</td><td class="n">457</td><td class="n">101.06</td><td class="n">8.36</td><td class="n">12.85</td><td class="n">21.42</td><td class="null">null</td><td class="n">47</td><td class="n">96</td><td>competitive</td></tr>
-<tr><td>Hospitality</td><td class="n">401</td><td class="n">51.55</td><td class="n">4.75</td><td class="n">12.56</td><td class="n">23.67</td><td class="null">null</td><td class="n">39</td><td class="n">118</td><td>competitive</td></tr>
-<tr><td>Industrial</td><td class="n">659</td><td class="n">83.29</td><td class="null">null</td><td class="n">10.96</td><td class="n">19.76</td><td class="null">null</td><td class="n">54</td><td class="n">108</td><td>competitive</td></tr>
-<tr><td>Residential</td><td class="n">593</td><td class="n">133.67</td><td class="null">null</td><td class="n">8.99</td><td class="n">17.42</td><td class="null">null</td><td class="n">57</td><td class="n">97</td><td>competitive</td></tr>
-<tr><td>Retail</td><td class="n">641</td><td class="n">128.41</td><td class="null">null</td><td class="n">5.18</td><td class="n">15.58</td><td class="null">null</td><td class="n">59</td><td class="n">89</td><td>competitive</td></tr>
+<tr><td>Land</td><td class="n">547</td><td class="n">35.58</td><td class="n">12.02</td><td class="n">15.58</td><td class="n">23.32</td><td class="n">6.10</td><td class="n">47</td><td class="n">107</td><td>competitive</td></tr>
+<tr><td>Mixed use</td><td class="n">457</td><td class="n">101.06</td><td class="n">10.71</td><td class="n">14.81</td><td class="n">22.83</td><td class="n">4.74</td><td class="n">47</td><td class="n">96</td><td>competitive</td></tr>
+<tr><td>Residential</td><td class="n">593</td><td class="n">133.67</td><td class="n">11.20</td><td class="n">14.37</td><td class="n">21.62</td><td class="n">6.55</td><td class="n">57</td><td class="n">97</td><td>competitive</td></tr>
+<tr><td>Retail</td><td class="n">641</td><td class="n">128.41</td><td class="n">11.28</td><td class="n">14.18</td><td class="n">20.10</td><td class="n">5.18</td><td class="n">59</td><td class="n">89</td><td>competitive</td></tr>
 </tbody></table></div>
   
 </section>
@@ -669,7 +738,7 @@ shares <span class="k">AS</span> (
   <h2>BROKER COHORT RETENTION</h2>
   <div class="meta">
     <b>Business question</b><p>Of the brokers who submitted their first deal in a given quarter, what share are still submitting one, two, four, eight quarters later? Are recent intakes sticking better or worse than older ones?</p>
-    <b>Technique</b><p>Cohort assignment from the first observed deal, a FULL COHORT GRID built by CROSS JOIN against generate_series, then a pivot into the classic retention triangle. WHY THE GRID EXISTS. Without it, a cohort that went completely silent in quarter five simply has no row for quarter five, and the reader&#x27;s eye joins quarter four straight to quarter six and concludes the cohort recovered. The grid manufactures every (cohort, offset) cell that COULD be observed, then LEFT JOINs the activity onto it, so silence arrives as an explicit 0.0. ZERO AND NULL MEAN DIFFERENT THINGS HERE, and conflating them is the commonest cohort reporting error: 0.0 the cohort existed, the quarter has happened, nobody submitted. NULL that quarter has not happened yet for this cohort. Not measurable. The grid&#x27;s WHERE clause is what draws that line, which is why the output is a triangle rather than a rectangle. q0 is 100.0 by construction, since a cohort is DEFINED by its first deal. That is a useful sanity check, not a finding: if any q0 came back below 100.0 the cohort assignment would be broken.</p>
+    <b>Technique</b><p>Cohort assignment from the first observed deal, a FULL COHORT GRID built by CROSS JOIN against generate_series, then a pivot into the classic retention triangle. WHY THE GRID EXISTS. Without it, a cohort that went completely silent in quarter five simply has no row for quarter five, and the reader&#x27;s eye joins quarter four straight to quarter six and concludes the cohort recovered. The grid manufactures every (cohort, offset) cell that COULD be observed, then LEFT JOINs the activity onto it, so silence arrives as an explicit 0.0.</p>
   </div>
   <pre><span class="k">WITH</span> broker_first <span class="k">AS</span> (
     <span class="c">-- Cohort = the quarter of the broker&#x27;s first ever submission.</span>
@@ -779,14 +848,23 @@ cells <span class="k">AS</span> (
   <h2>GAPS AND ISLANDS: UNBROKEN RUNS OF BROKER ACTIVITY</h2>
   <div class="meta">
     <b>Business question</b><p>Which brokers have submitted every single month without a break, and who has just broken a long run and needs a call this week?</p>
-    <b>Technique</b><p>The classic gaps and islands solution by difference of row number. HOW THE TRICK WORKS, in one sentence: for a run of CONSECUTIVE months the month advances by exactly one and the row number advances by exactly one, so subtracting the row number from the month gives the SAME constant for every month in the run, and that constant is a ready made group key. The moment a month is missing the month jumps by two while the row number jumps by one, the constant shifts, and a new island begins. WHY NOT SELF JOIN each row to the row before it and hunt for breaks: that finds the boundaries but then needs a second pass to stitch each boundary back into a run. The difference trick labels every row with its run in a single window pass, and it is O(n log n) on the sort rather than O(n) joins. THE ROW NUMBER MUST BE DENSE AND GAP FREE, which is why ROW_NUMBER is correct and RANK is not: RANK leaves gaps on ties and the arithmetic breaks instantly. The DISTINCT in broker_month guarantees one row per month per broker so no tie can arise in the first place. This is real on this data, not a set piece: 800 brokers resolve into 2,704 islands, so the average broker&#x27;s history is broken into more than three separate runs.</p>
+    <b>Technique</b><p>The classic gaps and islands solution by difference of row number. HOW THE TRICK WORKS, in one sentence: for a run of CONSECUTIVE months the month advances by exactly one and the row number advances by exactly one, so subtracting the row number from the month gives the SAME constant for every month in the run, and that constant is a ready made group key. The moment a month is missing the month jumps by two while the row number jumps by one, the constant shifts, and a new island begins. WHY NOT SELF JOIN each row to the row before it and hunt for breaks: that finds the boundaries but then needs a second pass to stitch each boundary back into a run. The difference trick labels every row with its run in a single window pass, and it is O(n log n) on the sort rather than O(n) joins. THE ROW NUMBER MUST BE DENSE AND GAP FREE, which is why ROW_NUMBER is correct and RANK is not: RANK leaves gaps on ties and the arithmetic breaks instantly. The DISTINCT in broker_month guarantees one row per month per broker so no tie can arise in the first place. THE GROUPING KEY MUST BE THE PERSON, NOT THE VERSION. This query originally grouped by the raw broker_sk from the fact, which is a Type 2 VERSION key. A broker who changed agency in 2023 has two surrogate keys, so an unbroken run of activity from 2020 to 2026 was cut into two streaks by a change in a dimension attribute, not by any gap in the broker&#x27;s actual behaviour. That is precisely the wrong answer to &quot;who has submitted every single month without a break&quot;. Measured over the same population of people, so the two sides are comparable: grouping by VERSION spreads those people across 1,131 surrogate keys and produces 8,035 islands, grouping by PERSON gives 800 brokers and 7,801 islands. So 234 island boundaries were dimension attribute changes rather than real gaps in anybody&#x27;s behaviour. (Over the whole fact, including the UNKNOWN member, version grouping gives 8,036 islands across 1,132 surrogate keys.) The display join had the same defect in a more visible form: &quot;JOIN dim_broker ON broker_sk AND is_current&quot; is an inner join that dropped every streak belonging to a superseded version outright. Both are fixed by resolving to the natural key first, the same two hop that Q05 and Q14 use. This is real on this data, not a set piece: 800 named brokers resolve into 7,801 islands, so the average broker&#x27;s history is broken into just under ten separate runs.</p>
   </div>
   <pre><span class="k">WITH</span> broker_month <span class="k">AS</span> (
     <span class="c">-- DISTINCT collapses many deals in a month to a single activity marker,</span>
     <span class="c">-- which is what makes ROW_NUMBER dense and the arithmetic valid.</span>
-    <span class="k">SELECT</span> <span class="k">DISTINCT</span> p.broker_sk,
+    <span class="c">--</span>
+    <span class="c">-- The two hop resolution happens HERE, before the islands are built, so a</span>
+    <span class="c">-- version change cannot masquerade as a gap. curr.broker_sk &gt; 0 drops the</span>
+    <span class="c">-- UNKNOWN placeholder, because the closing line of this report is &quot;who</span>
+    <span class="c">-- needs a call this week&quot; and nobody can call Unknown broker.</span>
+    <span class="k">SELECT</span> <span class="k">DISTINCT</span> curr.broker_sk <span class="k">AS</span> broker_sk,
            <span class="f">date_trunc</span>(<span class="s">&#x27;month&#x27;</span>, p.received_date)::<span class="k">date</span> <span class="k">AS</span> active_month
     <span class="k">FROM</span> mart.fct_deal_pipeline p
+    <span class="k">JOIN</span> mart.dim_broker hist <span class="k">ON</span> hist.broker_sk = p.broker_sk
+    <span class="k">JOIN</span> mart.dim_broker curr <span class="k">ON</span> curr.broker_nk = hist.broker_nk
+                             <span class="k">AND</span> curr.is_current
+    <span class="k">WHERE</span> curr.broker_sk &gt; 0
 ),
 sequenced <span class="k">AS</span> (
     <span class="k">SELECT</span> bm.broker_sk,
@@ -832,7 +910,9 @@ last_month <span class="k">AS</span> (
        <span class="k">END</span>::integer                                                <span class="k">AS</span> months_since_streak_ended,
        b.is_active                                                 <span class="k">AS</span> broker_still_on_the_books
 <span class="k">FROM</span> streaks st
-<span class="k">JOIN</span> mart.dim_broker b <span class="k">ON</span> b.broker_sk = st.broker_sk <span class="k">AND</span> b.is_current
+<span class="c">-- st.broker_sk is already the CURRENT version, resolved in broker_month, so</span>
+<span class="c">-- this is a plain lookup and cannot drop a streak.</span>
+<span class="k">JOIN</span> mart.dim_broker b <span class="k">ON</span> b.broker_sk = st.broker_sk
 <span class="k">CROSS</span> <span class="k">JOIN</span> last_month lm
 <span class="k">ORDER</span> <span class="k">BY</span> st.streak_months <span class="k">DESC</span>, b.broker_nk
 <span class="k">LIMIT</span> 20;</pre>
@@ -841,22 +921,22 @@ last_month <span class="k">AS</span> (
 <tr><td>BRK-000029</td><td>Broker BRK-000029</td><td>Agency 006</td><td>Junior</td><td>2020-01-01</td><td>2026-07-01</td><td class="n">79</td><td class="n">1</td><td>t</td><td class="null">null</td><td>t</td></tr>
 <tr><td>BRK-000033</td><td>Broker BRK-000033</td><td>Agency 007</td><td>Mid</td><td>2020-01-01</td><td>2026-07-01</td><td class="n">79</td><td class="n">1</td><td>t</td><td class="null">null</td><td>t</td></tr>
 <tr><td>BRK-000045</td><td>Broker BRK-000045 (corrected)</td><td>Agency 009</td><td>Principal</td><td>2020-01-01</td><td>2026-07-01</td><td class="n">79</td><td class="n">1</td><td>t</td><td class="null">null</td><td>t</td></tr>
+<tr><td>BRK-000063</td><td>Broker BRK-000063</td><td>Agency 029</td><td>Senior</td><td>2020-01-01</td><td>2026-07-01</td><td class="n">79</td><td class="n">1</td><td>t</td><td class="null">null</td><td>t</td></tr>
 <tr><td>BRK-000067</td><td>Broker BRK-000067</td><td>Agency 026</td><td>Junior</td><td>2020-01-01</td><td>2026-07-01</td><td class="n">79</td><td class="n">1</td><td>t</td><td class="null">null</td><td>t</td></tr>
 <tr><td>BRK-000094</td><td>Broker BRK-000094</td><td>Agency 021</td><td>Senior</td><td>2020-01-01</td><td>2026-07-01</td><td class="n">79</td><td class="n">1</td><td>t</td><td class="null">null</td><td>t</td></tr>
 <tr><td>BRK-000095</td><td>Broker BRK-000095</td><td>Agency 022</td><td>Junior</td><td>2020-01-01</td><td>2026-07-01</td><td class="n">79</td><td class="n">1</td><td>t</td><td class="null">null</td><td>t</td></tr>
 <tr><td>BRK-000101</td><td>Broker BRK-000101</td><td>Agency 020</td><td>Mid</td><td>2020-01-01</td><td>2026-07-01</td><td class="n">79</td><td class="n">1</td><td>t</td><td class="null">null</td><td>t</td></tr>
+<tr><td>BRK-000112</td><td>Broker BRK-000112</td><td>Agency 050</td><td>Mid</td><td>2020-01-01</td><td>2026-07-01</td><td class="n">79</td><td class="n">1</td><td>t</td><td class="null">null</td><td>t</td></tr>
+<tr><td>BRK-000121</td><td>Broker BRK-000121</td><td>Agency 016</td><td>Mid</td><td>2020-01-01</td><td>2026-07-01</td><td class="n">79</td><td class="n">1</td><td>t</td><td class="null">null</td><td>t</td></tr>
 <tr><td>BRK-000130</td><td>Broker BRK-000130</td><td>Agency 002</td><td>Junior</td><td>2020-01-01</td><td>2026-07-01</td><td class="n">79</td><td class="n">1</td><td>t</td><td class="null">null</td><td>t</td></tr>
+<tr><td>BRK-000138</td><td>Broker BRK-000138</td><td>Agency 030</td><td>Senior</td><td>2020-01-01</td><td>2026-07-01</td><td class="n">79</td><td class="n">1</td><td>t</td><td class="null">null</td><td>t</td></tr>
 <tr><td>BRK-000153</td><td>Broker BRK-000153</td><td>Agency 006</td><td>Mid</td><td>2020-01-01</td><td>2026-07-01</td><td class="n">79</td><td class="n">1</td><td>t</td><td class="null">null</td><td>t</td></tr>
 <tr><td>BRK-000163</td><td>Broker BRK-000163</td><td>Agency 034</td><td>Mid</td><td>2020-01-01</td><td>2026-07-01</td><td class="n">79</td><td class="n">1</td><td>t</td><td class="null">null</td><td>t</td></tr>
+<tr><td>BRK-000167</td><td>Broker BRK-000167</td><td>Agency 052</td><td>Mid</td><td>2020-01-01</td><td>2026-07-01</td><td class="n">79</td><td class="n">1</td><td>t</td><td class="null">null</td><td>t</td></tr>
+<tr><td>BRK-000176</td><td>Broker BRK-000176</td><td>Agency 016</td><td>Senior</td><td>2020-01-01</td><td>2026-07-01</td><td class="n">79</td><td class="n">1</td><td>t</td><td class="null">null</td><td>t</td></tr>
+<tr><td>BRK-000196</td><td>Broker BRK-000196</td><td>Agency 008</td><td>Senior</td><td>2020-01-01</td><td>2026-07-01</td><td class="n">79</td><td class="n">1</td><td>t</td><td class="null">null</td><td>t</td></tr>
 <tr><td>BRK-000203</td><td>Broker BRK-000203</td><td>Agency 031</td><td>Mid</td><td>2020-01-01</td><td>2026-07-01</td><td class="n">79</td><td class="n">1</td><td>t</td><td class="null">null</td><td>t</td></tr>
-<tr><td>BRK-000276</td><td>Broker BRK-000276</td><td>Agency 012</td><td>Mid</td><td>2020-01-01</td><td>2026-07-01</td><td class="n">79</td><td class="n">1</td><td>t</td><td class="null">null</td><td>t</td></tr>
-<tr><td>BRK-000284</td><td>Broker BRK-000284</td><td>Agency 025</td><td>Junior</td><td>2020-01-01</td><td>2026-07-01</td><td class="n">79</td><td class="n">1</td><td>t</td><td class="null">null</td><td>t</td></tr>
-<tr><td>BRK-000313</td><td>Broker BRK-000313</td><td>Agency 028</td><td>Junior</td><td>2020-01-01</td><td>2026-07-01</td><td class="n">79</td><td class="n">1</td><td>t</td><td class="null">null</td><td>t</td></tr>
-<tr><td>BRK-000324</td><td>Broker BRK-000324</td><td>Agency 024</td><td>Mid</td><td>2020-01-01</td><td>2026-07-01</td><td class="n">79</td><td class="n">1</td><td>t</td><td class="null">null</td><td>t</td></tr>
-<tr><td>BRK-000326</td><td>Broker BRK-000326 (corrected)</td><td>Agency 057</td><td>Mid</td><td>2020-01-01</td><td>2026-07-01</td><td class="n">79</td><td class="n">1</td><td>t</td><td class="null">null</td><td>t</td></tr>
-<tr><td>BRK-000362</td><td>Broker BRK-000362</td><td>Agency 008</td><td>Junior</td><td>2020-01-01</td><td>2026-07-01</td><td class="n">79</td><td class="n">1</td><td>t</td><td class="null">null</td><td>t</td></tr>
-<tr><td>BRK-000377</td><td>Broker BRK-000377</td><td>Agency 016</td><td>Mid</td><td>2020-01-01</td><td>2026-07-01</td><td class="n">79</td><td class="n">1</td><td>t</td><td class="null">null</td><td>t</td></tr>
-<tr><td>BRK-000493</td><td>Broker BRK-000493</td><td>Agency 053</td><td>Senior</td><td>2020-01-01</td><td>2026-07-01</td><td class="n">79</td><td class="n">1</td><td>t</td><td class="null">null</td><td>t</td></tr>
+<tr><td>BRK-000221</td><td>Broker BRK-000221</td><td>Agency 001</td><td>Senior</td><td>2020-01-01</td><td>2026-07-01</td><td class="n">79</td><td class="n">1</td><td>t</td><td class="null">null</td><td>t</td></tr>
 </tbody></table></div>
   
 </section>
@@ -865,7 +945,7 @@ last_month <span class="k">AS</span> (
   <h2>AGENCY GROUP STRUCTURE ROLLUP</h2>
   <div class="meta">
     <b>Business question</b><p>Our agencies are a three level structure: national groups own regional masters, which own local offices. What does each entire group contribute once every subsidiary beneath it is counted, and which subsidiaries carry their group?</p>
-    <b>Technique</b><p>A recursive CTE walking dim_agency.parent_agency_sk from the roots downward, carrying the root identity down the tree so a rollup becomes a plain PARTITION BY. WHY RECURSION IS GENUINELY NEEDED. The depth is a property of the DATA, not of the query. A three level join chain would work today and silently drop a whole branch the day someone inserts a fourth level, and it cannot answer &quot;everything beneath node X&quot; at all. The recursive term does not care how deep the tree goes. THE ROOT IS CARRIED DOWN, not looked up afterwards. Because every row knows its root_agency_sk, the group rollup is one window function instead of a second recursive pass. That single decision is what keeps this query short. THE CYCLE CLAUSE IS NOT DECORATION. parent_agency_sk is a self reference with no constraint that can prevent A parenting B while B parents A, and a cycle in a recursive CTE does not return a wrong answer, it runs forever. Postgres 14 and later can detect this natively: CYCLE marks the row where a path repeats and stops descending. Shipping a recursive query over user maintained hierarchy data without a cycle guard is how a scheduled report takes a server down at 3am.</p>
+    <b>Technique</b><p>A recursive CTE walking dim_agency.parent_agency_sk from the roots downward, carrying the root identity down the tree so a rollup becomes a plain PARTITION BY. WHY RECURSION IS GENUINELY NEEDED. The depth is a property of the DATA, not of the query. A three level join chain would work today and silently drop a whole branch the day someone inserts a fourth level, and it cannot answer &quot;everything beneath node X&quot; at all. The recursive term does not care how deep the tree goes. THE ROOT IS CARRIED DOWN, not looked up afterwards. Because every row knows its root_agency_sk, the group rollup is one window function instead of a second recursive pass. That single decision is what keeps this query short. THE CYCLE CLAUSE IS NOT DECORATION. parent_agency_sk is a self reference with no constraint that can prevent A parenting B while B parents A, and a cycle in a recursive CTE does not return a wrong answer, it runs forever. Postgres 14 and later can detect this natively: CYCLE marks the row where a path repeats and stops descending. Shipping a recursive query over user maintained hierarchy data without a cycle guard is how a scheduled report takes a server down at 3am. WHY THERE IS NO LIMIT. There was one, LIMIT 25 with ORDER BY root_agency_name, and it answered the stated question for 2 of the 20 groups: the output stopped part way into the third alphabetically named group and 18 groups were invisible. A rollup query whose whole point is &quot;what does each entire group contribute&quot; cannot be truncated alphabetically. The tree is 60 nodes across 20 roots, which is a whole screen, not a data dump, so every node prints and the ORDER BY leads with the group total so the biggest group is at the top.</p>
   </div>
   <pre><span class="k">WITH</span> <span class="k">RECURSIVE</span> agency_tree <span class="k">AS</span> (
     <span class="c">-- Anchor: the national groups. No parent, and the unknown member at -1 is</span>
@@ -929,9 +1009,29 @@ agency_book <span class="k">AS</span> (
        t.is_cycle                                                        <span class="k">AS</span> cycle_detected
 <span class="k">FROM</span> agency_tree t
 <span class="k">LEFT</span> <span class="k">JOIN</span> agency_book ab <span class="k">ON</span> ab.agency_sk = t.agency_sk
-<span class="k">ORDER</span> <span class="k">BY</span> t.root_agency_name, t.depth, <span class="f">COALESCE</span>(ab.won_value_zar, 0) <span class="k">DESC</span>
-<span class="k">LIMIT</span> 25;</pre>
+<span class="c">-- Groups are ranked by what the whole group won, then the tree is walked from</span>
+<span class="c">-- the root down inside each group. Ordering by the group total first is what</span>
+<span class="c">-- makes the top of the output the answer to the business question.</span>
+<span class="k">ORDER</span> <span class="k">BY</span> <span class="f">sum</span>(<span class="f">COALESCE</span>(ab.won_value_zar, 0)) <span class="k">OVER</span> (<span class="k">PARTITION</span> <span class="k">BY</span> t.root_agency_sk) <span class="k">DESC</span>,
+         t.root_agency_name,
+         t.depth,
+         <span class="f">COALESCE</span>(ab.won_value_zar, 0) <span class="k">DESC</span>;</pre>
   <div class="scroll"><table><thead><tr><th>root_agency_name</th><th>depth</th><th>agency_tier</th><th>org_path</th><th>own_deals</th><th>own_deals_won</th><th>own_won_zar_bn</th><th>nodes_in_group</th><th>group_deals</th><th>group_won_zar_bn</th><th>pct_of_group_won</th><th>cycle_detected</th></tr></thead><tbody>
+<tr><td>Agency 003</td><td class="n">1</td><td>National</td><td>Agency 003</td><td class="n">2848</td><td class="n">184</td><td class="n">6.348</td><td class="n">15</td><td class="n">62,456</td><td class="n">166.783</td><td class="n">3.81</td><td>f</td></tr>
+<tr><td>Agency 003</td><td class="n">2</td><td>Regional</td><td>Agency 003 &gt; Agency 012</td><td class="n">8336</td><td class="n">517</td><td class="n">22.430</td><td class="n">15</td><td class="n">62,456</td><td class="n">166.783</td><td class="n">13.45</td><td>f</td></tr>
+<tr><td>Agency 003</td><td class="n">2</td><td>Regional</td><td>Agency 003 &gt; Agency 022</td><td class="n">6930</td><td class="n">414</td><td class="n">17.907</td><td class="n">15</td><td class="n">62,456</td><td class="n">166.783</td><td class="n">10.74</td><td>f</td></tr>
+<tr><td>Agency 003</td><td class="n">2</td><td>Regional</td><td>Agency 003 &gt; Agency 030</td><td class="n">5503</td><td class="n">331</td><td class="n">17.041</td><td class="n">15</td><td class="n">62,456</td><td class="n">166.783</td><td class="n">10.22</td><td>f</td></tr>
+<tr><td>Agency 003</td><td class="n">2</td><td>Regional</td><td>Agency 003 &gt; Agency 019</td><td class="n">5945</td><td class="n">379</td><td class="n">15.591</td><td class="n">15</td><td class="n">62,456</td><td class="n">166.783</td><td class="n">9.35</td><td>f</td></tr>
+<tr><td>Agency 003</td><td class="n">2</td><td>Regional</td><td>Agency 003 &gt; Agency 008</td><td class="n">4954</td><td class="n">320</td><td class="n">13.969</td><td class="n">15</td><td class="n">62,456</td><td class="n">166.783</td><td class="n">8.38</td><td>f</td></tr>
+<tr><td>Agency 003</td><td class="n">2</td><td>Regional</td><td>Agency 003 &gt; Agency 034</td><td class="n">3883</td><td class="n">245</td><td class="n">10.197</td><td class="n">15</td><td class="n">62,456</td><td class="n">166.783</td><td class="n">6.11</td><td>f</td></tr>
+<tr><td>Agency 003</td><td class="n">2</td><td>Regional</td><td>Agency 003 &gt; Agency 017</td><td class="n">3080</td><td class="n">182</td><td class="n">8.149</td><td class="n">15</td><td class="n">62,456</td><td class="n">166.783</td><td class="n">4.89</td><td>f</td></tr>
+<tr><td>Agency 003</td><td class="n">2</td><td>Regional</td><td>Agency 003 &gt; Agency 001</td><td class="n">3312</td><td class="n">196</td><td class="n">7.358</td><td class="n">15</td><td class="n">62,456</td><td class="n">166.783</td><td class="n">4.41</td><td>f</td></tr>
+<tr><td>Agency 003</td><td class="n">2</td><td>Regional</td><td>Agency 003 &gt; Agency 031</td><td class="n">1785</td><td class="n">114</td><td class="n">5.197</td><td class="n">15</td><td class="n">62,456</td><td class="n">166.783</td><td class="n">3.12</td><td>f</td></tr>
+<tr><td>Agency 003</td><td class="n">3</td><td>Boutique</td><td>Agency 003 &gt; Agency 001 &gt; Agency 041</td><td class="n">4188</td><td class="n">251</td><td class="n">11.676</td><td class="n">15</td><td class="n">62,456</td><td class="n">166.783</td><td class="n">7.00</td><td>f</td></tr>
+<tr><td>Agency 003</td><td class="n">3</td><td>Boutique</td><td>Agency 003 &gt; Agency 001 &gt; Agency 054</td><td class="n">4361</td><td class="n">258</td><td class="n">10.181</td><td class="n">15</td><td class="n">62,456</td><td class="n">166.783</td><td class="n">6.10</td><td>f</td></tr>
+<tr><td>Agency 003</td><td class="n">3</td><td>Boutique</td><td>Agency 003 &gt; Agency 001 &gt; Agency 040</td><td class="n">3317</td><td class="n">210</td><td class="n">10.046</td><td class="n">15</td><td class="n">62,456</td><td class="n">166.783</td><td class="n">6.02</td><td>f</td></tr>
+<tr><td>Agency 003</td><td class="n">3</td><td>Boutique</td><td>Agency 003 &gt; Agency 001 &gt; Agency 011</td><td class="n">1891</td><td class="n">109</td><td class="n">5.757</td><td class="n">15</td><td class="n">62,456</td><td class="n">166.783</td><td class="n">3.45</td><td>f</td></tr>
+<tr><td>Agency 003</td><td class="n">3</td><td>Boutique</td><td>Agency 003 &gt; Agency 001 &gt; Agency 057</td><td class="n">2123</td><td class="n">116</td><td class="n">4.937</td><td class="n">15</td><td class="n">62,456</td><td class="n">166.783</td><td class="n">2.96</td><td>f</td></tr>
 <tr><td>Agency 002</td><td class="n">1</td><td>National</td><td>Agency 002</td><td class="n">2683</td><td class="n">155</td><td class="n">7.600</td><td class="n">13</td><td class="n">54,627</td><td class="n">165.327</td><td class="n">4.60</td><td>f</td></tr>
 <tr><td>Agency 002</td><td class="n">2</td><td>Regional</td><td>Agency 002 &gt; Agency 015</td><td class="n">9104</td><td class="n">607</td><td class="n">25.904</td><td class="n">13</td><td class="n">54,627</td><td class="n">165.327</td><td class="n">15.67</td><td>f</td></tr>
 <tr><td>Agency 002</td><td class="n">2</td><td>Regional</td><td>Agency 002 &gt; Agency 028</td><td class="n">6561</td><td class="n">426</td><td class="n">21.867</td><td class="n">13</td><td class="n">54,627</td><td class="n">165.327</td><td class="n">13.23</td><td>f</td></tr>
@@ -945,20 +1045,10 @@ agency_book <span class="k">AS</span> (
 <tr><td>Agency 002</td><td class="n">3</td><td>Boutique</td><td>Agency 002 &gt; Agency 028 &gt; Agency 060</td><td class="n">2543</td><td class="n">166</td><td class="n">9.651</td><td class="n">13</td><td class="n">54,627</td><td class="n">165.327</td><td class="n">5.84</td><td>f</td></tr>
 <tr><td>Agency 002</td><td class="n">3</td><td>Boutique</td><td>Agency 002 &gt; Agency 028 &gt; Agency 049</td><td class="n">2641</td><td class="n">154</td><td class="n">9.003</td><td class="n">13</td><td class="n">54,627</td><td class="n">165.327</td><td class="n">5.45</td><td>f</td></tr>
 <tr><td>Agency 002</td><td class="n">3</td><td>Boutique</td><td>Agency 002 &gt; Agency 021 &gt; Agency 051</td><td class="n">2667</td><td class="n">188</td><td class="n">8.911</td><td class="n">13</td><td class="n">54,627</td><td class="n">165.327</td><td class="n">5.39</td><td>f</td></tr>
-<tr><td>Agency 003</td><td class="n">1</td><td>National</td><td>Agency 003</td><td class="n">2848</td><td class="n">184</td><td class="n">6.348</td><td class="n">15</td><td class="n">62,456</td><td class="n">166.783</td><td class="n">3.81</td><td>f</td></tr>
-<tr><td>Agency 003</td><td class="n">2</td><td>Regional</td><td>Agency 003 &gt; Agency 012</td><td class="n">8336</td><td class="n">517</td><td class="n">22.430</td><td class="n">15</td><td class="n">62,456</td><td class="n">166.783</td><td class="n">13.45</td><td>f</td></tr>
-<tr><td>Agency 003</td><td class="n">2</td><td>Regional</td><td>Agency 003 &gt; Agency 022</td><td class="n">6930</td><td class="n">414</td><td class="n">17.907</td><td class="n">15</td><td class="n">62,456</td><td class="n">166.783</td><td class="n">10.74</td><td>f</td></tr>
-<tr><td>Agency 003</td><td class="n">2</td><td>Regional</td><td>Agency 003 &gt; Agency 030</td><td class="n">5503</td><td class="n">331</td><td class="n">17.041</td><td class="n">15</td><td class="n">62,456</td><td class="n">166.783</td><td class="n">10.22</td><td>f</td></tr>
-<tr><td>Agency 003</td><td class="n">2</td><td>Regional</td><td>Agency 003 &gt; Agency 019</td><td class="n">5945</td><td class="n">379</td><td class="n">15.591</td><td class="n">15</td><td class="n">62,456</td><td class="n">166.783</td><td class="n">9.35</td><td>f</td></tr>
-<tr><td>Agency 003</td><td class="n">2</td><td>Regional</td><td>Agency 003 &gt; Agency 008</td><td class="n">4954</td><td class="n">320</td><td class="n">13.969</td><td class="n">15</td><td class="n">62,456</td><td class="n">166.783</td><td class="n">8.38</td><td>f</td></tr>
-<tr><td>Agency 003</td><td class="n">2</td><td>Regional</td><td>Agency 003 &gt; Agency 034</td><td class="n">3883</td><td class="n">245</td><td class="n">10.197</td><td class="n">15</td><td class="n">62,456</td><td class="n">166.783</td><td class="n">6.11</td><td>f</td></tr>
-<tr><td>Agency 003</td><td class="n">2</td><td>Regional</td><td>Agency 003 &gt; Agency 017</td><td class="n">3080</td><td class="n">182</td><td class="n">8.149</td><td class="n">15</td><td class="n">62,456</td><td class="n">166.783</td><td class="n">4.89</td><td>f</td></tr>
-<tr><td>Agency 003</td><td class="n">2</td><td>Regional</td><td>Agency 003 &gt; Agency 001</td><td class="n">3312</td><td class="n">196</td><td class="n">7.358</td><td class="n">15</td><td class="n">62,456</td><td class="n">166.783</td><td class="n">4.41</td><td>f</td></tr>
-<tr><td>Agency 003</td><td class="n">2</td><td>Regional</td><td>Agency 003 &gt; Agency 031</td><td class="n">1785</td><td class="n">114</td><td class="n">5.197</td><td class="n">15</td><td class="n">62,456</td><td class="n">166.783</td><td class="n">3.12</td><td>f</td></tr>
-<tr><td>Agency 003</td><td class="n">3</td><td>Boutique</td><td>Agency 003 &gt; Agency 001 &gt; Agency 041</td><td class="n">4188</td><td class="n">251</td><td class="n">11.676</td><td class="n">15</td><td class="n">62,456</td><td class="n">166.783</td><td class="n">7.00</td><td>f</td></tr>
-<tr><td>Agency 003</td><td class="n">3</td><td>Boutique</td><td>Agency 003 &gt; Agency 001 &gt; Agency 054</td><td class="n">4361</td><td class="n">258</td><td class="n">10.181</td><td class="n">15</td><td class="n">62,456</td><td class="n">166.783</td><td class="n">6.10</td><td>f</td></tr>
+<tr><td>Agency 006</td><td class="n">1</td><td>National</td><td>Agency 006</td><td class="n">6348</td><td class="n">362</td><td class="n">17.892</td><td class="n">7</td><td class="n">38,730</td><td class="n">115.313</td><td class="n">15.52</td><td>f</td></tr>
+<tr><td>Agency 006</td><td class="n">2</td><td>Regional</td><td>Agency 006 &gt; Agency 016</td><td class="n">6949</td><td class="n">431</td><td class="n">21.518</td><td class="n">7</td><td class="n">38,730</td><td class="n">115.313</td><td class="n">18.66</td><td>f</td></tr>
 </tbody></table></div>
-  
+  <p class="note">Showing the first 30 of 60 rows.</p>
 </section>
 <section class="q">
   <div class="qid">Q14</div>
@@ -1041,7 +1131,7 @@ FULL <span class="k">JOIN</span> as_it_is i <span class="k">ON</span> i.agency_n
   
 </section>
 <footer>
-  Generated 2026-07-30 12:46 UTC from <code>sql/05_analytics.sql</code> against the
+  Generated 2026-07-30 17:12 UTC from <code>sql/05_analytics.sql</code> against the
   loaded warehouse. Rebuild with <code>./run.sh results</code>.
 </footer>
 </div></body></html>

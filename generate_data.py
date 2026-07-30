@@ -296,8 +296,17 @@ METROS = [
     "Noordveld Metro",
 ]
 
-# Invented suburb compounds. Checked by eye against real South African place
-# names so that none of them is a real suburb.
+# Invented Afrikaans and English suburb compounds. A handful of these strings do
+# coincide with real South African place names, which is unavoidable with compound
+# Afrikaans toponyms built from a small stock of words like "vaal", "klip", "kloof"
+# and "fontein". An earlier version of this comment claimed none of them was a real
+# suburb, and that claim was false.
+#
+# The claim that matters is narrower and checkable: no generated property
+# corresponds to a real property, because the erf number is random, the metro is
+# drawn from an invented list, and the province is drawn independently of the
+# suburb. A row can therefore share a suburb name with somewhere real and still
+# describe nowhere.
 SUBURBS = [
     "Kleinrand", "Vaalhoek", "Brakspruit", "Duinfontein", "Wildekloof",
     "Skuinsbaai", "Perdedal", "Melkkop", "Aalwynpark", "Bokveldrand",

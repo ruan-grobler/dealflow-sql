@@ -17,207 +17,207 @@ SET
 Pager usage is off.
                                                                                                               QUERY PLAN                                                                                                              
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- GroupAggregate  (cost=221395.60..222192.84 rows=11 width=81) (actual time=4548.000..5268.712 rows=10 loops=1)
+ GroupAggregate  (cost=403536.27..418026.83 rows=11 width=81) (actual time=4976.191..5745.973 rows=10 loops=1)
    Group Key: s.stage_name
-   Buffers: shared hit=1099262 read=28334, temp read=9005 written=8706
-   ->  Sort  (cost=221395.60..221555.00 rows=63757 width=41) (actual time=4537.730..4665.476 rows=916341 loops=1)
+   Buffers: shared hit=1099266 read=28330, temp read=9005 written=8706
+   ->  Sort  (cost=403536.27..406434.33 rows=1159223 width=41) (actual time=4967.216..5171.757 rows=916341 loops=1)
          Sort Key: s.stage_name
          Sort Method: external merge  Disk: 28448kB
-         Buffers: shared hit=1099262 read=28334, temp read=7108 written=7124
-         ->  Hash Join  (cost=27.45..214344.20 rows=63757 width=41) (actual time=80.977..4092.249 rows=916341 loops=1)
+         Buffers: shared hit=1099266 read=28330, temp read=7108 written=7124
+         ->  Hash Join  (cost=27.45..215452.12 rows=1159223 width=41) (actual time=91.896..4469.850 rows=916341 loops=1)
                Hash Cond: (d.to_stage_sk = s.stage_sk)
-               Buffers: shared hit=1099262 read=28334
-               ->  Subquery Scan on d  (cost=26.20..211235.51 rows=1159223 width=36) (actual time=4.840..3800.871 rows=916341 loops=1)
+               Buffers: shared hit=1099266 read=28330
+               ->  Subquery Scan on d  (cost=26.20..211235.51 rows=1159223 width=36) (actual time=7.140..4175.706 rows=916341 loops=1)
                      Filter: (d.days_in_stage IS NOT NULL)
                      Rows Removed by Filter: 248702
-                     Buffers: shared hit=1099262 read=28333
-                     ->  WindowAgg  (cost=26.20..199585.03 rows=1165048 width=61) (actual time=4.799..3692.431 rows=1165043 loops=1)
-                           Buffers: shared hit=1099262 read=28333
-                           ->  Merge Append  (cost=26.20..170458.83 rows=1165048 width=29) (actual time=4.753..2802.194 rows=1165043 loops=1)
+                     Buffers: shared hit=1099265 read=28330
+                     ->  WindowAgg  (cost=26.20..199585.03 rows=1165048 width=61) (actual time=7.095..4055.614 rows=1165043 loops=1)
+                           Buffers: shared hit=1099265 read=28330
+                           ->  Merge Append  (cost=26.20..170458.83 rows=1165048 width=29) (actual time=7.024..3077.706 rows=1165043 loops=1)
                                  Sort Key: e.deal_nk, e.event_ts
-                                 Buffers: shared hit=1099262 read=28333
-                                 ->  Index Scan using fct_deal_stage_event_2020_01_deal_nk_event_ts_idx on fct_deal_stage_event_2020_01 e_1  (cost=0.28..375.80 rows=3922 width=29) (actual time=0.089..3.814 rows=3922 loops=1)
+                                 Buffers: shared hit=1099265 read=28330
+                                 ->  Index Scan using fct_deal_stage_event_2020_01_deal_nk_event_ts_idx on fct_deal_stage_event_2020_01 e_1  (cost=0.28..375.80 rows=3922 width=29) (actual time=0.151..5.044 rows=3922 loops=1)
                                        Buffers: shared hit=3491 read=97
-                                 ->  Index Scan using fct_deal_stage_event_2020_02_deal_nk_event_ts_idx on fct_deal_stage_event_2020_02 e_2  (cost=0.29..819.25 rows=8241 width=29) (actual time=0.078..7.964 rows=8241 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2020_02_deal_nk_event_ts_idx on fct_deal_stage_event_2020_02 e_2  (cost=0.29..819.25 rows=8241 width=29) (actual time=0.099..12.633 rows=8241 loops=1)
                                        Buffers: shared hit=7425 read=201
-                                 ->  Index Scan using fct_deal_stage_event_2020_03_deal_nk_event_ts_idx on fct_deal_stage_event_2020_03 e_3  (cost=0.29..1191.37 rows=11288 width=29) (actual time=0.092..12.598 rows=11288 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2020_03_deal_nk_event_ts_idx on fct_deal_stage_event_2020_03 e_3  (cost=0.29..1191.37 rows=11288 width=29) (actual time=0.105..17.075 rows=11288 loops=1)
                                        Buffers: shared hit=10546 read=275
-                                 ->  Index Scan using fct_deal_stage_event_2020_04_deal_nk_event_ts_idx on fct_deal_stage_event_2020_04 e_4  (cost=0.29..1151.75 rows=10458 width=29) (actual time=0.065..14.195 rows=10458 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2020_04_deal_nk_event_ts_idx on fct_deal_stage_event_2020_04 e_4  (cost=0.29..1151.75 rows=10458 width=29) (actual time=0.090..27.311 rows=10458 loops=1)
                                        Buffers: shared hit=9840 read=255
-                                 ->  Index Scan using fct_deal_stage_event_2020_05_deal_nk_event_ts_idx on fct_deal_stage_event_2020_05 e_5  (cost=0.29..1188.40 rows=10802 width=29) (actual time=0.063..12.992 rows=10802 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2020_05_deal_nk_event_ts_idx on fct_deal_stage_event_2020_05 e_5  (cost=0.29..1188.40 rows=10802 width=29) (actual time=0.070..22.489 rows=10802 loops=1)
                                        Buffers: shared hit=10109 read=264
-                                 ->  Index Scan using fct_deal_stage_event_2020_06_deal_nk_event_ts_idx on fct_deal_stage_event_2020_06 e_6  (cost=0.29..1278.09 rows=11582 width=29) (actual time=0.057..15.043 rows=11582 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2020_06_deal_nk_event_ts_idx on fct_deal_stage_event_2020_06 e_6  (cost=0.29..1278.09 rows=11582 width=29) (actual time=0.097..30.028 rows=11582 loops=1)
                                        Buffers: shared hit=11013 read=282
-                                 ->  Index Scan using fct_deal_stage_event_2020_07_deal_nk_event_ts_idx on fct_deal_stage_event_2020_07 e_7  (cost=0.29..1213.36 rows=11035 width=29) (actual time=0.078..14.750 rows=11035 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2020_07_deal_nk_event_ts_idx on fct_deal_stage_event_2020_07 e_7  (cost=0.29..1213.36 rows=11035 width=29) (actual time=0.448..23.545 rows=11035 loops=1)
                                        Buffers: shared hit=10362 read=269
-                                 ->  Index Scan using fct_deal_stage_event_2020_08_deal_nk_event_ts_idx on fct_deal_stage_event_2020_08 e_8  (cost=0.29..1296.61 rows=11866 width=29) (actual time=0.063..16.492 rows=11866 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2020_08_deal_nk_event_ts_idx on fct_deal_stage_event_2020_08 e_8  (cost=0.29..1296.61 rows=11866 width=29) (actual time=0.157..23.781 rows=11866 loops=1)
                                        Buffers: shared hit=11229 read=289
-                                 ->  Index Scan using fct_deal_stage_event_2020_09_deal_nk_event_ts_idx on fct_deal_stage_event_2020_09 e_9  (cost=0.29..1289.08 rows=11749 width=29) (actual time=0.043..14.004 rows=11749 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2020_09_deal_nk_event_ts_idx on fct_deal_stage_event_2020_09 e_9  (cost=0.29..1289.08 rows=11749 width=29) (actual time=0.120..23.715 rows=11749 loops=1)
                                        Buffers: shared hit=11070 read=286
-                                 ->  Index Scan using fct_deal_stage_event_2020_10_deal_nk_event_ts_idx on fct_deal_stage_event_2020_10 e_10  (cost=0.29..1313.15 rows=11977 width=29) (actual time=0.054..14.997 rows=11977 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2020_10_deal_nk_event_ts_idx on fct_deal_stage_event_2020_10 e_10  (cost=0.29..1313.15 rows=11977 width=29) (actual time=0.140..22.371 rows=11977 loops=1)
                                        Buffers: shared hit=11258 read=292
-                                 ->  Index Scan using fct_deal_stage_event_2020_11_deal_nk_event_ts_idx on fct_deal_stage_event_2020_11 e_11  (cost=0.29..1355.20 rows=12295 width=29) (actual time=0.062..16.390 rows=12295 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2020_11_deal_nk_event_ts_idx on fct_deal_stage_event_2020_11 e_11  (cost=0.29..1355.20 rows=12295 width=29) (actual time=0.124..25.368 rows=12295 loops=1)
                                        Buffers: shared hit=11697 read=300
-                                 ->  Index Scan using fct_deal_stage_event_2020_12_deal_nk_event_ts_idx on fct_deal_stage_event_2020_12 e_12  (cost=0.28..871.06 rows=7685 width=29) (actual time=0.037..9.528 rows=7685 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2020_12_deal_nk_event_ts_idx on fct_deal_stage_event_2020_12 e_12  (cost=0.28..871.06 rows=7685 width=29) (actual time=0.097..94.965 rows=7685 loops=1)
                                        Buffers: shared hit=7427 read=188
-                                 ->  Index Scan using fct_deal_stage_event_2021_01_deal_nk_event_ts_idx on fct_deal_stage_event_2021_01 e_13  (cost=0.29..974.10 rows=8871 width=29) (actual time=0.075..11.235 rows=8871 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2021_01_deal_nk_event_ts_idx on fct_deal_stage_event_2021_01 e_13  (cost=0.29..974.10 rows=8871 width=29) (actual time=0.153..24.732 rows=8871 loops=1)
                                        Buffers: shared hit=8331 read=217
-                                 ->  Index Scan using fct_deal_stage_event_2021_02_deal_nk_event_ts_idx on fct_deal_stage_event_2021_02 e_14  (cost=0.29..1289.90 rows=12143 width=29) (actual time=0.067..15.924 rows=12143 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2021_02_deal_nk_event_ts_idx on fct_deal_stage_event_2021_02 e_14  (cost=0.29..1289.90 rows=12143 width=29) (actual time=0.109..32.286 rows=12143 loops=1)
                                        Buffers: shared hit=11197 read=296
-                                 ->  Index Scan using fct_deal_stage_event_2021_03_deal_nk_event_ts_idx on fct_deal_stage_event_2021_03 e_15  (cost=0.29..1613.90 rows=15006 width=29) (actual time=0.059..18.560 rows=15006 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2021_03_deal_nk_event_ts_idx on fct_deal_stage_event_2021_03 e_15  (cost=0.29..1613.90 rows=15006 width=29) (actual time=0.109..33.755 rows=15006 loops=1)
                                        Buffers: shared hit=14146 read=365
-                                 ->  Index Scan using fct_deal_stage_event_2021_04_deal_nk_event_ts_idx on fct_deal_stage_event_2021_04 e_16  (cost=0.29..1361.88 rows=12366 width=29) (actual time=0.058..14.922 rows=12366 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2021_04_deal_nk_event_ts_idx on fct_deal_stage_event_2021_04 e_16  (cost=0.29..1361.88 rows=12366 width=29) (actual time=0.086..29.540 rows=12366 loops=1)
                                        Buffers: shared hit=11628 read=301
-                                 ->  Index Scan using fct_deal_stage_event_2021_05_deal_nk_event_ts_idx on fct_deal_stage_event_2021_05 e_17  (cost=0.29..1470.28 rows=13360 width=29) (actual time=0.069..15.453 rows=13360 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2021_05_deal_nk_event_ts_idx on fct_deal_stage_event_2021_05 e_17  (cost=0.29..1470.28 rows=13360 width=29) (actual time=0.064..34.306 rows=13360 loops=1)
                                        Buffers: shared hit=12722 read=325
-                                 ->  Index Scan using fct_deal_stage_event_2021_06_deal_nk_event_ts_idx on fct_deal_stage_event_2021_06 e_18  (cost=0.29..1367.89 rows=12384 width=29) (actual time=0.061..16.536 rows=12384 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2021_06_deal_nk_event_ts_idx on fct_deal_stage_event_2021_06 e_18  (cost=0.29..1367.89 rows=12384 width=29) (actual time=0.092..34.821 rows=12384 loops=1)
                                        Buffers: shared hit=11748 read=302
-                                 ->  Index Scan using fct_deal_stage_event_2021_07_deal_nk_event_ts_idx on fct_deal_stage_event_2021_07 e_19  (cost=0.29..1356.26 rows=12330 width=29) (actual time=0.063..15.754 rows=12330 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2021_07_deal_nk_event_ts_idx on fct_deal_stage_event_2021_07 e_19  (cost=0.29..1356.26 rows=12330 width=29) (actual time=0.108..25.565 rows=12330 loops=1)
                                        Buffers: shared hit=11595 read=301
-                                 ->  Index Scan using fct_deal_stage_event_2021_08_deal_nk_event_ts_idx on fct_deal_stage_event_2021_08 e_20  (cost=0.29..1464.56 rows=13334 width=29) (actual time=0.097..16.075 rows=13334 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2021_08_deal_nk_event_ts_idx on fct_deal_stage_event_2021_08 e_20  (cost=0.29..1464.56 rows=13334 width=29) (actual time=0.061..27.733 rows=13334 loops=1)
                                        Buffers: shared hit=12649 read=325
-                                 ->  Index Scan using fct_deal_stage_event_2021_09_deal_nk_event_ts_idx on fct_deal_stage_event_2021_09 e_21  (cost=0.29..1425.78 rows=12984 width=29) (actual time=0.060..17.581 rows=12984 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2021_09_deal_nk_event_ts_idx on fct_deal_stage_event_2021_09 e_21  (cost=0.29..1425.78 rows=12984 width=29) (actual time=0.072..23.511 rows=12984 loops=1)
                                        Buffers: shared hit=12229 read=317
-                                 ->  Index Scan using fct_deal_stage_event_2021_10_deal_nk_event_ts_idx on fct_deal_stage_event_2021_10 e_22  (cost=0.29..1443.06 rows=13149 width=29) (actual time=0.093..17.357 rows=13149 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2021_10_deal_nk_event_ts_idx on fct_deal_stage_event_2021_10 e_22  (cost=0.29..1443.06 rows=13149 width=29) (actual time=0.072..24.960 rows=13149 loops=1)
                                        Buffers: shared hit=12354 read=321
-                                 ->  Index Scan using fct_deal_stage_event_2021_11_deal_nk_event_ts_idx on fct_deal_stage_event_2021_11 e_23  (cost=0.29..1512.56 rows=13768 width=29) (actual time=0.073..19.555 rows=13768 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2021_11_deal_nk_event_ts_idx on fct_deal_stage_event_2021_11 e_23  (cost=0.29..1512.56 rows=13768 width=29) (actual time=0.070..29.415 rows=13768 loops=1)
                                        Buffers: shared hit=13072 read=335
-                                 ->  Index Scan using fct_deal_stage_event_2021_12_deal_nk_event_ts_idx on fct_deal_stage_event_2021_12 e_24  (cost=0.29..963.06 rows=8490 width=29) (actual time=0.078..16.579 rows=8490 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2021_12_deal_nk_event_ts_idx on fct_deal_stage_event_2021_12 e_24  (cost=0.29..963.06 rows=8490 width=29) (actual time=0.093..22.102 rows=8490 loops=1)
                                        Buffers: shared hit=8223 read=208
-                                 ->  Index Scan using fct_deal_stage_event_2022_01_deal_nk_event_ts_idx on fct_deal_stage_event_2022_01 e_25  (cost=0.29..1101.25 rows=10025 width=29) (actual time=0.073..13.862 rows=10025 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2022_01_deal_nk_event_ts_idx on fct_deal_stage_event_2022_01 e_25  (cost=0.29..1101.25 rows=10025 width=29) (actual time=0.112..25.668 rows=10025 loops=1)
                                        Buffers: shared hit=9480 read=245
-                                 ->  Index Scan using fct_deal_stage_event_2022_02_deal_nk_event_ts_idx on fct_deal_stage_event_2022_02 e_26  (cost=0.29..1460.48 rows=13603 width=29) (actual time=0.068..17.877 rows=13603 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2022_02_deal_nk_event_ts_idx on fct_deal_stage_event_2022_02 e_26  (cost=0.29..1460.48 rows=13603 width=29) (actual time=0.081..29.115 rows=13603 loops=1)
                                        Buffers: shared hit=12808 read=331
-                                 ->  Index Scan using fct_deal_stage_event_2022_03_deal_nk_event_ts_idx on fct_deal_stage_event_2022_03 e_27  (cost=0.29..1698.44 rows=15740 width=29) (actual time=0.077..20.552 rows=15740 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2022_03_deal_nk_event_ts_idx on fct_deal_stage_event_2022_03 e_27  (cost=0.29..1698.44 rows=15740 width=29) (actual time=0.095..26.876 rows=15740 loops=1)
                                        Buffers: shared hit=14776 read=384
-                                 ->  Index Scan using fct_deal_stage_event_2022_04_deal_nk_event_ts_idx on fct_deal_stage_event_2022_04 e_28  (cost=0.29..1480.86 rows=13474 width=29) (actual time=0.071..19.307 rows=13474 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2022_04_deal_nk_event_ts_idx on fct_deal_stage_event_2022_04 e_28  (cost=0.29..1480.86 rows=13474 width=29) (actual time=0.120..27.489 rows=13474 loops=1)
                                        Buffers: shared hit=12653 read=328
-                                 ->  Index Scan using fct_deal_stage_event_2022_05_deal_nk_event_ts_idx on fct_deal_stage_event_2022_05 e_29  (cost=0.29..1659.34 rows=15098 width=29) (actual time=0.071..18.422 rows=15098 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2022_05_deal_nk_event_ts_idx on fct_deal_stage_event_2022_05 e_29  (cost=0.29..1659.34 rows=15098 width=29) (actual time=0.091..32.132 rows=15098 loops=1)
                                        Buffers: shared hit=14332 read=368
-                                 ->  Index Scan using fct_deal_stage_event_2022_06_deal_nk_event_ts_idx on fct_deal_stage_event_2022_06 e_30  (cost=0.29..1506.17 rows=13639 width=29) (actual time=0.086..15.732 rows=13639 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2022_06_deal_nk_event_ts_idx on fct_deal_stage_event_2022_06 e_30  (cost=0.29..1506.17 rows=13639 width=29) (actual time=0.095..28.435 rows=13639 loops=1)
                                        Buffers: shared hit=12935 read=332
-                                 ->  Index Scan using fct_deal_stage_event_2022_07_deal_nk_event_ts_idx on fct_deal_stage_event_2022_07 e_31  (cost=0.29..1462.85 rows=13330 width=29) (actual time=0.062..15.973 rows=13330 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2022_07_deal_nk_event_ts_idx on fct_deal_stage_event_2022_07 e_31  (cost=0.29..1462.85 rows=13330 width=29) (actual time=0.098..24.175 rows=13330 loops=1)
                                        Buffers: shared hit=12495 read=326
-                                 ->  Index Scan using fct_deal_stage_event_2022_08_deal_nk_event_ts_idx on fct_deal_stage_event_2022_08 e_32  (cost=0.29..1638.47 rows=14947 width=29) (actual time=0.070..18.936 rows=14947 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2022_08_deal_nk_event_ts_idx on fct_deal_stage_event_2022_08 e_32  (cost=0.29..1638.47 rows=14947 width=29) (actual time=0.091..24.816 rows=14947 loops=1)
                                        Buffers: shared hit=14118 read=365
-                                 ->  Index Scan using fct_deal_stage_event_2022_09_deal_nk_event_ts_idx on fct_deal_stage_event_2022_09 e_33  (cost=0.29..1545.38 rows=14125 width=29) (actual time=0.063..19.516 rows=14125 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2022_09_deal_nk_event_ts_idx on fct_deal_stage_event_2022_09 e_33  (cost=0.29..1545.38 rows=14125 width=29) (actual time=0.094..23.054 rows=14125 loops=1)
                                        Buffers: shared hit=13277 read=344
-                                 ->  Index Scan using fct_deal_stage_event_2022_10_deal_nk_event_ts_idx on fct_deal_stage_event_2022_10 e_34  (cost=0.29..1639.56 rows=14963 width=29) (actual time=0.091..17.789 rows=14963 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2022_10_deal_nk_event_ts_idx on fct_deal_stage_event_2022_10 e_34  (cost=0.29..1639.56 rows=14963 width=29) (actual time=0.154..28.183 rows=14963 loops=1)
                                        Buffers: shared hit=14196 read=366
-                                 ->  Index Scan using fct_deal_stage_event_2022_11_deal_nk_event_ts_idx on fct_deal_stage_event_2022_11 e_35  (cost=0.29..1570.62 rows=14273 width=29) (actual time=0.047..18.696 rows=14273 loops=1)
-                                       Buffers: shared hit=13490 read=347
-                                 ->  Index Scan using fct_deal_stage_event_2022_12_deal_nk_event_ts_idx on fct_deal_stage_event_2022_12 e_36  (cost=0.29..1037.40 rows=9168 width=29) (actual time=0.078..14.346 rows=9168 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2022_11_deal_nk_event_ts_idx on fct_deal_stage_event_2022_11 e_35  (cost=0.29..1570.62 rows=14273 width=29) (actual time=0.090..24.031 rows=14273 loops=1)
+                                       Buffers: shared hit=13491 read=346
+                                 ->  Index Scan using fct_deal_stage_event_2022_12_deal_nk_event_ts_idx on fct_deal_stage_event_2022_12 e_36  (cost=0.29..1037.40 rows=9168 width=29) (actual time=0.053..16.710 rows=9168 loops=1)
                                        Buffers: shared hit=8872 read=224
-                                 ->  Index Scan using fct_deal_stage_event_2023_01_deal_nk_event_ts_idx on fct_deal_stage_event_2023_01 e_37  (cost=0.29..1225.97 rows=11177 width=29) (actual time=0.052..13.834 rows=11177 loops=1)
-                                       Buffers: shared hit=10570 read=273
-                                 ->  Index Scan using fct_deal_stage_event_2023_02_deal_nk_event_ts_idx on fct_deal_stage_event_2023_02 e_38  (cost=0.29..1552.70 rows=14588 width=29) (actual time=0.041..16.914 rows=14588 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2023_01_deal_nk_event_ts_idx on fct_deal_stage_event_2023_01 e_37  (cost=0.29..1225.97 rows=11177 width=29) (actual time=0.076..16.642 rows=11177 loops=1)
+                                       Buffers: shared hit=10571 read=272
+                                 ->  Index Scan using fct_deal_stage_event_2023_02_deal_nk_event_ts_idx on fct_deal_stage_event_2023_02 e_38  (cost=0.29..1552.70 rows=14588 width=29) (actual time=0.074..22.787 rows=14588 loops=1)
                                        Buffers: shared hit=13554 read=354
-                                 ->  Index Scan using fct_deal_stage_event_2023_03_deal_nk_event_ts_idx on fct_deal_stage_event_2023_03 e_39  (cost=0.29..1856.12 rows=17267 width=29) (actual time=0.033..21.449 rows=17267 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2023_03_deal_nk_event_ts_idx on fct_deal_stage_event_2023_03 e_39  (cost=0.29..1856.12 rows=17267 width=29) (actual time=0.065..23.569 rows=17267 loops=1)
                                        Buffers: shared hit=16232 read=419
-                                 ->  Index Scan using fct_deal_stage_event_2023_04_deal_nk_event_ts_idx on fct_deal_stage_event_2023_04 e_40  (cost=0.29..1580.26 rows=14437 width=29) (actual time=0.040..19.412 rows=14437 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2023_04_deal_nk_event_ts_idx on fct_deal_stage_event_2023_04 e_40  (cost=0.29..1580.26 rows=14437 width=29) (actual time=0.088..19.341 rows=14437 loops=1)
                                        Buffers: shared hit=13519 read=350
-                                 ->  Index Scan using fct_deal_stage_event_2023_05_deal_nk_event_ts_idx on fct_deal_stage_event_2023_05 e_41  (cost=0.29..1846.09 rows=16809 width=29) (actual time=0.032..21.143 rows=16809 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2023_05_deal_nk_event_ts_idx on fct_deal_stage_event_2023_05 e_41  (cost=0.29..1846.09 rows=16809 width=29) (actual time=0.066..25.891 rows=16809 loops=1)
                                        Buffers: shared hit=15963 read=408
-                                 ->  Index Scan using fct_deal_stage_event_2023_06_deal_nk_event_ts_idx on fct_deal_stage_event_2023_06 e_42  (cost=0.29..1654.60 rows=15032 width=29) (actual time=0.052..22.066 rows=15032 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2023_06_deal_nk_event_ts_idx on fct_deal_stage_event_2023_06 e_42  (cost=0.29..1654.60 rows=15032 width=29) (actual time=0.086..26.028 rows=15032 loops=1)
                                        Buffers: shared hit=14205 read=365
-                                 ->  Index Scan using fct_deal_stage_event_2023_07_deal_nk_event_ts_idx on fct_deal_stage_event_2023_07 e_43  (cost=0.29..1707.66 rows=15551 width=29) (actual time=0.059..20.421 rows=15551 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2023_07_deal_nk_event_ts_idx on fct_deal_stage_event_2023_07 e_43  (cost=0.29..1707.66 rows=15551 width=29) (actual time=0.070..21.983 rows=15551 loops=1)
                                        Buffers: shared hit=14747 read=377
-                                 ->  Index Scan using fct_deal_stage_event_2023_08_deal_nk_event_ts_idx on fct_deal_stage_event_2023_08 e_44  (cost=0.29..1688.45 rows=15401 width=29) (actual time=0.039..19.306 rows=15401 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2023_08_deal_nk_event_ts_idx on fct_deal_stage_event_2023_08 e_44  (cost=0.29..1688.45 rows=15401 width=29) (actual time=0.057..21.332 rows=15401 loops=1)
                                        Buffers: shared hit=14532 read=374
-                                 ->  Index Scan using fct_deal_stage_event_2023_09_deal_nk_event_ts_idx on fct_deal_stage_event_2023_09 e_45  (cost=0.29..1651.39 rows=15174 width=29) (actual time=0.045..29.389 rows=15174 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2023_09_deal_nk_event_ts_idx on fct_deal_stage_event_2023_09 e_45  (cost=0.29..1651.39 rows=15174 width=29) (actual time=0.096..23.060 rows=15174 loops=1)
                                        Buffers: shared hit=14185 read=368
-                                 ->  Index Scan using fct_deal_stage_event_2023_10_deal_nk_event_ts_idx on fct_deal_stage_event_2023_10 e_46  (cost=0.29..1856.76 rows=16994 width=29) (actual time=0.055..36.776 rows=16994 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2023_10_deal_nk_event_ts_idx on fct_deal_stage_event_2023_10 e_46  (cost=0.29..1856.76 rows=16994 width=29) (actual time=0.083..25.082 rows=16994 loops=1)
                                        Buffers: shared hit=16097 read=412
-                                 ->  Index Scan using fct_deal_stage_event_2023_11_deal_nk_event_ts_idx on fct_deal_stage_event_2023_11 e_47  (cost=0.29..1716.70 rows=15613 width=29) (actual time=0.052..27.098 rows=15613 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2023_11_deal_nk_event_ts_idx on fct_deal_stage_event_2023_11 e_47  (cost=0.29..1716.70 rows=15613 width=29) (actual time=0.089..23.064 rows=15613 loops=1)
                                        Buffers: shared hit=14731 read=379
-                                 ->  Index Scan using fct_deal_stage_event_2023_12_deal_nk_event_ts_idx on fct_deal_stage_event_2023_12 e_48  (cost=0.29..1092.44 rows=9645 width=29) (actual time=0.049..20.477 rows=9645 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2023_12_deal_nk_event_ts_idx on fct_deal_stage_event_2023_12 e_48  (cost=0.29..1092.44 rows=9645 width=29) (actual time=0.090..16.862 rows=9645 loops=1)
                                        Buffers: shared hit=9312 read=235
-                                 ->  Index Scan using fct_deal_stage_event_2024_01_deal_nk_event_ts_idx on fct_deal_stage_event_2024_01 e_49  (cost=0.29..1366.56 rows=12472 width=29) (actual time=0.061..22.549 rows=12472 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2024_01_deal_nk_event_ts_idx on fct_deal_stage_event_2024_01 e_49  (cost=0.29..1366.56 rows=12472 width=29) (actual time=0.089..17.913 rows=12472 loops=1)
                                        Buffers: shared hit=11773 read=305
-                                 ->  Index Scan using fct_deal_stage_event_2024_02_deal_nk_event_ts_idx on fct_deal_stage_event_2024_02 e_50  (cost=0.29..1761.67 rows=16455 width=29) (actual time=0.056..25.204 rows=16455 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2024_02_deal_nk_event_ts_idx on fct_deal_stage_event_2024_02 e_50  (cost=0.29..1761.67 rows=16455 width=29) (actual time=0.069..23.652 rows=16455 loops=1)
                                        Buffers: shared hit=15310 read=401
-                                 ->  Index Scan using fct_deal_stage_event_2024_03_deal_nk_event_ts_idx on fct_deal_stage_event_2024_03 e_51  (cost=0.29..1952.07 rows=18311 width=29) (actual time=0.048..45.360 rows=18311 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2024_03_deal_nk_event_ts_idx on fct_deal_stage_event_2024_03 e_51  (cost=0.29..1952.07 rows=18311 width=29) (actual time=0.083..25.688 rows=18311 loops=1)
                                        Buffers: shared hit=17111 read=444
-                                 ->  Index Scan using fct_deal_stage_event_2024_04_deal_nk_event_ts_idx on fct_deal_stage_event_2024_04 e_52  (cost=0.29..1923.78 rows=17539 width=29) (actual time=0.054..35.061 rows=17539 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2024_04_deal_nk_event_ts_idx on fct_deal_stage_event_2024_04 e_52  (cost=0.29..1923.78 rows=17539 width=29) (actual time=0.073..27.926 rows=17539 loops=1)
                                        Buffers: shared hit=16682 read=425
-                                 ->  Index Scan using fct_deal_stage_event_2024_05_deal_nk_event_ts_idx on fct_deal_stage_event_2024_05 e_53  (cost=0.29..1911.59 rows=17409 width=29) (actual time=0.051..31.610 rows=17409 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2024_05_deal_nk_event_ts_idx on fct_deal_stage_event_2024_05 e_53  (cost=0.29..1911.59 rows=17409 width=29) (actual time=0.067..32.696 rows=17409 loops=1)
                                        Buffers: shared hit=16458 read=422
-                                 ->  Index Scan using fct_deal_stage_event_2024_06_deal_nk_event_ts_idx on fct_deal_stage_event_2024_06 e_54  (cost=0.29..1736.53 rows=15860 width=29) (actual time=0.055..34.953 rows=15860 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2024_06_deal_nk_event_ts_idx on fct_deal_stage_event_2024_06 e_54  (cost=0.29..1736.53 rows=15860 width=29) (actual time=0.084..25.769 rows=15860 loops=1)
                                        Buffers: shared hit=14862 read=385
-                                 ->  Index Scan using fct_deal_stage_event_2024_07_deal_nk_event_ts_idx on fct_deal_stage_event_2024_07 e_55  (cost=0.29..1971.80 rows=17933 width=29) (actual time=0.047..36.476 rows=17933 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2024_07_deal_nk_event_ts_idx on fct_deal_stage_event_2024_07 e_55  (cost=0.29..1971.80 rows=17933 width=29) (actual time=0.068..25.888 rows=17933 loops=1)
                                        Buffers: shared hit=17032 read=436
-                                 ->  Index Scan using fct_deal_stage_event_2024_08_deal_nk_event_ts_idx on fct_deal_stage_event_2024_08 e_56  (cost=0.29..1844.90 rows=16907 width=29) (actual time=0.083..39.482 rows=16907 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2024_08_deal_nk_event_ts_idx on fct_deal_stage_event_2024_08 e_56  (cost=0.29..1844.90 rows=16907 width=29) (actual time=0.086..26.593 rows=16907 loops=1)
                                        Buffers: shared hit=15931 read=410
-                                 ->  Index Scan using fct_deal_stage_event_2024_09_deal_nk_event_ts_idx on fct_deal_stage_event_2024_09 e_57  (cost=0.29..1963.54 rows=17973 width=29) (actual time=0.065..33.975 rows=17973 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2024_09_deal_nk_event_ts_idx on fct_deal_stage_event_2024_09 e_57  (cost=0.29..1963.54 rows=17973 width=29) (actual time=0.059..23.882 rows=17973 loops=1)
                                        Buffers: shared hit=17094 read=436
-                                 ->  Index Scan using fct_deal_stage_event_2024_10_deal_nk_event_ts_idx on fct_deal_stage_event_2024_10 e_58  (cost=0.29..1971.17 rows=18033 width=29) (actual time=0.036..32.857 rows=18033 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2024_10_deal_nk_event_ts_idx on fct_deal_stage_event_2024_10 e_58  (cost=0.29..1971.17 rows=18033 width=29) (actual time=0.056..23.173 rows=18033 loops=1)
                                        Buffers: shared hit=17029 read=437
-                                 ->  Index Scan using fct_deal_stage_event_2024_11_deal_nk_event_ts_idx on fct_deal_stage_event_2024_11 e_59  (cost=0.29..1850.38 rows=16927 width=29) (actual time=0.065..34.607 rows=16927 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2024_11_deal_nk_event_ts_idx on fct_deal_stage_event_2024_11 e_59  (cost=0.29..1850.38 rows=16927 width=29) (actual time=0.061..26.867 rows=16927 loops=1)
                                        Buffers: shared hit=15939 read=410
-                                 ->  Index Scan using fct_deal_stage_event_2024_12_deal_nk_event_ts_idx on fct_deal_stage_event_2024_12 e_60  (cost=0.29..1318.11 rows=11680 width=29) (actual time=0.048..26.689 rows=11680 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2024_12_deal_nk_event_ts_idx on fct_deal_stage_event_2024_12 e_60  (cost=0.29..1318.11 rows=11680 width=29) (actual time=0.065..19.373 rows=11680 loops=1)
                                        Buffers: shared hit=11313 read=284
-                                 ->  Index Scan using fct_deal_stage_event_2025_01_deal_nk_event_ts_idx on fct_deal_stage_event_2025_01 e_61  (cost=0.29..1443.78 rows=13189 width=29) (actual time=0.042..27.429 rows=13189 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2025_01_deal_nk_event_ts_idx on fct_deal_stage_event_2025_01 e_61  (cost=0.29..1443.78 rows=13189 width=29) (actual time=0.063..19.455 rows=13189 loops=1)
                                        Buffers: shared hit=12470 read=320
-                                 ->  Index Scan using fct_deal_stage_event_2025_02_deal_nk_event_ts_idx on fct_deal_stage_event_2025_02 e_62  (cost=0.29..1891.44 rows=17871 width=29) (actual time=0.040..33.116 rows=17871 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2025_02_deal_nk_event_ts_idx on fct_deal_stage_event_2025_02 e_62  (cost=0.29..1891.44 rows=17871 width=29) (actual time=0.068..27.898 rows=17871 loops=1)
                                        Buffers: shared hit=16657 read=434
-                                 ->  Index Scan using fct_deal_stage_event_2025_03_deal_nk_event_ts_idx on fct_deal_stage_event_2025_03 e_63  (cost=0.29..2267.36 rows=21127 width=29) (actual time=0.037..35.399 rows=21127 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2025_03_deal_nk_event_ts_idx on fct_deal_stage_event_2025_03 e_63  (cost=0.29..2267.36 rows=21127 width=29) (actual time=0.043..34.351 rows=21127 loops=1)
                                        Buffers: shared hit=19966 read=515
-                                 ->  Index Scan using fct_deal_stage_event_2025_04_deal_nk_event_ts_idx on fct_deal_stage_event_2025_04 e_64  (cost=0.29..2013.12 rows=18261 width=29) (actual time=0.037..33.910 rows=18261 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2025_04_deal_nk_event_ts_idx on fct_deal_stage_event_2025_04 e_64  (cost=0.29..2013.12 rows=18261 width=29) (actual time=0.039..26.692 rows=18261 loops=1)
                                        Buffers: shared hit=17295 read=443
-                                 ->  Index Scan using fct_deal_stage_event_2025_05_deal_nk_event_ts_idx on fct_deal_stage_event_2025_05 e_65  (cost=0.29..2047.87 rows=18700 width=29) (actual time=0.042..33.038 rows=18700 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2025_05_deal_nk_event_ts_idx on fct_deal_stage_event_2025_05 e_65  (cost=0.29..2047.87 rows=18700 width=29) (actual time=0.060..29.494 rows=18700 loops=1)
                                        Buffers: shared hit=17601 read=453
-                                 ->  Index Scan using fct_deal_stage_event_2025_06_deal_nk_event_ts_idx on fct_deal_stage_event_2025_06 e_66  (cost=0.29..2096.38 rows=19050 width=29) (actual time=0.056..36.855 rows=19050 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2025_06_deal_nk_event_ts_idx on fct_deal_stage_event_2025_06 e_66  (cost=0.29..2096.38 rows=19050 width=29) (actual time=0.041..31.429 rows=19050 loops=1)
                                        Buffers: shared hit=18210 read=462
-                                 ->  Index Scan using fct_deal_stage_event_2025_07_deal_nk_event_ts_idx on fct_deal_stage_event_2025_07 e_67  (cost=0.29..2039.95 rows=18576 width=29) (actual time=0.055..42.824 rows=18576 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2025_07_deal_nk_event_ts_idx on fct_deal_stage_event_2025_07 e_67  (cost=0.29..2039.95 rows=18576 width=29) (actual time=0.057..25.919 rows=18576 loops=1)
                                        Buffers: shared hit=17567 read=452
-                                 ->  Index Scan using fct_deal_stage_event_2025_08_deal_nk_event_ts_idx on fct_deal_stage_event_2025_08 e_68  (cost=0.29..2003.95 rows=18330 width=29) (actual time=0.048..30.063 rows=18330 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2025_08_deal_nk_event_ts_idx on fct_deal_stage_event_2025_08 e_68  (cost=0.29..2003.95 rows=18330 width=29) (actual time=0.060..24.701 rows=18330 loops=1)
                                        Buffers: shared hit=17191 read=447
-                                 ->  Index Scan using fct_deal_stage_event_2025_09_deal_nk_event_ts_idx on fct_deal_stage_event_2025_09 e_69  (cost=0.29..2207.98 rows=20218 width=29) (actual time=0.053..32.827 rows=20218 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2025_09_deal_nk_event_ts_idx on fct_deal_stage_event_2025_09 e_69  (cost=0.29..2207.98 rows=20218 width=29) (actual time=0.071..28.105 rows=20218 loops=1)
                                        Buffers: shared hit=19191 read=492
-                                 ->  Index Scan using fct_deal_stage_event_2025_10_deal_nk_event_ts_idx on fct_deal_stage_event_2025_10 e_70  (cost=0.29..2146.93 rows=19664 width=29) (actual time=0.049..32.345 rows=19664 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2025_10_deal_nk_event_ts_idx on fct_deal_stage_event_2025_10 e_70  (cost=0.29..2146.93 rows=19664 width=29) (actual time=0.076..28.006 rows=19664 loops=1)
                                        Buffers: shared hit=18566 read=480
-                                 ->  Index Scan using fct_deal_stage_event_2025_11_deal_nk_event_ts_idx on fct_deal_stage_event_2025_11 e_71  (cost=0.29..2003.41 rows=18346 width=29) (actual time=0.047..25.306 rows=18346 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2025_11_deal_nk_event_ts_idx on fct_deal_stage_event_2025_11 e_71  (cost=0.29..2003.41 rows=18346 width=29) (actual time=0.063..25.201 rows=18346 loops=1)
                                        Buffers: shared hit=17215 read=445
-                                 ->  Index Scan using fct_deal_stage_event_2025_12_deal_nk_event_ts_idx on fct_deal_stage_event_2025_12 e_72  (cost=0.29..1508.21 rows=13377 width=29) (actual time=0.042..19.881 rows=13377 loops=1)
-                                       Buffers: shared hit=12978 read=326
-                                 ->  Index Scan using fct_deal_stage_event_2026_01_deal_nk_event_ts_idx on fct_deal_stage_event_2026_01 e_73  (cost=0.29..1554.48 rows=14217 width=29) (actual time=0.055..19.737 rows=14217 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2025_12_deal_nk_event_ts_idx on fct_deal_stage_event_2025_12 e_72  (cost=0.29..1508.21 rows=13377 width=29) (actual time=0.047..21.816 rows=13377 loops=1)
+                                       Buffers: shared hit=12979 read=325
+                                 ->  Index Scan using fct_deal_stage_event_2026_01_deal_nk_event_ts_idx on fct_deal_stage_event_2026_01 e_73  (cost=0.29..1554.48 rows=14217 width=29) (actual time=0.061..21.743 rows=14217 loops=1)
                                        Buffers: shared hit=13381 read=345
-                                 ->  Index Scan using fct_deal_stage_event_2026_02_deal_nk_event_ts_idx on fct_deal_stage_event_2026_02 e_74  (cost=0.29..2052.44 rows=19406 width=29) (actual time=0.041..26.821 rows=19406 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2026_02_deal_nk_event_ts_idx on fct_deal_stage_event_2026_02 e_74  (cost=0.29..2052.44 rows=19406 width=29) (actual time=0.045..23.535 rows=19406 loops=1)
                                        Buffers: shared hit=17877 read=470
-                                 ->  Index Scan using fct_deal_stage_event_2026_03_deal_nk_event_ts_idx on fct_deal_stage_event_2026_03 e_75  (cost=0.29..2539.46 rows=23720 width=29) (actual time=0.053..29.882 rows=23720 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2026_03_deal_nk_event_ts_idx on fct_deal_stage_event_2026_03 e_75  (cost=0.29..2539.46 rows=23720 width=29) (actual time=0.058..36.445 rows=23720 loops=1)
                                        Buffers: shared hit=22384 read=577
-                                 ->  Index Scan using fct_deal_stage_event_2026_04_deal_nk_event_ts_idx on fct_deal_stage_event_2026_04 e_76  (cost=0.29..2201.00 rows=20070 width=29) (actual time=0.064..24.803 rows=20070 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2026_04_deal_nk_event_ts_idx on fct_deal_stage_event_2026_04 e_76  (cost=0.29..2201.00 rows=20070 width=29) (actual time=0.055..28.072 rows=20070 loops=1)
                                        Buffers: shared hit=18977 read=486
-                                 ->  Index Scan using fct_deal_stage_event_2026_05_deal_nk_event_ts_idx on fct_deal_stage_event_2026_05 e_77  (cost=0.29..2231.58 rows=20369 width=29) (actual time=0.046..63.203 rows=20369 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2026_05_deal_nk_event_ts_idx on fct_deal_stage_event_2026_05 e_77  (cost=0.29..2231.58 rows=20369 width=29) (actual time=0.065..31.557 rows=20369 loops=1)
                                        Buffers: shared hit=19129 read=494
-                                 ->  Index Scan using fct_deal_stage_event_2026_06_deal_nk_event_ts_idx on fct_deal_stage_event_2026_06 e_78  (cost=0.29..2313.80 rows=21040 width=29) (actual time=0.063..83.337 rows=21040 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2026_06_deal_nk_event_ts_idx on fct_deal_stage_event_2026_06 e_78  (cost=0.29..2313.80 rows=21040 width=29) (actual time=0.065..32.346 rows=21040 loops=1)
                                        Buffers: shared hit=20002 read=510
-                                 ->  Index Scan using fct_deal_stage_event_2026_07_deal_nk_event_ts_idx on fct_deal_stage_event_2026_07 e_79  (cost=0.29..2248.79 rows=20486 width=29) (actual time=0.051..60.465 rows=20486 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2026_07_deal_nk_event_ts_idx on fct_deal_stage_event_2026_07 e_79  (cost=0.29..2248.79 rows=20486 width=29) (actual time=0.055..33.151 rows=20486 loops=1)
                                        Buffers: shared hit=19359 read=498
-                                 ->  Index Scan using fct_deal_stage_event_2026_08_deal_nk_event_ts_idx on fct_deal_stage_event_2026_08 e_80  (cost=0.12..8.14 rows=1 width=29) (actual time=0.003..0.007 rows=0 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2026_08_deal_nk_event_ts_idx on fct_deal_stage_event_2026_08 e_80  (cost=0.12..8.14 rows=1 width=29) (actual time=0.003..0.003 rows=0 loops=1)
                                        Buffers: shared hit=1
-                                 ->  Index Scan using fct_deal_stage_event_2026_09_deal_nk_event_ts_idx on fct_deal_stage_event_2026_09 e_81  (cost=0.12..8.14 rows=1 width=29) (actual time=0.002..0.006 rows=0 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2026_09_deal_nk_event_ts_idx on fct_deal_stage_event_2026_09 e_81  (cost=0.12..8.14 rows=1 width=29) (actual time=0.003..0.003 rows=0 loops=1)
                                        Buffers: shared hit=1
-                                 ->  Index Scan using fct_deal_stage_event_2026_10_deal_nk_event_ts_idx on fct_deal_stage_event_2026_10 e_82  (cost=0.12..8.14 rows=1 width=29) (actual time=0.002..0.009 rows=0 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2026_10_deal_nk_event_ts_idx on fct_deal_stage_event_2026_10 e_82  (cost=0.12..8.14 rows=1 width=29) (actual time=0.002..0.002 rows=0 loops=1)
                                        Buffers: shared hit=1
-                                 ->  Index Scan using fct_deal_stage_event_2026_11_deal_nk_event_ts_idx on fct_deal_stage_event_2026_11 e_83  (cost=0.12..8.14 rows=1 width=29) (actual time=0.002..0.002 rows=0 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2026_11_deal_nk_event_ts_idx on fct_deal_stage_event_2026_11 e_83  (cost=0.12..8.14 rows=1 width=29) (actual time=0.006..0.006 rows=0 loops=1)
                                        Buffers: shared hit=1
-                                 ->  Index Scan using fct_deal_stage_event_2026_12_deal_nk_event_ts_idx on fct_deal_stage_event_2026_12 e_84  (cost=0.12..8.14 rows=1 width=29) (actual time=0.002..0.005 rows=0 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_2026_12_deal_nk_event_ts_idx on fct_deal_stage_event_2026_12 e_84  (cost=0.12..8.14 rows=1 width=29) (actual time=0.008..0.009 rows=0 loops=1)
                                        Buffers: shared hit=1
-                                 ->  Index Scan using fct_deal_stage_event_default_deal_nk_event_ts_idx on fct_deal_stage_event_default e_85  (cost=0.27..53.64 rows=369 width=29) (actual time=0.043..0.912 rows=369 loops=1)
+                                 ->  Index Scan using fct_deal_stage_event_default_deal_nk_event_ts_idx on fct_deal_stage_event_default e_85  (cost=0.27..53.64 rows=369 width=29) (actual time=0.065..1.058 rows=369 loops=1)
                                        Buffers: shared hit=267 read=4
-               ->  Hash  (cost=1.11..1.11 rows=11 width=13) (actual time=76.094..76.112 rows=11 loops=1)
+               ->  Hash  (cost=1.11..1.11 rows=11 width=13) (actual time=84.727..84.742 rows=11 loops=1)
                      Buckets: 1024  Batches: 1  Memory Usage: 9kB
-                     Buffers: shared read=1
-                     ->  Seq Scan on dim_stage s  (cost=0.00..1.11 rows=11 width=13) (actual time=76.053..76.069 rows=11 loops=1)
-                           Buffers: shared read=1
+                     Buffers: shared hit=1
+                     ->  Seq Scan on dim_stage s  (cost=0.00..1.11 rows=11 width=13) (actual time=84.664..84.671 rows=11 loops=1)
+                           Buffers: shared hit=1
  Planning:
-   Buffers: shared read=15
- Planning Time: 11.463 ms
+   Buffers: shared hit=2 read=17
+ Planning Time: 15.272 ms
  JIT:
    Functions: 192
    Options: Inlining false, Optimization false, Expressions true, Deforming true
-   Timing: Generation 15.855 ms, Inlining 0.000 ms, Optimization 5.462 ms, Emission 71.409 ms, Total 92.727 ms
- Execution Time: 5300.899 ms
+   Timing: Generation 15.293 ms, Inlining 0.000 ms, Optimization 8.304 ms, Emission 77.660 ms, Total 101.257 ms
+ Execution Time: 5776.952 ms
 (202 rows)
 

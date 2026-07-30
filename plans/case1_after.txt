@@ -43,47 +43,61 @@ SET
 (38 rows)
 
 Pager usage is off.
-                                                                               QUERY PLAN                                                                                
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Sort  (cost=2370.12..2370.43 rows=121 width=58) (actual time=61.263..61.270 rows=38 loops=1)
+                                                                                         QUERY PLAN                                                                                          
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=3127.61..3127.91 rows=121 width=58) (actual time=27.037..28.960 rows=38 loops=1)
    Sort Key: (count(*)) DESC
    Sort Method: quicksort  Memory: 27kB
-   Buffers: shared hit=1046, temp read=245 written=246
-   ->  GroupAggregate  (cost=2361.96..2365.94 rows=121 width=58) (actual time=49.440..61.256 rows=38 loops=1)
+   Buffers: shared hit=1098
+   ->  Finalize GroupAggregate  (cost=3090.35..3123.42 rows=121 width=58) (actual time=26.798..28.937 rows=38 loops=1)
          Group Key: fs.stage_name, ts.stage_name
-         Buffers: shared hit=1046, temp read=245 written=246
-         ->  Sort  (cost=2361.96..2362.39 rows=173 width=24) (actual time=49.429..54.869 rows=57343 loops=1)
-               Sort Key: fs.stage_name, ts.stage_name
-               Sort Method: external merge  Disk: 1960kB
-               Buffers: shared hit=1046, temp read=245 written=246
-               ->  Hash Join  (cost=2.50..2355.53 rows=173 width=24) (actual time=0.023..27.600 rows=57343 loops=1)
-                     Hash Cond: (e.to_stage_sk = ts.stage_sk)
-                     Buffers: shared hit=1046
-                     ->  Hash Join  (cost=1.25..2345.83 rows=3154 width=19) (actual time=0.010..20.431 rows=57343 loops=1)
-                           Hash Cond: (e.from_stage_sk = fs.stage_sk)
-                           Buffers: shared hit=1045
-                           ->  Append  (cost=0.00..2190.86 rows=57343 width=14) (actual time=0.003..13.014 rows=57343 loops=1)
-                                 Buffers: shared hit=1044
-                                 ->  Seq Scan on fct_deal_stage_event_2026_01 e_1  (cost=0.00..472.25 rows=14217 width=14) (actual time=0.003..2.120 rows=14217 loops=1)
-                                       Filter: ((event_date >= '2026-01-01'::date) AND (event_date < '2026-04-01'::date))
-                                       Buffers: shared hit=259
-                                 ->  Seq Scan on fct_deal_stage_event_2026_02 e_2  (cost=0.00..644.09 rows=19406 width=14) (actual time=0.013..2.825 rows=19406 loops=1)
-                                       Filter: ((event_date >= '2026-01-01'::date) AND (event_date < '2026-04-01'::date))
-                                       Buffers: shared hit=353
-                                 ->  Seq Scan on fct_deal_stage_event_2026_03 e_3  (cost=0.00..787.80 rows=23720 width=14) (actual time=0.009..3.660 rows=23720 loops=1)
-                                       Filter: ((event_date >= '2026-01-01'::date) AND (event_date < '2026-04-01'::date))
-                                       Buffers: shared hit=432
-                           ->  Hash  (cost=1.11..1.11 rows=11 width=13) (actual time=0.003..0.004 rows=11 loops=1)
-                                 Buckets: 1024  Batches: 1  Memory Usage: 9kB
-                                 Buffers: shared hit=1
-                                 ->  Seq Scan on dim_stage fs  (cost=0.00..1.11 rows=11 width=13) (actual time=0.001..0.002 rows=11 loops=1)
-                                       Buffers: shared hit=1
-                     ->  Hash  (cost=1.11..1.11 rows=11 width=13) (actual time=0.011..0.012 rows=11 loops=1)
-                           Buckets: 1024  Batches: 1  Memory Usage: 9kB
-                           Buffers: shared hit=1
-                           ->  Seq Scan on dim_stage ts  (cost=0.00..1.11 rows=11 width=13) (actual time=0.007..0.008 rows=11 loops=1)
-                                 Buffers: shared hit=1
- Planning Time: 0.260 ms
- Execution Time: 61.582 ms
-(40 rows)
+         Buffers: shared hit=1098
+         ->  Gather Merge  (cost=3090.35..3118.58 rows=242 width=58) (actual time=26.785..28.805 rows=110 loops=1)
+               Workers Planned: 2
+               Workers Launched: 2
+               Buffers: shared hit=1098
+               ->  Sort  (cost=2090.32..2090.62 rows=121 width=58) (actual time=22.157..22.163 rows=37 loops=3)
+                     Sort Key: fs.stage_name, ts.stage_name
+                     Sort Method: quicksort  Memory: 29kB
+                     Buffers: shared hit=1098
+                     Worker 0:  Sort Method: quicksort  Memory: 29kB
+                     Worker 1:  Sort Method: quicksort  Memory: 29kB
+                     ->  Partial HashAggregate  (cost=2084.62..2086.14 rows=121 width=58) (actual time=22.075..22.091 rows=37 loops=3)
+                           Group Key: fs.stage_name, ts.stage_name
+                           Batches: 1  Memory Usage: 48kB
+                           Buffers: shared hit=1080
+                           Worker 0:  Batches: 1  Memory Usage: 48kB
+                           Worker 1:  Batches: 1  Memory Usage: 48kB
+                           ->  Hash Join  (cost=2.50..1845.69 rows=23893 width=24) (actual time=0.142..15.253 rows=19114 loops=3)
+                                 Hash Cond: (e.to_stage_sk = ts.stage_sk)
+                                 Buffers: shared hit=1080
+                                 ->  Hash Join  (cost=1.25..1757.56 rows=23893 width=19) (actual time=0.057..11.512 rows=19114 loops=3)
+                                       Hash Cond: (e.from_stage_sk = fs.stage_sk)
+                                       Buffers: shared hit=1047
+                                       ->  Parallel Append  (cost=0.00..1669.43 rows=23893 width=14) (actual time=0.011..7.295 rows=19114 loops=3)
+                                             Buffers: shared hit=1044
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2026_03 e_3  (cost=0.00..641.29 rows=13953 width=14) (actual time=0.004..2.203 rows=7907 loops=3)
+                                                   Filter: ((event_date >= '2026-01-01'::date) AND (event_date < '2026-04-01'::date))
+                                                   Buffers: shared hit=432
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2026_02 e_2  (cost=0.00..524.23 rows=11415 width=14) (actual time=0.013..2.857 rows=9703 loops=2)
+                                                   Filter: ((event_date >= '2026-01-01'::date) AND (event_date < '2026-04-01'::date))
+                                                   Buffers: shared hit=353
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2026_01 e_1  (cost=0.00..384.44 rows=8363 width=14) (actual time=0.005..3.752 rows=14217 loops=1)
+                                                   Filter: ((event_date >= '2026-01-01'::date) AND (event_date < '2026-04-01'::date))
+                                                   Buffers: shared hit=259
+                                       ->  Hash  (cost=1.11..1.11 rows=11 width=13) (actual time=0.015..0.015 rows=11 loops=3)
+                                             Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                             Buffers: shared hit=3
+                                             ->  Seq Scan on dim_stage fs  (cost=0.00..1.11 rows=11 width=13) (actual time=0.003..0.005 rows=11 loops=3)
+                                                   Buffers: shared hit=3
+                                 ->  Hash  (cost=1.11..1.11 rows=11 width=13) (actual time=0.021..0.022 rows=11 loops=3)
+                                       Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                       Buffers: shared hit=3
+                                       ->  Seq Scan on dim_stage ts  (cost=0.00..1.11 rows=11 width=13) (actual time=0.009..0.011 rows=11 loops=3)
+                                             Buffers: shared hit=3
+ Planning:
+   Buffers: shared hit=6
+ Planning Time: 0.272 ms
+ Execution Time: 29.021 ms
+(54 rows)
 

@@ -7,6 +7,7 @@
 #   ./run.sh quality      re-run the 51 data quality assertions
 #   ./run.sh benchmark    re-run the performance case studies
 #   ./run.sh results      rebuild results.html from live query output
+#   ./run.sh figures      check that no measured figure is restated in two files
 #   ./run.sh psql         open a SQL shell on the warehouse
 #   ./run.sh stop         stop the container, keep the data
 #   ./run.sh clean        remove the container and its volume
@@ -26,8 +27,14 @@ CMD=run
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --scale) SCALE="$2"; shift 2 ;;
-    run|analytics|quality|benchmark|results|psql|stop|clean) CMD="$1"; shift ;;
-    help|-h|--help) sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    run|analytics|quality|benchmark|results|figures|psql|stop|clean) CMD="$1"; shift ;;
+    # Delimited by content, not by a line number: start at the title line and
+    # stop at the first line that is not a comment. The range used to be a
+    # hardcoded 2,17p, and line 17 is "set -euo pipefail", which has no
+    # leading "#" and so printed verbatim as the last line of --help.
+    help|-h|--help)
+      awk '/^# DealFlow SQL:/{f=1} f && !/^#/{exit} f{sub(/^# ?/, ""); print}' "$0"
+      exit 0 ;;
     *) echo "Unknown argument: $1"; echo "Try: ./run.sh --help"; exit 2 ;;
   esac
 done
@@ -51,7 +58,12 @@ if [[ "$CMD" == "clean" ]]; then
 fi
 
 # The password lives only in .env, which is gitignored. Generated on first run,
-# never printed, never passed on a command line where ps(1) could read it.
+# never printed, and passed to docker by environment NAME rather than by value,
+# so it does not appear in ps(1) output. Verified both ways: "-e PGPASSWORD=x"
+# puts the literal x in argv where any local user can read it, "-e PGPASSWORD"
+# does not, because docker reads the value from this process's environment.
+# It is still readable via docker inspect on the container. That is a local
+# container tradeoff, not a secret store, and saying so is the honest version.
 if [[ ! -f .env ]]; then
   { echo "POSTGRES_USER=dealflow"
     echo "POSTGRES_DB=dealflow"
@@ -64,17 +76,19 @@ source .env
 set +a
 
 # pg_stat_statements has to be loaded at server start, so it is a container
-# flag rather than something a session can turn on. It is what makes the
-# workload ranking in PERFORMANCE.md a measurement instead of a guess.
+# flag rather than something a session can turn on. It is what makes
+# plans/evidence_850_workload_ranking.txt a measurement instead of a guess.
 if [[ -z "$(docker ps -q -f name="^${CONTAINER}$")" ]]; then
   if [[ -n "$(docker ps -aq -f name="^${CONTAINER}$")" ]]; then
     docker start "$CONTAINER" >/dev/null
   else
     echo "Creating container $CONTAINER on $IMAGE (the first run pulls the image)..."
+    # POSTGRES_PASSWORD by NAME, for the ps(1) reason above. The other two are
+    # not secret, but they are passed the same way so the pattern is uniform.
     docker run -d --name "$CONTAINER" \
-      -e POSTGRES_USER="$POSTGRES_USER" \
-      -e POSTGRES_DB="$POSTGRES_DB" \
-      -e POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
+      -e POSTGRES_USER \
+      -e POSTGRES_DB \
+      -e POSTGRES_PASSWORD \
       -p "$PORT":5432 "$IMAGE" \
       -c shared_preload_libraries=pg_stat_statements >/dev/null
   fi
@@ -97,7 +111,8 @@ if ! docker exec "$CONTAINER" pg_isready -h 127.0.0.1 -U "$POSTGRES_USER" -d "$P
   exit 1
 fi
 
-PSQL=(docker exec -i -e PGPASSWORD="$POSTGRES_PASSWORD" "$CONTAINER"
+export PGPASSWORD="$POSTGRES_PASSWORD"
+PSQL=(docker exec -i -e PGPASSWORD "$CONTAINER"
       psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1)
 
 # An existing container keeps the password it was created with. If .env was
@@ -113,11 +128,15 @@ fi
 step() { printf '\n\033[1m==> %s\033[0m\n' "$1"; }
 
 case "$CMD" in
-  psql)      exec docker exec -it -e PGPASSWORD="$POSTGRES_PASSWORD" "$CONTAINER" \
+  # -e PGPASSWORD by NAME here too. This line is interactive rather than scripted,
+  # but argv is argv: the value would sit in ps(1) output for as long as the shell
+  # is open, which is longer than any other command in this file.
+  psql)      exec docker exec -it -e PGPASSWORD "$CONTAINER" \
                   psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" ;;
   analytics) step "Analysis queries"; "${PSQL[@]}" -e -P pager=off < sql/05_analytics.sql; exit 0 ;;
   benchmark) step "Performance case studies"; python3 benchmark.py; exit 0 ;;
   results)   step "Rebuilding results.html"; python3 build_results.py; exit 0 ;;
+  figures)   step "Single-source figure check"; python3 check_figures.py; exit 0 ;;
   quality)
     step "Data quality assertions: WAREHOUSE battery (our correctness contract, must be clean)"
     python3 run_quality.py --battery warehouse
@@ -131,32 +150,51 @@ esac
 
 START=$(date +%s)
 
-step "1/8  Foundation, landing zone and typed staging (sql/01_staging.sql)"
+step "1/10  Foundation, landing zone and typed staging (sql/01_staging.sql)"
 "${PSQL[@]}" -q < sql/01_staging.sql
 
-step "2/8  Generating and loading the synthetic feed at scale $SCALE (generate_data.py)"
+step "2/10  Generating and loading the synthetic feed at scale $SCALE (generate_data.py)"
 mkdir -p out
 python3 generate_data.py --schema raw --truncate --scale "$SCALE" \
         --ledger-out out/generator_ledger.json
 
-step "3/8  Dimensional model: dimensions, partitioned fact, working tables (sql/02_warehouse.sql)"
+step "3/10  Dimensional model: dimensions, partitioned fact, working tables (sql/02_warehouse.sql)"
 "${PSQL[@]}" -q < sql/02_warehouse.sql
 
-step "4/8  Load: raw to staging to intermediate, plus both Type 2 dimensions (sql/03_load.sql)"
+step "4/10  Load: raw to staging to intermediate, plus both Type 2 dimensions (sql/03_load.sql)"
 "${PSQL[@]}" -q < sql/03_load.sql
 
-step "5/8  Facts, materialized aggregate, quality gate, watermarks (sql/04_facts.sql)"
+step "5/10  Facts, materialized aggregate, quality gate, watermarks (sql/04_facts.sql)"
 "${PSQL[@]}" -q < sql/04_facts.sql
 
-step "6/8  Data quality assertion framework (sql/07_quality.sql)"
+step "6/10  Data quality assertion framework (sql/07_quality.sql)"
 "${PSQL[@]}" -q < sql/07_quality.sql
 
-step "7/8  Warehouse correctness contract: 30 assertions, all must pass"
+step "7/10  Warehouse correctness contract: 30 assertions, all must pass"
 python3 run_quality.py --battery warehouse
 
-step "8/8  Analysis queries (sql/05_analytics.sql)"
-"${PSQL[@]}" -e -P pager=off < sql/05_analytics.sql > out/analytics_output.txt
+step "8/10  Analysis queries (sql/05_analytics.sql)"
+# The banner is written here rather than claimed in a README, because this file
+# is a standalone dump of deal values and broker rankings that renders on GitHub
+# and is the one most likely to be read out of context.
+{ echo "ALL DATA BELOW IS SYNTHETIC. Generated by generate_data.py from the fixed seed"
+  echo "dealflow-2026-v1. No real broker, agency, property, deal or client appears in it."
+  echo; } > out/analytics_output.txt
+"${PSQL[@]}" -e -P pager=off < sql/05_analytics.sql >> out/analytics_output.txt
 echo "  14 queries ran. Full output in out/analytics_output.txt"
+
+step "9/10  Browsable results page (build_results.py)"
+# On the main path on purpose. results.html is the one artifact that renders as a
+# web page, so it is the one a reviewer clicks first, and it was shipped stale
+# once because regenerating it was a separate command nobody remembered to run.
+# A rebuild can no longer leave it behind.
+python3 build_results.py
+
+step "10/10  Single-source figure check (check_figures.py)"
+# On the main path because the failure it catches is silent. A measurement gets
+# corrected in one file and three stale copies survive elsewhere, and nothing
+# breaks, so nobody notices until a reviewer finds four answers to one question.
+python3 check_figures.py
 
 ELAPSED=$(( $(date +%s) - START ))
 
