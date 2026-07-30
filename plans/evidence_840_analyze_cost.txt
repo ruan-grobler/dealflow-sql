@@ -1,0 +1,8 @@
+Timing is on.
+ANALYZE
+Time: 261.021 ms
+ANALYZE
+Time: 255.451 ms
+ANALYZE
+Time: 9161.156 ms (00:09.161)
+Timing is off.

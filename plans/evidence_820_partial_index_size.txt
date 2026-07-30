@@ -1,0 +1,10 @@
+CREATE INDEX
+CREATE INDEX
+       index_name       |  size  |  bytes   
+------------------------+--------+----------
+ ix_pipeline_open_stage | 728 kB |   745472
+ ix_pipeline_stage_full | 12 MB  | 12320768
+(2 rows)
+
+DROP INDEX
+NOTICE:  relation "ix_pipeline_open_stage" already exists, skipping

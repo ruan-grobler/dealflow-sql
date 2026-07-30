@@ -1,0 +1,19 @@
+SET
+SET
+ events | total_value_zar  
+--------+------------------
+  23720 | 1082148429549.78
+(1 row)
+
+Pager usage is off.
+                                                                        QUERY PLAN                                                                         
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=906.40..906.41 rows=1 width=40) (actual time=7.557..7.557 rows=1 loops=1)
+   Buffers: shared hit=432
+   ->  Seq Scan on fct_deal_stage_event_2026_03 fct_deal_stage_event  (cost=0.00..787.80 rows=23720 width=9) (actual time=0.006..4.878 rows=23720 loops=1)
+         Filter: ((event_date >= '2026-03-01'::date) AND (event_date < '2026-04-01'::date))
+         Buffers: shared hit=432
+ Planning Time: 0.118 ms
+ Execution Time: 7.586 ms
+(7 rows)
+

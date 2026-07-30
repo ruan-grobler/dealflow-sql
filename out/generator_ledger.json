@@ -1,0 +1,649 @@
+{
+  "seed": "dealflow-2026-v1",
+  "scale": 1.0,
+  "generated_at_utc": "2026-07-30T12:57:17+00:00",
+  "generation_seconds": 39.268,
+  "load_seconds": 26.642,
+  "total_seconds": 65.91,
+  "timings": {
+    "entities": 0.226,
+    "broker_directory (61701 rows)": 1.102,
+    "property_register (13600 rows)": 0.258,
+    "deals in memory (250000)": 4.891,
+    "deal_submission (262500 rows)": 9.099,
+    "stage_event (1204742 rows)": 23.691,
+    "COPY broker_directory": 2.845,
+    "COPY property_register": 0.793,
+    "COPY deal_submission": 6.371,
+    "COPY stage_event": 12.2,
+    "BRIN indexes": 0.337,
+    "ANALYZE": 4.095
+  },
+  "injection_rates": {
+    "D01_duplicate": 0.05,
+    "D02_value_null": 0.012,
+    "D03_value_thousands": 0.004,
+    "D04_value_unparseable": 0.006,
+    "D05_date_unparseable": 0.009,
+    "D06_email_variant": 0.015,
+    "D07_unknown_broker": 0.008,
+    "D08_property_name_only": 0.005,
+    "D09_negative_value": 0.003,
+    "D10_sector_hint_noise": 0.01,
+    "E01_event_redelivered": 0.019,
+    "E04_orphan_event": 0.001,
+    "E05_event_before_receipt": 0.003,
+    "E06_event_out_of_range": 0.002,
+    "B02_directory_email_variant": 0.01,
+    "B03_directory_text_variant": 0.008,
+    "P02_register_sector_variant": 0.01
+  },
+  "injection_counts": {
+    "designated_parse_losses": 1000,
+    "E02_impossible_transitions": 6000,
+    "E03_unknown_stage_codes": 2000,
+    "B01_duplicate_directory_rows": 12,
+    "P01_null_sector_rows": 30
+  },
+  "generator_counters": {
+    "submission": {
+      "rows": 262500,
+      "duplicates": 12500,
+      "value_null": 3008,
+      "value_thousands": 1040,
+      "value_unparseable": 2364,
+      "date_unparseable": 1574,
+      "email_variant": 3921,
+      "unknown_broker": 2069,
+      "property_name_only": 1331,
+      "negative_value": 775,
+      "sector_hint_noise": 2542,
+      "designated_losses": 1000
+    },
+    "event": {
+      "accepted": 1173397,
+      "redelivered": 22338,
+      "impossible": 5823,
+      "unknown_stage": 1957,
+      "orphan": 1227,
+      "before_receipt": 2790,
+      "out_of_range": 2367,
+      "rows": 1204742
+    }
+  },
+  "sql_report": {
+    "row_counts": [
+      [
+        "raw.property_register",
+        "13600"
+      ],
+      [
+        "raw.broker_directory",
+        "61701"
+      ],
+      [
+        "raw.deal_submission",
+        "262500"
+      ],
+      [
+        "raw.stage_event",
+        "1204742"
+      ]
+    ],
+    "submission_ledger": [
+      [
+        "rows total",
+        "262500"
+      ],
+      [
+        "hard reject: value unparseable text",
+        "2364"
+      ],
+      [
+        "hard reject: received_ts unparseable",
+        "1574"
+      ],
+      [
+        "hard rejects total",
+        "3938"
+      ],
+      [
+        "soft: value absent (NULL)",
+        "3008"
+      ],
+      [
+        "soft: negative value",
+        "775"
+      ],
+      [
+        "stageable rows",
+        "258562"
+      ],
+      [
+        "distinct broker refs",
+        "2839"
+      ],
+      [
+        "broker refs unknown to the directory",
+        "2069"
+      ],
+      [
+        "rows with no property ref",
+        "1331"
+      ]
+    ],
+    "dedupe_candidates": [
+      [
+        "groups on (broker, property, week)",
+        "244143",
+        "",
+        ""
+      ],
+      [
+        "true duplicate pairs visible in the eligible set",
+        "8920",
+        "",
+        ""
+      ],
+      [
+        "caught / missed / false-merge BY RULE:",
+        "",
+        "",
+        ""
+      ],
+      [
+        "  round(v/100000)  AGREED SPEC",
+        "4543",
+        "4377",
+        "4"
+      ],
+      [
+        "  round(log(v)/log(1.05))  5 pct bands",
+        "7843",
+        "1077",
+        "45"
+      ],
+      [
+        "  round(log(v)/log(1.10))  10 pct bands",
+        "8372",
+        "548",
+        "58"
+      ],
+      [
+        "  round(log(v)/log(1.25))  25 pct bands",
+        "8686",
+        "234",
+        "79"
+      ],
+      [
+        "  no value term at all",
+        "8920",
+        "0",
+        "405"
+      ],
+      [
+        "  no value term, 3 pct tolerance  RECOMMENDED",
+        "8920",
+        "0",
+        "68"
+      ]
+    ],
+    "broker_concentration": [
+      [
+        "decile 1",
+        "49.67"
+      ],
+      [
+        "decile 2",
+        "12.64"
+      ],
+      [
+        "decile 3",
+        "8.44"
+      ],
+      [
+        "decile 4",
+        "6.48"
+      ],
+      [
+        "decile 5",
+        "5.34"
+      ],
+      [
+        "decile 6",
+        "4.59"
+      ],
+      [
+        "decile 7",
+        "4.05"
+      ],
+      [
+        "decile 8",
+        "3.65"
+      ],
+      [
+        "decile 9",
+        "3.26"
+      ],
+      [
+        "decile 10",
+        "1.88"
+      ]
+    ],
+    "sector_value": [
+      [
+        "Mixed Use",
+        "18734",
+        "53.2",
+        "106.1",
+        "829.3"
+      ],
+      [
+        "Residential",
+        "35985",
+        "38.2",
+        "66.2",
+        "449.3"
+      ],
+      [
+        "Hospitality",
+        "14458",
+        "31.1",
+        "54.4",
+        "364.7"
+      ],
+      [
+        "Retail",
+        "47406",
+        "28.6",
+        "52.5",
+        "377.0"
+      ],
+      [
+        "Healthcare",
+        "9337",
+        "25.5",
+        "42.3",
+        "270.8"
+      ],
+      [
+        "Office",
+        "41711",
+        "22.6",
+        "41.5",
+        "293.9"
+      ],
+      [
+        "Industrial",
+        "55345",
+        "15.8",
+        "27.6",
+        "183.0"
+      ],
+      [
+        "Land",
+        "30990",
+        "8.5",
+        "16.7",
+        "123.8"
+      ]
+    ],
+    "seasonality": [
+      [
+        "01",
+        "2479",
+        "0.751"
+      ],
+      [
+        "02",
+        "4429",
+        "1.341"
+      ],
+      [
+        "03",
+        "4605",
+        "1.394"
+      ],
+      [
+        "04",
+        "3331",
+        "1.009"
+      ],
+      [
+        "05",
+        "3492",
+        "1.057"
+      ],
+      [
+        "06",
+        "3154",
+        "0.955"
+      ],
+      [
+        "07",
+        "3352",
+        "1.015"
+      ],
+      [
+        "08",
+        "3368",
+        "1.020"
+      ],
+      [
+        "09",
+        "3476",
+        "1.052"
+      ],
+      [
+        "10",
+        "3580",
+        "1.084"
+      ],
+      [
+        "11",
+        "3349",
+        "1.014"
+      ],
+      [
+        "12",
+        "734",
+        "0.222"
+      ]
+    ],
+    "growth_jan_on_jan": [
+      [
+        "2020-01",
+        "1825"
+      ],
+      [
+        "2021-01",
+        "2017"
+      ],
+      [
+        "2022-01",
+        "2225"
+      ],
+      [
+        "2023-01",
+        "2444"
+      ],
+      [
+        "2024-01",
+        "2680"
+      ],
+      [
+        "2025-01",
+        "2947"
+      ],
+      [
+        "2026-01",
+        "3216"
+      ]
+    ],
+    "channel_mix": [
+      [
+        "Email intake",
+        "120753",
+        "46.00"
+      ],
+      [
+        "Portal",
+        "70896",
+        "27.01"
+      ],
+      [
+        "Referral",
+        "36821",
+        "14.03"
+      ],
+      [
+        "Direct call",
+        "23536",
+        "8.97"
+      ],
+      [
+        "Auction notice",
+        "10494",
+        "4.00"
+      ]
+    ],
+    "funnel_reach": [
+      [
+        "RECEIVED",
+        "249275",
+        "100.00"
+      ],
+      [
+        "TRIAGED",
+        "225849",
+        "90.60"
+      ],
+      [
+        "QUALIFIED",
+        "151873",
+        "60.93"
+      ],
+      [
+        "LOST",
+        "123687",
+        "49.62"
+      ],
+      [
+        "UNDERWRITING",
+        "99255",
+        "39.82"
+      ],
+      [
+        "STALLED",
+        "96196",
+        "38.59"
+      ],
+      [
+        "OFFER",
+        "59049",
+        "23.69"
+      ],
+      [
+        "DUE_DILIGENCE",
+        "36065",
+        "14.47"
+      ],
+      [
+        "LEGAL",
+        "22570",
+        "9.05"
+      ],
+      [
+        "CLOSED_WON",
+        "15485",
+        "6.21"
+      ]
+    ],
+    "terminal_split": [
+      [
+        "LOST",
+        "120105",
+        "48.00"
+      ],
+      [
+        "STALLED",
+        "93464",
+        "37.35"
+      ],
+      [
+        "CLOSED_WON",
+        "14997",
+        "5.99"
+      ],
+      [
+        "STILL OPEN (UNDERWRITING)",
+        "8693",
+        "3.47"
+      ],
+      [
+        "STILL OPEN (TRIAGED)",
+        "3820",
+        "1.53"
+      ],
+      [
+        "STILL OPEN (QUALIFIED)",
+        "3802",
+        "1.52"
+      ],
+      [
+        "STILL OPEN (RECEIVED)",
+        "1788",
+        "0.71"
+      ],
+      [
+        "STILL OPEN (OFFER)",
+        "1495",
+        "0.60"
+      ],
+      [
+        "STILL OPEN (DUE_DILIGENCE)",
+        "1320",
+        "0.53"
+      ],
+      [
+        "STILL OPEN (LEGAL)",
+        "740",
+        "0.30"
+      ]
+    ],
+    "dwell_percentiles": [
+      [
+        "RECEIVED",
+        "8257",
+        "0.00",
+        "19.00"
+      ],
+      [
+        "TRIAGED",
+        "228380",
+        "3.09",
+        "7.34"
+      ],
+      [
+        "QUALIFIED",
+        "182767",
+        "7.42",
+        "23.01"
+      ],
+      [
+        "UNDERWRITING",
+        "143864",
+        "14.18",
+        "45.84"
+      ],
+      [
+        "DUE_DILIGENCE",
+        "44047",
+        "14.18",
+        "44.77"
+      ],
+      [
+        "LOST",
+        "125283",
+        "19.83",
+        "69.84"
+      ],
+      [
+        "OFFER",
+        "77650",
+        "20.94",
+        "67.07"
+      ],
+      [
+        "CLOSED_WON",
+        "16866",
+        "24.11",
+        "72.93"
+      ],
+      [
+        "LEGAL",
+        "26360",
+        "27.94",
+        "87.08"
+      ],
+      [
+        "STALLED",
+        "97387",
+        "90.31",
+        "109.76"
+      ]
+    ],
+    "event_defects": [
+      [
+        "unknown stage code",
+        "1957"
+      ],
+      [
+        "event date outside 2020-01..2026-12",
+        "2416"
+      ],
+      [
+        "orphan deal reference",
+        "1227"
+      ],
+      [
+        "redelivered verbatim (extra rows)",
+        "22338"
+      ],
+      [
+        "event before its deal received_ts",
+        "3551"
+      ]
+    ],
+    "directory_shape": [
+      [
+        "snapshots",
+        "79"
+      ],
+      [
+        "distinct brokers",
+        "800"
+      ],
+      [
+        "brokers absent from the first snapshot",
+        "40"
+      ],
+      [
+        "duplicate broker rows within one snapshot",
+        "12"
+      ],
+      [
+        "rows needing text conforming (case or whitespace)",
+        "1088"
+      ]
+    ],
+    "property_shape": [
+      [
+        "null sector rows",
+        "30"
+      ],
+      [
+        "delta rows",
+        "1600"
+      ],
+      [
+        "initial rows",
+        "12000"
+      ],
+      [
+        "properties never submitted",
+        "960"
+      ]
+    ],
+    "fingerprint": [
+      [
+        "deal_submission",
+        "fa8527a67d565e6beb6c30a52b42a496"
+      ],
+      [
+        "stage_event",
+        "221867f803b0e4bc07ebd72c7fdb1850"
+      ]
+    ]
+  }
+}

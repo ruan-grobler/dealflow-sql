@@ -1,0 +1,42 @@
+SET
+SET
+Pager usage is off.
+                                                                                   QUERY PLAN                                                                                   
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=7395.82..7395.87 rows=20 width=59) (actual time=54.248..58.170 rows=20 loops=1)
+   Buffers: shared hit=30590 read=3375
+   ->  Sort  (cost=7395.82..7396.04 rows=90 width=59) (actual time=54.247..58.165 rows=20 loops=1)
+         Sort Key: (sum(f.deal_value_zar)) DESC NULLS LAST
+         Sort Method: top-N heapsort  Memory: 27kB
+         Buffers: shared hit=30590 read=3375
+         ->  Finalize GroupAggregate  (cost=7364.95..7393.42 rows=90 width=59) (actual time=51.271..58.085 rows=79 loops=1)
+               Group Key: p.sector, p.province
+               Buffers: shared hit=30590 read=3375
+               ->  Gather Merge  (cost=7364.95..7390.05 rows=180 width=59) (actual time=51.216..57.644 rows=231 loops=1)
+                     Workers Planned: 2
+                     Workers Launched: 2
+                     Buffers: shared hit=30590 read=3375
+                     ->  Partial GroupAggregate  (cost=6364.92..6369.25 rows=90 width=59) (actual time=41.374..43.865 rows=77 loops=3)
+                           Group Key: p.sector, p.province
+                           Buffers: shared hit=30590 read=3375
+                           ->  Sort  (cost=6364.92..6365.56 rows=256 width=28) (actual time=41.323..41.901 rows=3279 loops=3)
+                                 Sort Key: p.sector, p.province
+                                 Sort Method: quicksort  Memory: 277kB
+                                 Buffers: shared hit=30590 read=3375
+                                 Worker 0:  Sort Method: quicksort  Memory: 279kB
+                                 Worker 1:  Sort Method: quicksort  Memory: 275kB
+                                 ->  Nested Loop  (cost=0.29..6354.68 rows=256 width=28) (actual time=1.493..36.826 rows=3279 loops=3)
+                                       Buffers: shared hit=30572 read=3375
+                                       ->  Parallel Seq Scan on fct_deal_pipeline f  (cost=0.00..5985.39 rows=256 width=17) (actual time=1.456..25.904 rows=3279 loops=3)
+                                             Filter: (is_open AND (current_stage_sk >= 3) AND (current_stage_sk <= 7))
+                                             Rows Removed by Filter: 79621
+                                             Buffers: shared hit=1056 read=3375
+                                       ->  Index Scan using dim_property_pkey on dim_property p  (cost=0.29..1.44 rows=1 width=27) (actual time=0.003..0.003 rows=1 loops=9838)
+                                             Index Cond: (property_sk = f.property_sk)
+                                             Buffers: shared hit=29516
+ Planning:
+   Buffers: shared hit=9
+ Planning Time: 0.452 ms
+ Execution Time: 58.282 ms
+(35 rows)
+

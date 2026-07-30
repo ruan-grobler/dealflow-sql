@@ -1,0 +1,26 @@
+                           index_name                            | index_relations | idx_scan | idx_tup_read | idx_tup_fetch 
+-----------------------------------------------------------------+-----------------+----------+--------------+---------------
+ dim_property_pkey                                               |               1 |   512163 |       512162 |        511577
+ dim_date_pkey                                                   |               1 |    16523 |        13236 |         13148
+ ex_dim_property_no_overlap                                      |               1 |    12001 |        12001 |         12001
+ dim_agency_pkey                                                 |               1 |     1212 |         1211 |          1211
+ ex_dim_broker_no_overlap                                        |               1 |     1207 |         1207 |          1207
+ ix_fct_event_deal_ts                                            |              85 |     1020 |     13980516 |      13980516
+ ix_fct_event_broker_date                                        |              85 |      960 |            0 |             0
+ dim_stage_pkey                                                  |               1 |      671 |          660 |           660
+ dim_agency_agency_name_key                                      |               1 |      300 |          240 |           240
+ dim_deal_source_pkey                                            |               1 |      155 |          124 |           124
+ dim_deal_source_source_channel_is_off_market_submission_qua_key |               1 |       30 |            0 |             0
+ dim_broker_pkey                                                 |               1 |       18 |           17 |             1
+ ix_pipeline_open_stage                                          |               1 |       12 |       118056 |             0
+ ix_pipeline_received                                            |               1 |       12 |      2984424 |             0
+ dim_stage_stage_name_key                                        |               1 |        8 |           88 |            88
+ ix_raw_ingested_brin                                            |               1 |        1 |         7680 |             0
+ dim_date_date_actual_key                                        |               1 |        0 |            0 |             0
+ fct_deal_pipeline_pkey                                          |               1 |        0 |            0 |             0
+ fct_deal_stage_event_pkey                                       |              85 |        0 |            0 |             0
+ ix_dim_broker_pit                                               |               1 |        0 |            0 |             0
+ uq_dim_broker_current                                           |               1 |        0 |            0 |             0
+ uq_dim_property_current                                         |               1 |        0 |            0 |             0
+(22 rows)
+

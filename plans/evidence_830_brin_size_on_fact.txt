@@ -1,0 +1,7 @@
+CREATE INDEX
+ brin_relations | total_size 
+----------------+------------
+             85 | 2040 kB
+(1 row)
+
+DROP INDEX

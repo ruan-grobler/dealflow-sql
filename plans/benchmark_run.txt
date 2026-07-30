@@ -1,0 +1,195 @@
+==============================================================================
+DEALFLOW WAREHOUSE PERFORMANCE BENCHMARK
+==============================================================================
+
+ENVIRONMENT UNDER TEST
+  Output format is unaligned.
+  Field separator is " | ".
+  PostgreSQL 16.14 (Debian 16.14-1.pgdg13+1) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+  shared_buffers=128MB work_mem=4MB max_parallel_workers_per_gather=2 TimeZone=Africa/Johannesburg
+
+PREFLIGHT AND FIXTURE
+  000_guard                      1,101.3 ms  preflight OK: source fixture holds 1165043 stage events
+  010_schema_and_helper            166.0 ms  schema "perf" already exists, skipping
+  020_dim_date                     287.5 ms  relation "dim_date" already exists, skipping
+  030_dim_stage                    194.3 ms  relation "dim_stage" already exists, skipping
+  040_dim_agency                    99.0 ms  relation "dim_agency" already exists, skipping
+  050_dim_broker                   104.5 ms  relation "ix_dim_broker_pit" already exists, skipping
+  060_dim_property                 163.9 ms  relation "uq_dim_property_current" already exists, skipping
+  070_dim_deal_source              105.4 ms  relation "dim_deal_source" already exists, skipping
+  080_fact_ddl                     413.5 ms  monthly partitions ensured: 84
+  090_fact_load                    419.8 ms  fact already holds 1165043 rows, skipping load
+  100_fact_foreign_keys            123.1 ms  foreign keys already present
+  110_analyze                   11,197.3 ms
+  120_pipeline                     833.7 ms  relation "ix_pipeline_received" already exists, skipping
+  130_raw_landing                2,561.3 ms  raw landing table already holds 1165043 rows, skipping load
+  140_verify                     1,730.5 ms  fixture verified against mart: 1165043 events, 248702 deals, 1165043 raw rows, 85 partitions, 369 in DEFAULT, 14926 on an unknown member
+
+FIXTURE UNDER TEST
+  Output format is unaligned.
+  Field separator is " | ".
+  fct_deal_stage_event partitions | 85
+  dim_broker rows (SCD2) | 1207
+  fact heap size | 166 MB
+  fct_deal_pipeline rows | 248702
+  fct_deal_stage_event rows | 1165043
+  raw_stage_event rows | 1165043
+
+CASE case1: Non sargable month filter defeats partition pruning
+  before  median      362.8 ms  (warmup 626.4 ms)
+      Sort Method: quicksort  Memory: 27kB
+      Workers Launched: 2
+      Planning Time: 6.902 ms
+      Execution Time: 417.486 ms
+      Fact partitions in plan: 85
+      Top level buffers: shared hit=54 read=21220
+  after   median       22.3 ms  (warmup 54.3 ms)
+      Sort Method: quicksort  Memory: 27kB
+      Workers Launched: 2
+      Planning Time: 0.373 ms
+      Execution Time: 30.284 ms
+      Fact partitions in plan: 3
+      Top level buffers: shared hit=1098
+
+CASE case2: A broker performance review has no access path
+  before  median       99.9 ms  (warmup 277.3 ms)
+      Workers Launched: 2
+      Sort Method: quicksort  Memory: 25kB
+      Planning Time: 7.541 ms
+      Execution Time: 149.201 ms
+      Fact partitions in plan: 85
+      Top level buffers: shared hit=103 read=21220
+  fix applied in 2,516.0 ms
+  after   median        4.1 ms  (warmup 48.5 ms)
+      Sort Method: quicksort  Memory: 25kB
+      Planning Time: 2.449 ms
+      Execution Time: 1.201 ms
+      Fact partitions in plan: 84
+      Top level buffers: shared hit=160
+
+CASE case3: Stage dwell percentiles sort 1.14 million rows with no ordered access path
+  before  median    6,967.6 ms  (warmup 8,094.0 ms)
+      Sort Method: external merge  Disk: 28448kB
+      Planning Time: 9.422 ms
+      Execution Time: 24256.226 ms
+      Fact partitions in plan: 85
+      Top level buffers: shared hit=1 read=21220, temp read=20989 written=20713
+  fix applied in 7,214.3 ms
+  after   median    5,588.4 ms  (warmup 5,456.1 ms)
+      Sort Method: external merge  Disk: 28448kB
+      Planning Time: 9.636 ms
+      Execution Time: 10619.424 ms
+      Top level buffers: shared hit=1099259 read=28338, temp read=9005 written=8706
+
+CASE case4: Open pipeline value at risk reads every deal to report on 4 percent of them
+  before  median       45.2 ms  (warmup 545.1 ms)
+      Sort Method: top-N heapsort  Memory: 27kB
+      Workers Launched: 2
+      Planning Time: 0.452 ms
+      Execution Time: 58.282 ms
+      Top level buffers: shared hit=30590 read=3375
+  fix applied in 241.9 ms
+  after   median        7.8 ms  (warmup 19.9 ms)
+      Sort Method: top-N heapsort  Memory: 27kB
+      Heap Fetches: 0
+      Planning Time: 0.444 ms
+      Execution Time: 19.114 ms
+      Top level buffers: shared hit=202
+
+CASE case5: BRIN on the partitioned fact, measured and then rejected
+  before  median      138.9 ms  (warmup 484.1 ms)
+      Workers Launched: 2
+      Planning Time: 7.260 ms
+      Execution Time: 175.284 ms
+      Fact partitions in plan: 85
+      Top level buffers: shared read=21220
+  fix applied in 542.3 ms
+  after   median       29.7 ms  (warmup 120.8 ms)
+      Workers Launched: 2
+      Planning Time: 2.858 ms
+      Execution Time: 27.201 ms
+      Fact partitions in plan: 85
+      Top level buffers: shared hit=665
+
+CASE case5b: Free rewrite versus the BRIN index, head to head
+  before  median       29.6 ms  (warmup 76.9 ms)
+      Workers Launched: 2
+      Planning Time: 5.591 ms
+      Execution Time: 30.028 ms
+      Fact partitions in plan: 85
+      Top level buffers: shared hit=665
+  fix applied in 164.3 ms
+  after   median        5.8 ms  (warmup 18.5 ms)
+      Planning Time: 0.118 ms
+      Execution Time: 7.586 ms
+      Fact partitions in plan: 1
+      Top level buffers: shared hit=432
+
+EVIDENCE CAPTURE
+  plans/evidence_710_pruning_plan_time.txt
+  plans/evidence_720_pruning_run_time.txt
+  plans/evidence_730_no_pruning.txt
+  plans/evidence_810_brin_on_raw.txt
+  plans/evidence_820_partial_index_size.txt
+  plans/evidence_830_brin_size_on_fact.txt
+  plans/evidence_840_analyze_cost.txt
+
+INDEX JUSTIFICATION
+index_name                            | index_relations | idx_scan | idx_tup_read | idx_tup_fetch 
+-----------------------------------------------------------------+-----------------+----------+--------------+---------------
+ dim_property_pkey                                               |               1 |   512163 |       512162 |        511577
+ dim_date_pkey                                                   |               1 |    16523 |        13236 |         13148
+ ex_dim_property_no_overlap                                      |               1 |    12001 |        12001 |         12001
+ dim_agency_pkey                                                 |               1 |     1212 |         1211 |          1211
+ ex_dim_broker_no_overlap                                        |               1 |     1207 |         1207 |          1207
+ ix_fct_event_deal_ts                                            |              85 |     1020 |     13980516 |      13980516
+ ix_fct_event_broker_date                                        |              85 |      960 |            0 |             0
+ dim_stage_pkey                                                  |               1 |      671 |          660 |           660
+ dim_agency_agency_name_key                                      |               1 |      300 |          240 |           240
+ dim_deal_source_pkey                                            |               1 |      155 |          124 |           124
+ dim_deal_source_source_channel_is_off_market_submission_qua_key |               1 |       30 |            0 |             0
+ dim_broker_pkey                                                 |               1 |       18 |           17 |             1
+ ix_pipeline_open_stage                                          |               1 |       12 |       118056 |             0
+ ix_pipeline_received                                            |               1 |       12 |      2984424 |             0
+ dim_stage_stage_name_key                                        |               1 |        8 |           88 |            88
+ ix_raw_ingested_brin                                            |               1 |        1 |         7680 |             0
+ dim_date_date_actual_key                                        |               1 |        0 |            0 |             0
+ fct_deal_pipeline_pkey                                          |               1 |        0 |            0 |             0
+ fct_deal_stage_event_pkey                                       |              85 |        0 |            0 |             0
+ ix_dim_broker_pit                                               |               1 |        0 |            0 |             0
+ uq_dim_broker_current                                           |               1 |        0 |            0 |             0
+ uq_dim_property_current                                         |               1 |        0 |            0 |             0
+(22 rows)
+
+
+MEASURED RESULTS. Median of 9 timed runs after one warmup run.
+Timings are client observed round trip and include planning time.
+
+case    query                                                 before ms  after ms  speedup
+------  ----------------------------------------------------  ---------  --------  -------
+case1   Non sargable month filter defeats partition pruning   362.8      22.3      16.3x  
+case2   A broker performance review has no access path        99.9       4.1       24.5x  
+case3   Stage dwell percentiles sort 1.14 million rows with   6,967.6    5,588.4   1.2x   
+case4   Open pipeline value at risk reads every deal to repo  45.2       7.8       5.8x   
+case5   BRIN on the partitioned fact, measured and then reje  138.9      29.7      4.7x   
+case5b  Free rewrite versus the BRIN index, head to head      29.6       5.8       5.1x   
+------  ----------------------------------------------------  ---------  --------  -------
+
+SPREAD (min / median / max, milliseconds). A quiet box keeps max/min near 1.
+  case1    before       323.5 /      362.8 /      710.7
+           after         18.2 /       22.3 /       40.5
+  case2    before        83.9 /       99.9 /      198.4
+           after          3.3 /        4.1 /        5.3
+  case3    before     6,001.9 /    6,967.6 /    7,939.9
+           after      4,644.6 /    5,588.4 /    6,934.5
+  case4    before        35.8 /       45.2 /      606.0  <-- max/min 16.9x, treat with suspicion
+           after          7.5 /        7.8 /        8.1
+  case5    before       126.3 /      138.9 /      234.9
+           after         16.1 /       29.7 /       36.3
+  case5b   before        18.9 /       29.6 /       55.8
+           after          5.4 /        5.8 /        6.3
+
+  WARNING: at least one result above was measured on a busy or unstable system.
+  Re-run on an idle container before quoting those numbers anywhere.
+
+total wall clock 249.0 s
