@@ -4,9 +4,13 @@
 --
 -- WHAT THIS FILE IS
 --   The single source of truth for the performance case studies. It builds an isolated
---   fixture at full production volume (1,144,830 stage events, 250,000 deals, 800 brokers,
---   2020-01-01 through 2026-07-31), then defines, for each case study, the BEFORE state,
---   the BEFORE query, the fix, and the AFTER query.
+--   fixture at full production volume (1,165,043 stage events, 248,702 deals, 800 current
+--   brokers, 85 monthly partitions spanning 2020-01 to 2026-12 plus a DEFAULT holding the 369
+--   out of range events the generator deliberately seeds), then defines, for each case study,
+--   the BEFORE state, the BEFORE query, the fix, and the AFTER query.
+--   Those counts are stated for orientation only. Nothing in this file is asserted against
+--   them: block 140_verify checks the fixture against mart at run time instead, because a
+--   number typed into a comment is correct on the day it is typed and silently wrong after.
 --
 --   benchmark.py PARSES the "-- @block" directives below and executes them. The SQL and the
 --   harness therefore cannot drift apart: there is one copy of every query and every index,
@@ -39,9 +43,10 @@
 --   win. Each query is run once to warm the cache and then at least 5 more times; the reported
 --   figure is the MEDIAN of the timed runs, with min and max also reported so a reader can see
 --   the spread. EXPLAIN (ANALYZE, BUFFERS) is captured separately, for plan SHAPE and buffer
---   counts only, because its per node instrumentation is not free: on an 85 partition plan it
---   inflated one measured query from 3.9 ms to 36.2 ms, roughly 9x. Shape from EXPLAIN, speed
---   from the clock.
+--   counts only, because its per node instrumentation is not free. Re-measured on this build
+--   the penalty is modest rather than dramatic: the widest gap was case 4's after query, 4.9 ms
+--   on the clock against 7.2 ms of planning plus execution self reported by EXPLAIN ANALYZE,
+--   about 1.5x. Shape from EXPLAIN, speed from the clock, because the bias only goes one way.
 --
 -- CONTAINER UNDER TEST
 --   PostgreSQL 16.14 on aarch64, 8 vCPU, shared_buffers 128MB, work_mem 4MB,
@@ -67,16 +72,209 @@ BEGIN
     END IF;
     SELECT count(*) INTO v_events FROM mart.fct_deal_stage_event;
     IF v_events < 1000000 THEN
-        RAISE EXCEPTION 'source fixture holds only % events, expected the full volume (about 1.14 million)', v_events;
+        RAISE EXCEPTION 'source fixture holds only % events, expected the full volume (about 1.17 million)', v_events;
     END IF;
     RAISE NOTICE 'preflight OK: source fixture holds % stage events', v_events;
 END $$;
 
 
+-- @block preflight 010_fixture_provenance
+-- =====================================================================================
+-- THE FIXTURE IS A CACHE, SO IT NEEDS A CACHE KEY. THIS BLOCK IS THAT KEY.
+--
+-- THE DEFECT THIS FIXES, AND IT WAS A REAL FAILURE AND NOT A HYPOTHETICAL ONE
+--   Every fixture block below skips work it has already done, because rebuilding 1.16
+--   million rows takes 68 seconds and verifying them takes 3. That caching is the right
+--   call. The bug was the KEY it cached on. Block 050 asked "is this broker version already
+--   loaded?" by comparing mart.dim_broker.broker_sk, and broker_sk is a surrogate key the
+--   lab does not own: sql/03_load.sql assigns it from an identity sequence with no ORDER BY,
+--   so a warehouse rebuild can hand the same brokers different numbers. When that happened
+--   the guard saw keys it did not recognise, tried to insert versions of brokers it already
+--   held, and the SCD2 constraint stopped it dead:
+--       ERROR:  conflicting key value violates exclusion constraint "ex_dim_broker_no_overlap"
+--   The constraint was keyed on the row's real identity, (broker_nk, validity window). The
+--   guard was keyed on a number that had moved. Guard and constraint disagreed, so a second
+--   run of the benchmark failed.
+--
+-- WHY NOT JUST "ON CONFLICT DO NOTHING"
+--   It would work, in the sense that the error would stop. An untargeted DO NOTHING does
+--   swallow exclusion constraint violations. But think about what the lab would then hold:
+--   old rows keyed to the old surrogate numbers, silently kept, while every fact row is
+--   resolved against the new ones. Case study 2 filters WHERE broker_sk = 407 and would
+--   quietly be measuring a different broker. Trading a loud crash for a silent wrong
+--   measurement is the worst trade available in a benchmark, so it is not taken here.
+--
+-- WHY NOT JUST DROP AND REBUILD EVERY TIME
+--   Measured on this container: a full rebuild is 68 seconds, and computing the fingerprint
+--   below is about 3. Verifying is roughly 20x cheaper than rebuilding, which is exactly the
+--   ratio that makes a cache worth having. Unconditional rebuilding would also reset the
+--   perf index usage counters on every run and make --case, the flag for iterating on one
+--   case study, cost over a minute a time. The right fix for a wrong cache key is a right
+--   cache key, not the removal of the cache.
+--
+-- SO: THE FIXTURE IS EITHER PROVABLY DERIVED FROM THIS EXACT WAREHOUSE, OR IT IS REBUILT.
+--   perf.fixture_provenance records a checksum of every source column the lab copies. The
+--   row is written by block 150, which runs AFTER the fixture has verified itself, so its
+--   presence means "a complete, verified fixture built from this warehouse" and nothing
+--   weaker. Anything else (no row, a different checksum, a fixture whose row counts have
+--   moved since) drops the fixture tables and rebuilds. There is deliberately no third state
+--   in which the benchmark measures a fixture it cannot vouch for.
+--
+--   Note for whoever edits fn_source_fingerprint: widening what the checksum covers changes
+--   the checksum, so the next run rebuilds by itself. Narrowing it does not, so force one
+--   rebuild by hand with: python3 benchmark.py --rebuild
+-- =====================================================================================
+CREATE SCHEMA IF NOT EXISTS perf;
+
+-- Single row by construction. A one row table with a CHECK pinning the key is clearer than a
+-- table that could hold two conflicting answers about how the fixture was built.
+CREATE TABLE IF NOT EXISTS perf.fixture_provenance (
+    fixture_id         integer     PRIMARY KEY CHECK (fixture_id = 1),
+    source_fingerprint text        NOT NULL,
+    verified_at        timestamptz NOT NULL,
+    event_rows         bigint      NOT NULL,
+    deal_rows          bigint      NOT NULL,
+    raw_rows           bigint      NOT NULL
+);
+COMMENT ON TABLE perf.fixture_provenance IS
+    'What the perf fixture was built from, written only after it verified itself. The cache key for the fixture.';
+
+-- One checksum over every source column the lab copies out of the warehouse.
+--
+-- SUM OF PER ROW HASHES, NOT A HASH OF THE WHOLE TABLE. Summing is order independent, so it
+-- needs no sort and no ORDER BY over 1.16 million rows, and it is not fooled by two rows
+-- swapping places the way a concatenated hash would be. Measured at about 3 seconds total.
+--
+-- EVERY COLUMN IS COALESCED TO A SENTINEL FIRST, and that is not decoration. concat_ws SKIPS
+-- null arguments, so ('A', NULL, 'B') and ('A', 'B', NULL) produce the identical string and a
+-- real difference becomes invisible. This is the same trap sql/03_load.sql documents in its
+-- SCD2 change detector, avoided the same way.
+--
+-- hashtext is only ever compared against a value computed by the same server, so its lack of
+-- a cross version stability guarantee does not matter here.
+CREATE OR REPLACE FUNCTION perf.fn_source_fingerprint()
+RETURNS text LANGUAGE sql STABLE AS $$
+    WITH parts AS (
+        SELECT 'fct_deal_stage_event' AS src,
+               count(*)                                       AS rows,
+               coalesce(sum(hashtext(concat_ws('|',
+                   coalesce(f.deal_nk,            '~'), coalesce(f.broker_sk::text,      '~'),
+                   coalesce(f.property_sk::text,  '~'), coalesce(f.from_stage_sk::text,  '~'),
+                   coalesce(f.to_stage_sk::text,  '~'), coalesce(f.event_ts::text,       '~'),
+                   coalesce(f.event_date::text,   '~'), coalesce(f.deal_value_zar::text, '~'),
+                   coalesce(f.is_forward_move::text, '~')))::bigint), 0) AS checksum
+        FROM mart.fct_deal_stage_event f
+        UNION ALL
+        SELECT 'fct_deal_pipeline', count(*),
+               coalesce(sum(hashtext(concat_ws('|',
+                   coalesce(p.deal_nk, '~'), coalesce(p.deal_source_sk::text, '~')))::bigint), 0)
+        FROM mart.fct_deal_pipeline p
+        UNION ALL
+        SELECT 'dim_broker', count(*),
+               coalesce(sum(hashtext(concat_ws('|',
+                   coalesce(b.broker_sk::text,   '~'), coalesce(b.broker_nk,          '~'),
+                   coalesce(b.full_name,         '~'), coalesce(b.agency_name,        '~'),
+                   coalesce(b.region,            '~'), coalesce(b.broker_tier,        '~'),
+                   coalesce(b.is_active::text,   '~'), coalesce(b.valid_from::text,   '~'),
+                   coalesce(b.valid_to::text,    '~'), coalesce(b.row_hash::text,     '~')))::bigint), 0)
+        FROM mart.dim_broker b
+        UNION ALL
+        SELECT 'dim_property', count(*),
+               coalesce(sum(hashtext(concat_ws('|',
+                   coalesce(d.property_sk::text, '~'), coalesce(d.property_nk,        '~'),
+                   coalesce(d.sector,            '~'), coalesce(d.province,           '~'),
+                   coalesce(d.is_current::text,  '~')))::bigint), 0)
+        FROM mart.dim_property d
+        UNION ALL
+        SELECT 'dim_stage', count(*),
+               coalesce(sum(hashtext(concat_ws('|',
+                   coalesce(s.stage_sk::text,    '~'), coalesce(s.stage_name,         '~'),
+                   coalesce(s.stage_order::text, '~'), coalesce(s.is_terminal::text,  '~'),
+                   coalesce(s.is_won::text,      '~'), coalesce(s.is_lost::text,      '~')))::bigint), 0)
+        FROM mart.dim_stage s
+        UNION ALL
+        SELECT 'dim_deal_source', count(*),
+               coalesce(sum(hashtext(concat_ws('|',
+                   coalesce(j.deal_source_sk::text, '~'), coalesce(j.source_channel,        '~'),
+                   coalesce(j.is_off_market::text,  '~'), coalesce(j.submission_quality,    '~')))::bigint), 0)
+        FROM mart.dim_deal_source j
+    )
+    SELECT md5(string_agg(src || '=' || rows || ':' || checksum, '|' ORDER BY src)) FROM parts;
+$$;
+COMMENT ON FUNCTION perf.fn_source_fingerprint() IS
+    'Checksum of every warehouse column the perf fixture copies. Changes if and only if the fixture would come out different.';
+
+DO $$
+DECLARE
+    v_expected   text;
+    v_recorded   text;
+    v_reason     text := NULL;
+    v_events     bigint;
+    v_deals      bigint;
+    v_raw        bigint;
+    v_rec_events bigint;
+    v_rec_deals  bigint;
+    v_rec_raw    bigint;
+    r            record;
+BEGIN
+    v_expected := perf.fn_source_fingerprint();
+    SELECT source_fingerprint, event_rows, deal_rows, raw_rows
+      INTO v_recorded, v_rec_events, v_rec_deals, v_rec_raw
+      FROM perf.fixture_provenance WHERE fixture_id = 1;
+
+    IF v_recorded IS NULL THEN
+        v_reason := 'no completed build on record';
+    ELSIF v_recorded <> v_expected THEN
+        v_reason := 'the warehouse it was built from has changed';
+    ELSIF to_regclass('perf.fct_deal_stage_event') IS NULL
+       OR to_regclass('perf.fct_deal_pipeline')    IS NULL
+       OR to_regclass('perf.raw_stage_event')      IS NULL THEN
+        v_reason := 'a fixture table is missing';
+    ELSE
+        -- The checksum proves the SOURCE has not moved. This proves the fixture itself is
+        -- still all there, so a hand DELETE or a truncated table rebuilds rather than
+        -- quietly benchmarking less data than the numbers were taken on.
+        SELECT count(*) INTO v_events FROM perf.fct_deal_stage_event;
+        SELECT count(*) INTO v_deals  FROM perf.fct_deal_pipeline;
+        SELECT count(*) INTO v_raw    FROM perf.raw_stage_event;
+        IF (v_events, v_deals, v_raw) IS DISTINCT FROM (v_rec_events, v_rec_deals, v_rec_raw) THEN
+            v_reason := format('fixture row counts moved since it was built (%s/%s/%s now, %s/%s/%s recorded)',
+                               v_events, v_deals, v_raw, v_rec_events, v_rec_deals, v_rec_raw);
+        END IF;
+    END IF;
+
+    IF v_reason IS NULL THEN
+        RAISE NOTICE 'fixture matches the warehouse, reusing it (verified %)',
+            (SELECT verified_at FROM perf.fixture_provenance WHERE fixture_id = 1);
+        RETURN;
+    END IF;
+
+    -- Drop the fixture and keep the provenance table, so the record of what was there
+    -- survives to be overwritten rather than being part of what gets destroyed. Partitions
+    -- are skipped because dropping the partitioned parent takes them with it, and the names
+    -- are read into text up front so a cascade that removes a table early cannot leave this
+    -- loop holding a stale oid.
+    FOR r IN SELECT format('%I.%I', n.nspname, c.relname) AS qname
+             FROM pg_class c
+             JOIN pg_namespace n ON n.oid = c.relnamespace
+             WHERE n.nspname = 'perf'
+               AND c.relkind IN ('r', 'p')
+               AND NOT c.relispartition
+               AND c.relname <> 'fixture_provenance'
+    LOOP
+        EXECUTE 'DROP TABLE IF EXISTS ' || r.qname || ' CASCADE';
+    END LOOP;
+    DELETE FROM perf.fixture_provenance;
+
+    RAISE NOTICE 'rebuilding the fixture from scratch: %', v_reason;
+END $$;
+
+
 -- =====================================================================================
 -- SECTION 1. THE FIXTURE
--- Idempotent. Every block is safe to re-run and skips work that is already done, so a
--- benchmark re-run costs seconds rather than rebuilding 1.14 million rows.
+-- Idempotent, and gated by the provenance check above so that "already done" means "already
+-- done from this exact warehouse". Every block skips work it has already done, so a re-run
+-- against an unchanged warehouse costs seconds rather than rebuilding 1.16 million rows.
 -- =====================================================================================
 
 -- @block fixture 010_schema_and_helper
@@ -205,25 +403,44 @@ SELECT -1, 'UNKNOWN', 'Unknown broker', -1, 'Unknown agency', 'Unknown', 'Unknow
        false, '-infinity', 'infinity', sha256('unknown'::bytea)
 WHERE NOT EXISTS (SELECT 1 FROM perf.dim_broker WHERE broker_sk = -1);
 
+-- THE GUARD MATCHES ON (broker_nk, valid_from), WHICH IS THE GRAIN OF AN SCD2 ROW AND EXACTLY
+-- WHAT ex_dim_broker_no_overlap PROTECTS. It used to match on broker_sk, and that is the line
+-- that broke a second benchmark run: broker_sk is assigned by mart's identity sequence, so a
+-- warehouse rebuild can renumber the same brokers, and a guard looking for numbers that have
+-- moved concludes nothing is loaded and inserts a second version covering the same instant.
+-- An idempotency check has to be keyed on the same thing the constraint is keyed on, or the
+-- constraint is what tells you the check was wrong. The provenance gate in section 0 is the
+-- other half of this: it catches the renumbering itself, because keeping the old rows without
+-- error would leave case study 2 filtering broker_sk = 407 against a different broker.
+WITH src AS (
+    SELECT s.broker_sk, s.broker_nk, s.full_name,
+           -- LEFT JOIN, never INNER. An inner join here would silently drop any broker whose
+           -- agency is missing from dim_agency, which is the exact class of silent loss this
+           -- warehouse exists to prevent.
+           COALESCE(a.agency_sk, -1) AS agency_sk,
+           s.agency_name, s.region, s.broker_tier, s.is_active,
+           -- The first version of every key is anchored at -infinity because its history
+           -- predates the feed. Anchoring at the first snapshot timestamp instead makes any
+           -- fact dated earlier that same day fall out of the point in time join and vanish,
+           -- without changing a single row count.
+           CASE WHEN s.valid_from = (SELECT min(valid_from) FROM mart.dim_broker)
+                THEN '-infinity'::timestamptz
+                ELSE s.valid_from END AS valid_from,
+           s.valid_to, s.row_hash
+    FROM mart.dim_broker s
+    LEFT JOIN perf.dim_agency a ON a.agency_name = s.agency_name
+)
 INSERT INTO perf.dim_broker (broker_sk, broker_nk, full_name, agency_sk, agency_name,
                              region, broker_tier, is_active, valid_from, valid_to, row_hash)
-SELECT s.broker_sk, s.broker_nk, s.full_name,
-       -- LEFT JOIN, never INNER. An inner join here would silently drop any broker whose
-       -- agency is missing from dim_agency, which is the exact class of silent loss this
-       -- warehouse exists to prevent.
-       COALESCE(a.agency_sk, -1),
-       s.agency_name, s.region, s.broker_tier, s.is_active,
-       -- The first version of every key is anchored at -infinity because its history predates
-       -- the feed. Anchoring at the first snapshot timestamp instead makes any fact dated
-       -- earlier that same day fall out of the point in time join and vanish, without
-       -- changing a single row count.
-       CASE WHEN s.valid_from = (SELECT min(valid_from) FROM mart.dim_broker)
-            THEN '-infinity'::timestamptz
-            ELSE s.valid_from END,
-       s.valid_to, s.row_hash
-FROM mart.dim_broker s
-LEFT JOIN perf.dim_agency a ON a.agency_name = s.agency_name
-WHERE NOT EXISTS (SELECT 1 FROM perf.dim_broker t WHERE t.broker_sk = s.broker_sk);
+SELECT src.broker_sk, src.broker_nk, src.full_name, src.agency_sk,
+       src.agency_name, src.region, src.broker_tier, src.is_active,
+       src.valid_from, src.valid_to, src.row_hash
+FROM src
+-- Matched against the TRANSFORMED valid_from, not mart's raw one. Comparing against the raw
+-- value would never find the -infinity anchored first version and would try to re-insert it.
+WHERE NOT EXISTS (SELECT 1 FROM perf.dim_broker t
+                   WHERE t.broker_nk  = src.broker_nk
+                     AND t.valid_from = src.valid_from);
 
 SELECT setval(pg_get_serial_sequence('perf.dim_broker', 'broker_sk'),
               (SELECT max(broker_sk) FROM perf.dim_broker));
@@ -435,12 +652,15 @@ END $$;
 --     ERROR:  cannot add NOT VALID foreign key on partitioned table "fct_deal_stage_event"
 --             referencing relation "dim_broker"
 --     DETAIL:  This feature is not yet supported on partitioned tables.
--- NOT VALID does work on an individual leaf partition, which is a plain table (measured
--- 17.4 ms to add plus 20.1 ms to validate on one 20,182 row partition). But the plain
--- validating ADD CONSTRAINT over all 85 partitions and 1,165,043 rows was re-measured on this
--- build at 3,293 ms for one key, so the per partition workaround buys a shorter lock on each
--- of 85 tables in exchange for 85 separate DDL statements and no guarantee on the parent.
--- Referential integrity across the whole fact for about three seconds is worth taking.
+-- NOT VALID does work on an individual leaf partition, which is a plain table: re-measured on
+-- this build at 3.3 ms to add plus 1.9 ms to validate on the 19,406 row 2026_02 partition. But
+-- the plain validating ADD CONSTRAINT on the parent, across all 85 partitions and 1,165,043
+-- rows, is cheap enough that the workaround is not worth it: 117 to 344 ms for ONE key over
+-- four samples, and 1.8 to 2.9 s for all five keys together, which is what this block reports
+-- on every run. So the per partition route would buy a shorter lock on each of 85 tables in
+-- exchange for 85 separate DDL statements, no constraint on the parent, and nothing to show
+-- for it at this volume. Under two seconds for referential integrity across the whole fact is
+-- worth taking. The cost grows with row count, so re-measure before a maintenance window.
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_fct_event_broker') THEN
@@ -457,10 +677,12 @@ BEGIN
 END $$;
 
 -- @block fixture 110_analyze
--- ANALYZE the partitions, not the parent. MEASURED on this container: ANALYZE on the
--- partitioned parent took 7,485 ms, against 128 ms and 165 ms for two single partitions. The
--- planner estimates each partition from that partition's own statistics anyway, so a parent
--- ANALYZE belongs in a weekly maintenance job and not in the load path.
+-- ANALYZE the partitions, not the parent. RE-MEASURED on this container: ANALYZE on the
+-- partitioned parent took 7,797 ms, against 145 ms and 161 ms for two single partitions, so the
+-- parent costs roughly 50x one partition. The planner estimates each partition from that
+-- partition's own statistics anyway, and an extended statistics object on the parent was
+-- measured leaving the per partition estimate byte identical, so a parent ANALYZE belongs in a
+-- weekly maintenance job and not in the load path. See PERFORMANCE.md for that measurement.
 DO $$
 DECLARE r record;
 BEGIN
@@ -484,7 +706,7 @@ ANALYZE perf.dim_deal_source;
 -- simplification. The grain is one row per deal, but PostgreSQL requires the partition key in
 -- every unique index, so partitioning by received_date would make PRIMARY KEY (deal_nk)
 -- illegal and the stated grain unenforceable: restating a deal's received_date would insert a
--- second row for the same deal instead of updating it. At 42MB the table never needed it.
+-- second row for the same deal instead of updating it. At 35MB the table never needed it.
 CREATE TABLE IF NOT EXISTS perf.fct_deal_pipeline (
     deal_nk          text PRIMARY KEY,
     broker_sk        bigint      NOT NULL,
@@ -647,6 +869,26 @@ BEGIN
                  v_events, v_deals, v_raw, v_parts, v_default, v_unknown;
 END $$;
 
+-- @block fixture 150_provenance
+-- THE LAST STATEMENT IN THE FIXTURE, AND THE ORDER IS THE WHOLE POINT.
+-- This row is what section 0 reads to decide whether the fixture can be reused. Writing it
+-- here, after 140_verify has passed, is what makes its presence mean "a complete fixture that
+-- checked itself against this warehouse". Write it any earlier and a build that died halfway
+-- would leave behind a record claiming a fixture that does not exist, which is how a benchmark
+-- ends up reporting numbers taken on half a table.
+INSERT INTO perf.fixture_provenance
+    (fixture_id, source_fingerprint, verified_at, event_rows, deal_rows, raw_rows)
+SELECT 1, perf.fn_source_fingerprint(), clock_timestamp(),
+       (SELECT count(*) FROM perf.fct_deal_stage_event),
+       (SELECT count(*) FROM perf.fct_deal_pipeline),
+       (SELECT count(*) FROM perf.raw_stage_event)
+ON CONFLICT (fixture_id) DO UPDATE
+    SET source_fingerprint = EXCLUDED.source_fingerprint,
+        verified_at        = EXCLUDED.verified_at,
+        event_rows         = EXCLUDED.event_rows,
+        deal_rows          = EXCLUDED.deal_rows,
+        raw_rows           = EXCLUDED.raw_rows;
+
 
 -- =====================================================================================
 -- SECTION 2. CASE STUDY 1
@@ -658,7 +900,7 @@ END $$;
 -- @diagnosis The filter wraps the timestamp in to_char() and compares the result to text.
 --           The planner cannot reason about a function result against the partition
 --           boundaries, so it prunes nothing and reads all 85 partitions, evaluating to_char
---           on all 1,144,830 rows to keep 49,537. The captured plan shows Parallel Append
+--           on all 1,165,043 rows to keep 57,343. The captured plan shows Parallel Append
 --           with a Filter on to_char(event_ts) on every partition and Rows Removed by Filter
 --           on each one.
 -- @fix Rewrite the predicate as a half open range on the partition key itself. No DDL, no
@@ -698,10 +940,10 @@ ORDER BY 3 DESC;
 -- @title A broker performance review has no access path
 -- @question Broker review. For one broker, across their whole history, how many stage events
 --           per year, how many of those were wins, and what value did they close?
--- @diagnosis The query is highly selective (730 of 1,144,830 rows, 0.064 percent) but there
+-- @diagnosis The query is highly selective (114 of 1,165,043 rows, 0.0098 percent) but there
 --           is no index on broker_sk, and the filter is not on the partition key so pruning
 --           cannot help either. The only plan available is a parallel sequential scan of
---           every partition: about 18,000 buffers read to return 730 rows.
+--           every partition: 21,351 buffers read to return 114 rows, against 320 after the fix.
 -- @fix A composite btree on (broker_sk, event_date), created on the partitioned parent so
 --      every partition inherits it. broker_sk leads because it is the equality predicate;
 --      event_date follows so the same index also serves the common "this broker, this
@@ -740,22 +982,26 @@ ORDER BY 1;
 -- SECTION 4. CASE STUDY 3
 -- =====================================================================================
 -- @case case3
--- @title Stage dwell percentiles sort 1.14 million rows with no ordered access path
+-- @title Stage dwell percentiles sort 1.17 million rows with no ordered access path
 -- @question Cycle time review. Across all history, what is the median and 90th percentile
 --           number of days a deal spends in each stage before it moves?
 -- @diagnosis Two separate sorts, both spilling. The LAG window needs its input ordered by
 --           (deal_nk, event_ts) and nothing provides that order, so the planner sorts all
---           1,144,830 rows: the captured plan shows Sort Method external merge Disk 38144kB
+--           1,165,043 rows: the captured plan shows Sort Method external merge Disk 47984kB
 --           inside the window step. percentile_cont then needs its own sort of the same rows
---           by dwell value: external merge Disk 27048kB.
+--           by dwell value: external merge Disk 28448kB.
 -- @fix A btree on (deal_nk, event_ts). Each partition gets one, and Merge Append reads the
 --      85 partitions in key order, so the window function receives a pre-sorted stream and
 --      its 48 MB disk sort disappears entirely: temp blocks written fall from 20,713 to
 --      8,706. This is a PARTIAL fix and it is the most honest case study in the file. The
 --      percentile_cont sort is inherent to the aggregate and cannot be indexed away, so the
---      28 MB spill remains and the wall clock gain is only about 1.2x, with a run to run
---      spread wide enough that one measurement run on a loaded laptop came out SLOWER. The
---      plan improvement is unambiguous and the clock improvement is marginal, which is
+--      28 MB spill remains and the wall clock gain is only 1.6x to 1.7x across three
+--      consecutive runs, with a run to run spread wide enough that one earlier measurement run
+--      on a loaded laptop came out SLOWER. The Merge Append also trades a parallel sequential
+--      scan for random heap access: the after plan reads 1,099,256 shared buffers against the
+--      before plan's 21,221, and only wins because they are cache hits, so on a box with less
+--      memory the trade could invert. The plan improvement is unambiguous and the clock
+--      improvement is small, which is
 --      exactly the situation where quoting only the plan would be misleading. The real fix
 --      for this question is not an index at all: it is to materialise the aggregate, which
 --      is why mart.mv_broker_month exists.
@@ -806,10 +1052,11 @@ ORDER BY 1;
 -- @title Open pipeline value at risk reads every deal to report on 4 percent of them
 -- @question Risk review. For deals still open and sitting somewhere between Qualified and
 --           Legal, what value is exposed by property sector and province?
--- @diagnosis Only 9,427 of 250,000 deals are open, about 3.8 percent, but there is no index
---           on the flag so the planner scans the whole 42MB table and throws away 96 percent
---           of what it read. The plan shows Parallel Seq Scan with Rows Removed by Filter
---           81,360 per worker.
+-- @diagnosis Only 9,838 of 248,702 deals are both open and in stages 3 to 7, which is 4.0
+--           percent (14,694 are open at all, 5.9 percent, and the stage filter takes it to
+--           4.0). There is no index on the flag, so the planner scans the whole 35MB table and
+--           throws away 96 percent of what it read. The plan shows Parallel Seq Scan with Rows
+--           Removed by Filter 79,621 per worker.
 -- @fix A PARTIAL covering index: btree on (current_stage_sk) INCLUDE (property_sk,
 --      deal_value_zar) WHERE is_open. Partial because indexing the 96 percent of rows that
 --      can never match is wasted space and wasted maintenance on every update. INCLUDE so
@@ -961,8 +1208,8 @@ FROM perf.fct_deal_stage_event;
 -- SECTION 8. SUPPORTING MEASUREMENTS
 -- =====================================================================================
 -- @block evidence 810_brin_on_raw
--- Where BRIN does belong: one unpartitioned 1,144,830 row heap in ingest order. The whole
--- table is a single 19,841 page relation, so a summary of one range per 128 pages genuinely
+-- Where BRIN does belong: one unpartitioned 1,165,043 row heap in ingest order. The whole
+-- table is a single 21,105 page relation, so a summary of one range per 128 pages genuinely
 -- excludes almost all of it.
 DROP INDEX IF EXISTS perf.ix_raw_ingested_brin;
 DROP INDEX IF EXISTS perf.ix_raw_ingested_btree;

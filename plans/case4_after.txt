@@ -27,31 +27,31 @@ SET
 Pager usage is off.
                                                                                    QUERY PLAN                                                                                   
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Limit  (cost=449.86..449.91 rows=20 width=59) (actual time=18.980..18.988 rows=20 loops=1)
+ Limit  (cost=447.97..448.02 rows=20 width=59) (actual time=11.723..11.729 rows=20 loops=1)
    Buffers: shared hit=202
-   ->  Sort  (cost=449.86..450.08 rows=90 width=59) (actual time=18.979..18.983 rows=20 loops=1)
+   ->  Sort  (cost=447.97..448.19 rows=90 width=59) (actual time=11.722..11.725 rows=20 loops=1)
          Sort Key: (sum(f.deal_value_zar)) DESC NULLS LAST
          Sort Method: top-N heapsort  Memory: 27kB
          Buffers: shared hit=202
-         ->  HashAggregate  (cost=446.34..447.46 rows=90 width=59) (actual time=18.912..18.939 rows=79 loops=1)
+         ->  HashAggregate  (cost=444.45..445.57 rows=90 width=59) (actual time=11.670..11.691 rows=79 loops=1)
                Group Key: p.sector, p.province
                Batches: 1  Memory Usage: 80kB
                Buffers: shared hit=202
-               ->  Hash Join  (cost=410.31..440.20 rows=614 width=28) (actual time=5.814..13.456 rows=9838 loops=1)
+               ->  Hash Join  (cost=410.31..438.89 rows=556 width=28) (actual time=3.746..8.421 rows=9838 loops=1)
                      Hash Cond: (f.property_sk = p.property_sk)
                      Buffers: shared hit=202
-                     ->  Index Only Scan using ix_pipeline_open_stage on fct_deal_pipeline f  (cost=0.29..28.57 rows=614 width=17) (actual time=0.026..2.027 rows=9838 loops=1)
+                     ->  Index Only Scan using ix_pipeline_open_stage on fct_deal_pipeline f  (cost=0.29..27.40 rows=556 width=17) (actual time=0.044..1.297 rows=9838 loops=1)
                            Index Cond: ((current_stage_sk >= 3) AND (current_stage_sk <= 7))
                            Heap Fetches: 0
                            Buffers: shared hit=62
-                     ->  Hash  (cost=260.01..260.01 rows=12001 width=27) (actual time=5.755..5.756 rows=12001 loops=1)
+                     ->  Hash  (cost=260.01..260.01 rows=12001 width=27) (actual time=3.693..3.693 rows=12001 loops=1)
                            Buckets: 16384  Batches: 1  Memory Usage: 873kB
                            Buffers: shared hit=140
-                           ->  Seq Scan on dim_property p  (cost=0.00..260.01 rows=12001 width=27) (actual time=0.032..2.132 rows=12001 loops=1)
+                           ->  Seq Scan on dim_property p  (cost=0.00..260.01 rows=12001 width=27) (actual time=0.008..1.341 rows=12001 loops=1)
                                  Buffers: shared hit=140
  Planning:
    Buffers: shared hit=9
- Planning Time: 0.444 ms
- Execution Time: 19.114 ms
+ Planning Time: 0.421 ms
+ Execution Time: 11.814 ms
 (26 rows)
 

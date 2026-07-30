@@ -4,7 +4,7 @@
 Reads sql/06_performance.sql, which is the single source of truth for the fixture, the
 indexes and the case study queries, and executes it in the right order:
 
-    1. build or verify the fixture (idempotent, skips work already done)
+    1. check the fixture's provenance, then build or reuse it
     2. for every case: establish the BEFORE state, time the BEFORE query, capture its plan,
        establish the AFTER state, time the AFTER query, capture its plan
     3. capture the partition pruning and supporting evidence plans
@@ -13,6 +13,17 @@ indexes and the case study queries, and executes it in the right order:
 
 Nothing here invents a number. Every figure printed is parsed out of PostgreSQL's own
 output, and the captured plans are written to plans/ so a reader can check the claims.
+
+RE-RUNNING THIS IS SAFE, AND THAT TOOK A FIX
+    The fixture is a cache of the warehouse: 68 seconds to build, about 3 seconds to verify.
+    Step 1 computes a checksum of every warehouse column the fixture copies and compares it to
+    the one recorded when the fixture last verified itself. Match means reuse; anything else
+    means drop the fixture and rebuild it. So the second and third runs of this script land in
+    the same state as the first, and the benchmark never measures a fixture it cannot vouch
+    for. The gate lives in sql/06_performance.sql, in preflight block 010_fixture_provenance,
+    which also explains the defect it fixes: the old guards keyed on mart's identity assigned
+    surrogate keys, and a warehouse rebuild renumbers those, so a re-run tried to insert
+    dimension versions it already held and died on the SCD2 exclusion constraint.
 
 MEASUREMENT METHOD
     Each query runs once to warm the cache, then --runs times more. Reported figures are the
@@ -23,8 +34,15 @@ MEASUREMENT METHOD
     case study 1 it turns out to be most of the win.
 
     EXPLAIN (ANALYZE, BUFFERS) is captured separately and used only for plan shape and buffer
-    counts, never for the headline timings. Its per node instrumentation is not free: on an
-    85 partition plan it inflated one measured query from 3.9 ms to 36.2 ms.
+    counts, never for the headline timings. Its per node instrumentation is not free, though
+    re-measured on this build the penalty is modest: the widest gap was case 4's after query at
+    4.9 ms on the clock against 7.2 ms of planning plus execution self reported by EXPLAIN
+    ANALYZE, about 1.5x. The separation is kept because the bias only ever goes one way.
+
+    Run to run variance on a laptop container is much larger than that, and it is the reason
+    PERFORMANCE.md quotes a range across three consecutive runs rather than a point estimate:
+    over those runs the case 1 speedup moved between 7.7x and 24x while every partition count in
+    every plan stayed identical. Trust the plan facts; treat the milliseconds as indicative.
 
 WHY psql AND NOT psycopg
     No third party driver is needed, so the suite runs anywhere Docker runs. Every repetition
@@ -485,7 +503,7 @@ def main() -> int:
     parser.add_argument("--runs", type=int, default=5,
                         help="timed runs per query after one warmup run (default 5)")
     parser.add_argument("--rebuild", action="store_true",
-                        help="drop the perf schema and rebuild the fixture from scratch")
+                        help="force a rebuild even if the provenance check says the fixture is current")
     parser.add_argument("--case", action="append", default=None,
                         help="run only this case id, repeatable")
     parser.add_argument("--skip-evidence", action="store_true",

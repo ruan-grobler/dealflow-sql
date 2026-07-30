@@ -128,18 +128,25 @@ independent, multiplies two selectivities, and badly underestimates how many row
 query will return. A bad row estimate is what flips a hash join into a nested loop and turns
 80 ms into minutes.
 
-**They will ask: how do you know it worked?** I measured it, and the interesting part is
-that the obvious placement failed. An extended statistics object on the partitioned
-**parent** was accepted, populated by `ANALYZE`, and left the per-partition estimates byte
-identical: 51, 96 and 244 rows against actuals of 419, 924 and 1,779. The same object on the
-**child** corrected the 96 to exactly 924 against an actual 924. So the planner estimates
-each partition from that partition's own statistics. My partition-maker function therefore
-creates one per partition as it creates the partition, and rule DQ-008 fails the load if a
-populated partition is missing one.
+**They will ask: how do you know it worked?** I measured it, and the interesting part is that
+the obvious placement failed. One predicate, `from_stage_sk = 1 AND to_stage_sk = 2` on the
+February 2026 partition, actual 4,497 rows:
 
-**Honest limit.** I understand `ndistinct` and `dependencies` well enough to explain why
-they help here. I am shakier on `mcv` and on when extended statistics do not help at all,
-and I have not had to diagnose a plan regression under time pressure.
+- No extended statistics: the planner estimates **1,136**, out by 4x.
+- An object on the partitioned **parent**, accepted by PostgreSQL and populated by `ANALYZE`:
+  still **1,136**. It changed nothing, because the planner estimates each partition from that
+  partition's own statistics.
+- The object on the **partition**: **4,497**, exact.
+
+My partition-maker function therefore creates one per partition as it creates the partition,
+and rule DQ-008 fails the load if a populated partition is missing one.
+
+**Honest limit, and I can now put a number on it.** I used to say I was shaky on `mcv`. When I
+re-ran this I built the partition-level object with only `(ndistinct, dependencies)` and got
+2,094 against the actual 4,497: better than 1,136, still out by 2x. Adding `mcv` is what lands
+it exactly, because the estimate then comes from a stored frequency for that specific pair
+rather than from a correction to a product of selectivities. I still have not had to diagnose a
+plan regression under time pressure.
 
 ---
 
@@ -152,10 +159,11 @@ against 25 MB for the equivalent btree, and the planner chose it. On the partiti
 built one, measured it, and deleted it.
 
 **They will ask: why delete it?** Two reasons and the second is the real one. First, the
-average partition is around 170 pages, and at the default 128 pages per range a partition
-holds one or two BRIN summaries, so there is nothing to exclude. Second, I put it head to
-head against simply rewriting the query to filter on the partition key, and the rewrite was
-5.1x faster than the BRIN version with no object to build, maintain or vacuum. Partition
+average partition is about 250 pages, and at the default 128 pages per range a partition holds
+two BRIN summaries, so there is almost nothing to exclude. Second, I put it head to head
+against simply rewriting the query to filter on the partition key, and the rewrite was 5x to
+7x faster than the BRIN version across three runs, with no object to build, maintain or
+vacuum, and it read 432 buffers against 665 on every single run. Partition
 pruning and BRIN solve the same problem, so if you already partition on the column, BRIN on
 that column is redundant.
 
@@ -299,9 +307,38 @@ loaded warehouse and every row count came back byte identical, the anomaly loop 
 zero passes because there was nothing left to remove, and the Type 2 dimensions opened no
 new versions because the hash compare found no change.
 
+**They will ask: has your idempotence ever actually broken?** Yes, once, and in the benchmark
+rather than the warehouse. The performance lab caches its fixture, because rebuilding 1.16
+million rows takes 68 seconds and checking them takes 3. The bug was the key it cached on. It
+asked "is this broker version already loaded?" by comparing `broker_sk`, which is a surrogate
+key the lab does not own: my warehouse loader assigns it from an identity sequence with no
+`ORDER BY`, so rebuilding the warehouse can hand the same brokers different numbers. When that
+happened the guard saw keys it did not recognise, tried to insert versions it already held, and
+the SCD Type 2 exclusion constraint stopped it:
+
+```
+ERROR:  conflicting key value violates exclusion constraint "ex_dim_broker_no_overlap"
+```
+
+The constraint was keyed on the row's real identity, `(broker_nk, validity window)`. The guard
+was keyed on a number that had moved. **An idempotence check has to be keyed on the same thing
+the constraint is keyed on**, otherwise the constraint is what tells you the check was wrong.
+
+**They will ask: so you added `ON CONFLICT DO NOTHING`?** No, and this is the part I would want
+to be asked about. An untargeted `ON CONFLICT DO NOTHING` does swallow exclusion constraint
+violations, so it would have made the error go away. It would also have left the lab holding
+rows keyed to the old numbers while every fact row resolved against the new ones, and case study
+2 filters `WHERE broker_sk = 407`, so it would have gone on reporting a speedup for a different
+broker. Trading a loud crash for a silent wrong measurement is the worst trade available. I
+fixed both halves instead: the guard now matches on `(broker_nk, valid_from)`, and the fixture
+records a checksum of every warehouse column it copied, so a source that has moved forces a
+clean rebuild rather than a patch. Three consecutive runs with no manual reset, all clean.
+
 **Honest limit.** `MERGE` arrived in PostgreSQL 15 and this is the first thing I have used it
 on. I know it does not support `RETURNING` in 16, which is why the restatement log is written
-as a separate statement before the `MERGE` rather than out of it.
+as a separate statement before the `MERGE` rather than out of it. And the defect above shipped
+in the first place, which is the honest version of this section: I did not catch it until I ran
+the benchmark twice in a row.
 
 ---
 

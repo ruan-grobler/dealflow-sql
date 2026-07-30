@@ -3,377 +3,371 @@ SET
 Pager usage is off.
                                                                                           QUERY PLAN                                                                                          
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Sort  (cost=33564.19..33564.49 rows=121 width=58) (actual time=411.619..416.401 rows=38 loops=1)
+ Sort  (cost=33687.62..33687.75 rows=53 width=58) (actual time=556.045..556.429 rows=38 loops=1)
    Sort Key: (count(*)) DESC
    Sort Method: quicksort  Memory: 27kB
-   Buffers: shared hit=54 read=21220
-   ->  Finalize GroupAggregate  (cost=33526.93..33560.00 rows=121 width=58) (actual time=411.289..416.340 rows=38 loops=1)
+   Buffers: shared hit=164 read=21221
+   ->  GroupAggregate  (cost=3972.52..33686.10 rows=53 width=58) (actual time=474.287..556.345 rows=38 loops=1)
          Group Key: fs.stage_name, ts.stage_name
-         Buffers: shared hit=54 read=21220
-         ->  Gather Merge  (cost=33526.93..33555.16 rows=242 width=58) (actual time=411.267..416.153 rows=103 loops=1)
-               Workers Planned: 2
-               Workers Launched: 2
-               Buffers: shared hit=54 read=21220
-               ->  Sort  (cost=32526.90..32527.21 rows=121 width=58) (actual time=398.672..398.765 rows=34 loops=3)
-                     Sort Key: fs.stage_name, ts.stage_name
-                     Sort Method: quicksort  Memory: 28kB
-                     Buffers: shared hit=54 read=21220
-                     Worker 0:  Sort Method: quicksort  Memory: 29kB
-                     Worker 1:  Sort Method: quicksort  Memory: 29kB
-                     ->  Partial HashAggregate  (cost=32521.21..32522.72 rows=121 width=58) (actual time=398.545..398.651 rows=34 loops=3)
-                           Group Key: fs.stage_name, ts.stage_name
-                           Batches: 1  Memory Usage: 48kB
-                           Buffers: shared hit=36 read=21220
-                           Worker 0:  Batches: 1  Memory Usage: 48kB
-                           Worker 1:  Batches: 1  Memory Usage: 48kB
-                           ->  Hash Join  (cost=2.50..32448.37 rows=7284 width=24) (actual time=166.568..390.433 rows=19114 loops=3)
-                                 Hash Cond: (e.to_stage_sk = ts.stage_sk)
-                                 Buffers: shared hit=36 read=21220
-                                 ->  Hash Join  (cost=1.25..32420.63 rows=7284 width=19) (actual time=166.490..385.722 rows=19114 loops=3)
-                                       Hash Cond: (e.from_stage_sk = fs.stage_sk)
-                                       Buffers: shared hit=3 read=21220
-                                       ->  Parallel Append  (cost=0.00..32392.87 rows=7291 width=14) (actual time=166.306..380.485 rows=19114 loops=3)
+         Buffers: shared hit=164 read=21221
+         ->  Incremental Sort  (cost=3972.52..33684.78 rows=53 width=24) (actual time=474.263..547.989 rows=57343 loops=1)
+               Sort Key: fs.stage_name, ts.stage_name
+               Presorted Key: fs.stage_name
+               Full-sort Groups: 8  Sort Method: quicksort  Average Memory: 28kB  Peak Memory: 28kB
+               Pre-sorted Groups: 8  Sort Method: quicksort  Average Memory: 845kB  Peak Memory: 1057kB
+               Buffers: shared hit=164 read=21221
+               ->  Nested Loop  (cost=1001.38..33683.29 rows=53 width=24) (actual time=460.910..531.830 rows=57343 loops=1)
+                     Join Filter: (fs.stage_sk = e.from_stage_sk)
+                     Rows Removed by Join Filter: 573430
+                     Buffers: shared hit=164 read=21221
+                     ->  Index Scan using dim_stage_stage_name_key on dim_stage fs  (cost=0.14..12.30 rows=11 width=13) (actual time=0.065..0.158 rows=11 loops=1)
+                           Buffers: shared hit=1 read=1
+                     ->  Materialize  (cost=1001.25..33514.67 rows=962 width=19) (actual time=25.604..44.520 rows=57343 loops=11)
+                           Buffers: shared hit=163 read=21220
+                           ->  Gather  (cost=1001.25..33509.86 rows=962 width=19) (actual time=281.631..442.396 rows=57343 loops=1)
+                                 Workers Planned: 2
+                                 Workers Launched: 2
+                                 Buffers: shared hit=163 read=21220
+                                 ->  Hash Join  (cost=1.25..32413.66 rows=401 width=19) (actual time=127.496..295.999 rows=19114 loops=3)
+                                       Hash Cond: (e.to_stage_sk = ts.stage_sk)
+                                       Buffers: shared hit=163 read=21220
+                                       ->  Parallel Append  (cost=0.00..32392.87 rows=7291 width=14) (actual time=127.136..292.255 rows=19114 loops=3)
                                              Buffers: shared read=21220
-                                             ->  Seq Scan on fct_deal_stage_event_2026_08 e_80  (cost=0.00..0.00 rows=1 width=22) (actual time=0.010..0.011 rows=0 loops=1)
+                                             ->  Seq Scan on fct_deal_stage_event_2026_08 e_80  (cost=0.00..0.00 rows=1 width=22) (actual time=0.020..0.020 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
-                                             ->  Seq Scan on fct_deal_stage_event_2026_09 e_81  (cost=0.00..0.00 rows=1 width=22) (actual time=0.008..0.008 rows=0 loops=1)
+                                             ->  Seq Scan on fct_deal_stage_event_2026_09 e_81  (cost=0.00..0.00 rows=1 width=22) (actual time=0.009..0.009 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
-                                             ->  Seq Scan on fct_deal_stage_event_2026_10 e_82  (cost=0.00..0.00 rows=1 width=22) (actual time=0.011..0.011 rows=0 loops=1)
+                                             ->  Seq Scan on fct_deal_stage_event_2026_10 e_82  (cost=0.00..0.00 rows=1 width=22) (actual time=0.010..0.010 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
-                                             ->  Seq Scan on fct_deal_stage_event_2026_11 e_83  (cost=0.00..0.00 rows=1 width=22) (actual time=0.011..0.011 rows=0 loops=1)
+                                             ->  Seq Scan on fct_deal_stage_event_2026_11 e_83  (cost=0.00..0.00 rows=1 width=22) (actual time=0.006..0.006 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
-                                             ->  Seq Scan on fct_deal_stage_event_2026_12 e_84  (cost=0.00..0.00 rows=1 width=22) (actual time=0.007..0.007 rows=0 loops=1)
+                                             ->  Seq Scan on fct_deal_stage_event_2026_12 e_84  (cost=0.00..0.00 rows=1 width=22) (actual time=0.009..0.009 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2026_03 e_75  (cost=0.00..658.74 rows=209 width=14) (actual time=0.184..35.487 rows=23720 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2026_03 e_75  (cost=0.00..658.74 rows=209 width=14) (actual time=0.161..20.927 rows=23720 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Buffers: shared read=432
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2025_03 e_63  (cost=0.00..586.95 rows=186 width=14) (actual time=25.344..25.344 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2025_03 e_63  (cost=0.00..586.95 rows=186 width=14) (actual time=13.495..13.495 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 21127
                                                    Buffers: shared read=385
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2026_06 e_78  (cost=0.00..584.12 rows=186 width=14) (actual time=18.122..18.122 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2026_06 e_78  (cost=0.00..584.12 rows=186 width=14) (actual time=13.650..13.650 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 21040
                                                    Buffers: shared read=383
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2026_07 e_79  (cost=0.00..568.82 rows=181 width=14) (actual time=16.349..16.349 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2026_07 e_79  (cost=0.00..568.82 rows=181 width=14) (actual time=13.474..13.474 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 20486
                                                    Buffers: shared read=373
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2026_05 e_77  (cost=0.00..565.70 rows=180 width=14) (actual time=18.796..18.796 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2026_05 e_77  (cost=0.00..565.70 rows=180 width=14) (actual time=17.597..17.597 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 20369
                                                    Buffers: shared read=371
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2025_09 e_69  (cost=0.00..561.26 rows=178 width=14) (actual time=20.650..20.650 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2025_09 e_69  (cost=0.00..561.26 rows=178 width=14) (actual time=14.594..14.594 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 20218
                                                    Buffers: shared read=368
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2026_04 e_76  (cost=0.00..556.85 rows=177 width=14) (actual time=18.389..18.390 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2026_04 e_76  (cost=0.00..556.85 rows=177 width=14) (actual time=13.729..13.729 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 20070
                                                    Buffers: shared read=365
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2025_10 e_70  (cost=0.00..545.96 rows=174 width=14) (actual time=16.725..16.725 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2025_10 e_70  (cost=0.00..545.96 rows=174 width=14) (actual time=15.510..15.510 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 19664
                                                    Buffers: shared read=358
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2026_02 e_74  (cost=0.00..538.50 rows=171 width=14) (actual time=0.047..26.203 rows=19406 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2026_02 e_74  (cost=0.00..538.50 rows=171 width=14) (actual time=0.055..16.460 rows=19406 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Buffers: shared read=353
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2025_06 e_66  (cost=0.00..529.10 rows=168 width=14) (actual time=18.953..18.953 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2025_06 e_66  (cost=0.00..529.10 rows=168 width=14) (actual time=12.033..12.033 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 19050
                                                    Buffers: shared read=347
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2025_05 e_65  (cost=0.00..518.75 rows=165 width=14) (actual time=14.981..14.981 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2025_05 e_65  (cost=0.00..518.75 rows=165 width=14) (actual time=10.643..10.643 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 18700
                                                    Buffers: shared read=340
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2025_07 e_67  (cost=0.00..515.56 rows=164 width=14) (actual time=19.070..19.070 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2025_07 e_67  (cost=0.00..515.56 rows=164 width=14) (actual time=10.421..10.421 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 18576
                                                    Buffers: shared read=338
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2025_11 e_71  (cost=0.00..509.37 rows=162 width=14) (actual time=15.687..15.687 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2025_11 e_71  (cost=0.00..509.37 rows=162 width=14) (actual time=10.627..10.627 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 18346
                                                    Buffers: shared read=334
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2025_08 e_68  (cost=0.00..509.21 rows=162 width=14) (actual time=14.431..14.431 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2025_08 e_68  (cost=0.00..509.21 rows=162 width=14) (actual time=11.554..11.555 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 18330
                                                    Buffers: shared read=334
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2024_03 e_51  (cost=0.00..508.03 rows=162 width=14) (actual time=13.689..13.690 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2024_03 e_51  (cost=0.00..508.03 rows=162 width=14) (actual time=12.859..12.859 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 18311
                                                    Buffers: shared read=333
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2025_04 e_64  (cost=0.00..507.55 rows=161 width=14) (actual time=12.998..12.998 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2025_04 e_64  (cost=0.00..507.55 rows=161 width=14) (actual time=12.552..12.552 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 18261
                                                    Buffers: shared read=333
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2024_10 e_58  (cost=0.00..500.37 rows=159 width=14) (actual time=17.791..17.791 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2024_10 e_58  (cost=0.00..500.37 rows=159 width=14) (actual time=13.485..13.485 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 18033
                                                    Buffers: shared read=328
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2024_09 e_57  (cost=0.00..498.80 rows=159 width=14) (actual time=19.279..19.279 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2024_09 e_57  (cost=0.00..498.80 rows=159 width=14) (actual time=20.432..20.432 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 17973
                                                    Buffers: shared read=327
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2024_07 e_55  (cost=0.00..498.42 rows=158 width=14) (actual time=20.677..20.677 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2024_07 e_55  (cost=0.00..498.42 rows=158 width=14) (actual time=22.201..22.201 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 17933
                                                    Buffers: shared read=327
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2025_02 e_62  (cost=0.00..495.83 rows=158 width=14) (actual time=25.509..25.510 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2025_02 e_62  (cost=0.00..495.83 rows=158 width=14) (actual time=21.575..21.575 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 17871
                                                    Buffers: shared read=325
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2024_04 e_52  (cost=0.00..486.65 rows=155 width=14) (actual time=15.373..15.373 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2024_04 e_52  (cost=0.00..486.65 rows=155 width=14) (actual time=17.613..17.613 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 17539
                                                    Buffers: shared read=319
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2024_05 e_53  (cost=0.00..483.41 rows=154 width=14) (actual time=17.136..17.136 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2024_05 e_53  (cost=0.00..483.41 rows=154 width=14) (actual time=11.208..11.209 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 17409
                                                    Buffers: shared read=317
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2023_03 e_39  (cost=0.00..479.05 rows=152 width=14) (actual time=18.910..18.910 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2023_03 e_39  (cost=0.00..479.05 rows=152 width=14) (actual time=15.146..15.146 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 17267
                                                    Buffers: shared read=314
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2023_10 e_46  (cost=0.00..471.44 rows=150 width=14) (actual time=16.064..16.064 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2023_10 e_46  (cost=0.00..471.44 rows=150 width=14) (actual time=18.068..18.068 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 16994
                                                    Buffers: shared read=309
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2024_11 e_59  (cost=0.00..469.80 rows=149 width=14) (actual time=17.158..17.159 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2024_11 e_59  (cost=0.00..469.80 rows=149 width=14) (actual time=15.257..15.257 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 16927
                                                    Buffers: shared read=308
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2024_08 e_56  (cost=0.00..469.61 rows=149 width=14) (actual time=14.186..14.186 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2024_08 e_56  (cost=0.00..469.61 rows=149 width=14) (actual time=12.375..12.375 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 16907
                                                    Buffers: shared read=308
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2023_05 e_41  (cost=0.00..466.67 rows=148 width=14) (actual time=13.201..13.202 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2023_05 e_41  (cost=0.00..466.67 rows=148 width=14) (actual time=11.045..11.045 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 16809
                                                    Buffers: shared read=306
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2024_02 e_50  (cost=0.00..457.29 rows=145 width=14) (actual time=13.273..13.273 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2024_02 e_50  (cost=0.00..457.29 rows=145 width=14) (actual time=10.823..10.823 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 16455
                                                    Buffers: shared read=300
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2024_06 e_54  (cost=0.00..440.60 rows=140 width=14) (actual time=15.173..15.173 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2024_06 e_54  (cost=0.00..440.60 rows=140 width=14) (actual time=14.117..14.118 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 15860
                                                    Buffers: shared read=289
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2022_03 e_27  (cost=0.00..437.46 rows=139 width=14) (actual time=13.964..13.965 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2022_03 e_27  (cost=0.00..437.46 rows=139 width=14) (actual time=4.924..4.924 rows=0 loops=3)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
-                                                   Rows Removed by Filter: 15740
+                                                   Rows Removed by Filter: 5247
                                                    Buffers: shared read=287
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2023_11 e_47  (cost=0.00..433.24 rows=138 width=14) (actual time=11.751..11.751 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2023_11 e_47  (cost=0.00..433.24 rows=138 width=14) (actual time=6.059..6.059 rows=0 loops=2)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
-                                                   Rows Removed by Filter: 15613
+                                                   Rows Removed by Filter: 7806
                                                    Buffers: shared read=284
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2023_07 e_43  (cost=0.00..431.65 rows=137 width=14) (actual time=10.799..10.799 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2023_07 e_43  (cost=0.00..431.65 rows=137 width=14) (actual time=12.769..12.769 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 15551
                                                    Buffers: shared read=283
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2023_08 e_44  (cost=0.00..428.22 rows=136 width=14) (actual time=13.152..13.152 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2023_08 e_44  (cost=0.00..428.22 rows=136 width=14) (actual time=9.710..9.710 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 15401
                                                    Buffers: shared read=281
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2023_09 e_45  (cost=0.00..421.05 rows=134 width=14) (actual time=15.082..15.082 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2023_09 e_45  (cost=0.00..421.05 rows=134 width=14) (actual time=10.652..10.653 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 15174
                                                    Buffers: shared read=276
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2022_05 e_29  (cost=0.00..419.32 rows=133 width=14) (actual time=13.018..13.018 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2022_05 e_29  (cost=0.00..419.32 rows=133 width=14) (actual time=14.637..14.637 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 15098
                                                    Buffers: shared read=275
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2023_06 e_42  (cost=0.00..417.69 rows=132 width=14) (actual time=14.542..14.542 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2023_06 e_42  (cost=0.00..417.69 rows=132 width=14) (actual time=9.473..9.474 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 15032
                                                    Buffers: shared read=274
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2021_03 e_15  (cost=0.00..416.44 rows=132 width=14) (actual time=13.734..13.734 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2021_03 e_15  (cost=0.00..416.44 rows=132 width=14) (actual time=17.177..17.178 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 15006
                                                    Buffers: shared read=273
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2022_10 e_34  (cost=0.00..416.03 rows=132 width=14) (actual time=16.394..16.394 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2022_10 e_34  (cost=0.00..416.03 rows=132 width=14) (actual time=18.168..18.168 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 14963
                                                    Buffers: shared read=273
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2022_08 e_32  (cost=0.00..414.88 rows=132 width=14) (actual time=14.498..14.498 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2022_08 e_32  (cost=0.00..414.88 rows=132 width=14) (actual time=11.223..11.223 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 14947
                                                    Buffers: shared read=272
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2023_02 e_38  (cost=0.00..405.44 rows=129 width=14) (actual time=13.981..13.981 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2023_02 e_38  (cost=0.00..405.44 rows=129 width=14) (actual time=10.621..10.621 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 14588
                                                    Buffers: shared read=266
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2023_04 e_40  (cost=0.00..401.00 rows=128 width=14) (actual time=14.973..14.974 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2023_04 e_40  (cost=0.00..401.00 rows=128 width=14) (actual time=8.180..8.180 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 14437
                                                    Buffers: shared read=263
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2022_11 e_35  (cost=0.00..396.43 rows=126 width=14) (actual time=13.364..13.364 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2022_11 e_35  (cost=0.00..396.43 rows=126 width=14) (actual time=7.888..7.888 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 14273
                                                    Buffers: shared read=260
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2026_01 e_73  (cost=0.00..394.90 rows=125 width=14) (actual time=0.031..5.496 rows=4739 loops=3)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2026_01 e_73  (cost=0.00..394.90 rows=125 width=14) (actual time=0.038..11.467 rows=14217 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Buffers: shared read=259
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2022_09 e_33  (cost=0.00..392.02 rows=125 width=14) (actual time=5.778..5.778 rows=0 loops=2)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2022_09 e_33  (cost=0.00..392.02 rows=125 width=14) (actual time=8.226..8.227 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
-                                                   Rows Removed by Filter: 7062
+                                                   Rows Removed by Filter: 14125
                                                    Buffers: shared read=257
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2021_11 e_23  (cost=0.00..382.61 rows=122 width=14) (actual time=12.899..12.899 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2021_11 e_23  (cost=0.00..382.61 rows=122 width=14) (actual time=8.884..8.884 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 13768
                                                    Buffers: shared read=251
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2022_06 e_30  (cost=0.00..378.37 rows=121 width=14) (actual time=11.783..11.783 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2022_06 e_30  (cost=0.00..378.37 rows=121 width=14) (actual time=7.205..7.205 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 13639
                                                    Buffers: shared read=248
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2022_02 e_26  (cost=0.00..378.03 rows=120 width=14) (actual time=13.049..13.049 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2022_02 e_26  (cost=0.00..378.03 rows=120 width=14) (actual time=8.089..8.089 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 13603
                                                    Buffers: shared read=248
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2022_04 e_28  (cost=0.00..373.80 rows=119 width=14) (actual time=13.640..13.640 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2022_04 e_28  (cost=0.00..373.80 rows=119 width=14) (actual time=8.390..8.390 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 13474
                                                    Buffers: shared read=245
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2025_12 e_72  (cost=0.00..371.87 rows=118 width=14) (actual time=11.902..11.903 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2025_12 e_72  (cost=0.00..371.87 rows=118 width=14) (actual time=8.798..8.798 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 13377
                                                    Buffers: shared read=244
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2021_05 e_17  (cost=0.00..370.71 rows=118 width=14) (actual time=13.181..13.181 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2021_05 e_17  (cost=0.00..370.71 rows=118 width=14) (actual time=6.663..6.663 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 13360
                                                    Buffers: shared read=243
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2021_08 e_20  (cost=0.00..370.46 rows=118 width=14) (actual time=9.182..9.182 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2021_08 e_20  (cost=0.00..370.46 rows=118 width=14) (actual time=7.389..7.389 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 13334
                                                    Buffers: shared read=243
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2022_07 e_31  (cost=0.00..370.42 rows=118 width=14) (actual time=11.098..11.098 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2022_07 e_31  (cost=0.00..370.42 rows=118 width=14) (actual time=8.271..8.271 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 13330
                                                    Buffers: shared read=243
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2025_01 e_61  (cost=0.00..366.07 rows=116 width=14) (actual time=11.676..11.676 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2025_01 e_61  (cost=0.00..366.07 rows=116 width=14) (actual time=8.668..8.668 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 13189
                                                    Buffers: shared read=240
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2021_10 e_22  (cost=0.00..365.69 rows=116 width=14) (actual time=10.511..10.511 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2021_10 e_22  (cost=0.00..365.69 rows=116 width=14) (actual time=8.902..8.902 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 13149
                                                    Buffers: shared read=240
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2021_09 e_21  (cost=0.00..361.11 rows=115 width=14) (actual time=12.631..12.632 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2021_09 e_21  (cost=0.00..361.11 rows=115 width=14) (actual time=10.443..10.443 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 12984
                                                    Buffers: shared read=237
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2024_01 e_49  (cost=0.00..346.22 rows=110 width=14) (actual time=13.997..13.997 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2024_01 e_49  (cost=0.00..346.22 rows=110 width=14) (actual time=10.477..10.477 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 12472
                                                    Buffers: shared read=227
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2021_06 e_18  (cost=0.00..344.38 rows=109 width=14) (actual time=11.445..11.445 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2021_06 e_18  (cost=0.00..344.38 rows=109 width=14) (actual time=13.920..13.920 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 12384
                                                    Buffers: shared read=226
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2021_04 e_16  (cost=0.00..343.20 rows=109 width=14) (actual time=10.759..10.759 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2021_04 e_16  (cost=0.00..343.20 rows=109 width=14) (actual time=10.186..10.186 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 12366
                                                    Buffers: shared read=225
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2021_07 e_19  (cost=0.00..342.86 rows=109 width=14) (actual time=11.592..11.592 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2021_07 e_19  (cost=0.00..342.86 rows=109 width=14) (actual time=9.975..9.975 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 12330
                                                    Buffers: shared read=225
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2020_11 e_11  (cost=0.00..341.53 rows=108 width=14) (actual time=12.208..12.208 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2020_11 e_11  (cost=0.00..341.53 rows=108 width=14) (actual time=7.904..7.905 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 12295
                                                    Buffers: shared read=224
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2021_02 e_14  (cost=0.00..337.07 rows=107 width=14) (actual time=12.427..12.427 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2021_02 e_14  (cost=0.00..337.07 rows=107 width=14) (actual time=7.454..7.455 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 12143
                                                    Buffers: shared read=221
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2020_10 e_10  (cost=0.00..332.49 rows=106 width=14) (actual time=10.144..10.144 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2020_10 e_10  (cost=0.00..332.49 rows=106 width=14) (actual time=7.171..7.175 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 11977
                                                    Buffers: shared read=218
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2020_08 e_8  (cost=0.00..329.43 rows=105 width=14) (actual time=9.788..9.788 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2020_08 e_8  (cost=0.00..329.43 rows=105 width=14) (actual time=8.724..8.724 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 11866
                                                    Buffers: shared read=216
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2020_09 e_9  (cost=0.00..326.31 rows=104 width=14) (actual time=9.379..9.379 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2020_09 e_9  (cost=0.00..326.31 rows=104 width=14) (actual time=6.996..6.996 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 11749
                                                    Buffers: shared read=214
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2024_12 e_60  (cost=0.00..324.65 rows=103 width=14) (actual time=18.385..18.386 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2024_12 e_60  (cost=0.00..324.65 rows=103 width=14) (actual time=8.186..8.187 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 11680
                                                    Buffers: shared read=213
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2020_06 e_6  (cost=0.00..321.71 rows=102 width=14) (actual time=11.755..11.755 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2020_06 e_6  (cost=0.00..321.71 rows=102 width=14) (actual time=8.251..8.251 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 11582
                                                    Buffers: shared read=211
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2020_03 e_3  (cost=0.00..313.90 rows=99 width=14) (actual time=12.047..12.047 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2020_03 e_3  (cost=0.00..313.90 rows=99 width=14) (actual time=7.275..7.278 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 11288
                                                    Buffers: shared read=206
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2023_01 e_37  (cost=0.00..310.84 rows=99 width=14) (actual time=10.157..10.157 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2023_01 e_37  (cost=0.00..310.84 rows=99 width=14) (actual time=7.792..7.792 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 11177
                                                    Buffers: shared read=204
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2020_07 e_7  (cost=0.00..306.48 rows=98 width=14) (actual time=9.159..9.159 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2020_07 e_7  (cost=0.00..306.48 rows=98 width=14) (actual time=8.289..8.289 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 11035
                                                    Buffers: shared read=201
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2020_05 e_5  (cost=0.00..300.25 rows=95 width=14) (actual time=16.949..16.949 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2020_05 e_5  (cost=0.00..300.25 rows=95 width=14) (actual time=6.742..6.742 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 10802
                                                    Buffers: shared read=197
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2020_04 e_4  (cost=0.00..290.97 rows=92 width=14) (actual time=7.766..7.766 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2020_04 e_4  (cost=0.00..290.97 rows=92 width=14) (actual time=6.934..6.934 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 10458
                                                    Buffers: shared read=191
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2022_01 e_25  (cost=0.00..278.83 rows=88 width=14) (actual time=9.899..9.899 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2022_01 e_25  (cost=0.00..278.83 rows=88 width=14) (actual time=5.590..5.590 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 10025
                                                    Buffers: shared read=183
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2023_12 e_48  (cost=0.00..268.19 rows=85 width=14) (actual time=12.212..12.213 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2023_12 e_48  (cost=0.00..268.19 rows=85 width=14) (actual time=5.602..5.607 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 9645
                                                    Buffers: shared read=176
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2022_12 e_36  (cost=0.00..254.64 rows=81 width=14) (actual time=10.142..10.143 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2022_12 e_36  (cost=0.00..254.64 rows=81 width=14) (actual time=6.527..6.527 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 9168
                                                    Buffers: shared read=167
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2021_01 e_13  (cost=0.00..246.80 rows=78 width=14) (actual time=10.754..10.754 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2021_01 e_13  (cost=0.00..246.80 rows=78 width=14) (actual time=5.473..5.473 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 8871
                                                    Buffers: shared read=162
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2021_12 e_24  (cost=0.00..236.15 rows=75 width=14) (actual time=13.458..13.458 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2021_12 e_24  (cost=0.00..236.15 rows=75 width=14) (actual time=4.571..4.573 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 8490
                                                    Buffers: shared read=155
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2020_02 e_2  (cost=0.00..228.77 rows=73 width=14) (actual time=8.386..8.386 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2020_02 e_2  (cost=0.00..228.77 rows=73 width=14) (actual time=6.396..6.396 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 8241
                                                    Buffers: shared read=150
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2020_12 e_12  (cost=0.00..213.46 rows=68 width=14) (actual time=7.370..7.370 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2020_12 e_12  (cost=0.00..213.46 rows=68 width=14) (actual time=5.349..5.350 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 7685
                                                    Buffers: shared read=140
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_2020_01 e_1  (cost=0.00..109.49 rows=35 width=14) (actual time=4.078..4.078 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_2020_01 e_1  (cost=0.00..109.49 rows=35 width=14) (actual time=2.902..2.902 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 3922
                                                    Buffers: shared read=72
-                                             ->  Parallel Seq Scan on fct_deal_stage_event_default e_85  (cost=0.00..10.53 rows=4 width=14) (actual time=0.421..0.421 rows=0 loops=1)
+                                             ->  Parallel Seq Scan on fct_deal_stage_event_default e_85  (cost=0.00..10.53 rows=4 width=14) (actual time=0.322..0.322 rows=0 loops=1)
                                                    Filter: (to_char(event_ts, 'YYYY-MM'::text) = ANY ('{2026-01,2026-02,2026-03}'::text[]))
                                                    Rows Removed by Filter: 369
                                                    Buffers: shared read=7
-                                       ->  Hash  (cost=1.11..1.11 rows=11 width=13) (actual time=0.044..0.047 rows=11 loops=3)
+                                       ->  Hash  (cost=1.11..1.11 rows=11 width=13) (actual time=0.036..0.041 rows=11 loops=3)
                                              Buckets: 1024  Batches: 1  Memory Usage: 9kB
                                              Buffers: shared hit=3
-                                             ->  Seq Scan on dim_stage fs  (cost=0.00..1.11 rows=11 width=13) (actual time=0.029..0.031 rows=11 loops=3)
+                                             ->  Seq Scan on dim_stage ts  (cost=0.00..1.11 rows=11 width=13) (actual time=0.021..0.023 rows=11 loops=3)
                                                    Buffers: shared hit=3
-                                 ->  Hash  (cost=1.11..1.11 rows=11 width=13) (actual time=0.026..0.026 rows=11 loops=3)
-                                       Buckets: 1024  Batches: 1  Memory Usage: 9kB
-                                       Buffers: shared hit=3
-                                       ->  Seq Scan on dim_stage ts  (cost=0.00..1.11 rows=11 width=13) (actual time=0.016..0.018 rows=11 loops=3)
-                                             Buffers: shared hit=3
  Planning:
-   Buffers: shared hit=6 read=15
- Planning Time: 6.902 ms
- Execution Time: 417.486 ms
-(372 rows)
+   Buffers: shared read=15
+ Planning Time: 5.810 ms
+ Execution Time: 558.541 ms
+(366 rows)
 

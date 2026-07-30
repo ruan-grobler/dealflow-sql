@@ -1,207 +1,207 @@
 SET
 SET
 Pager usage is off.
-                                                                                     QUERY PLAN                                                                                     
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- GroupAggregate  (cost=447830.72..462321.28 rows=11 width=81) (actual time=23328.973..24173.147 rows=10 loops=1)
+                                                                                   QUERY PLAN                                                                                    
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ GroupAggregate  (cost=265690.05..266487.29 rows=11 width=81) (actual time=6033.582..6637.820 rows=10 loops=1)
    Group Key: s.stage_name
-   Buffers: shared hit=1 read=21220, temp read=20989 written=20713
-   ->  Sort  (cost=447830.72..450728.78 rows=1159223 width=41) (actual time=23311.562..23455.731 rows=916341 loops=1)
+   Buffers: shared read=21221, temp read=20989 written=20713
+   ->  Sort  (cost=265690.05..265849.45 rows=63757 width=41) (actual time=6024.887..6125.121 rows=916341 loops=1)
          Sort Key: s.stage_name
          Sort Method: external merge  Disk: 28448kB
-         Buffers: shared hit=1 read=21220, temp read=19092 written=19131
-         ->  Hash Join  (cost=211841.91..259746.57 rows=1159223 width=41) (actual time=15174.924..20486.525 rows=916341 loops=1)
+         Buffers: shared read=21221, temp read=19092 written=19131
+         ->  Hash Join  (cost=211841.91..258638.65 rows=63757 width=41) (actual time=4648.252..5687.804 rows=916341 loops=1)
                Hash Cond: (d.to_stage_sk = s.stage_sk)
-               Buffers: shared hit=1 read=21220, temp read=11984 written=12007
-               ->  Subquery Scan on d  (cost=211840.66..255529.96 rows=1159223 width=36) (actual time=14938.838..19660.711 rows=916341 loops=1)
+               Buffers: shared read=21221, temp read=11984 written=12007
+               ->  Subquery Scan on d  (cost=211840.66..255529.96 rows=1159223 width=36) (actual time=4569.173..5461.036 rows=916341 loops=1)
                      Filter: (d.days_in_stage IS NOT NULL)
                      Rows Removed by Filter: 248702
                      Buffers: shared read=21220, temp read=11984 written=12007
-                     ->  WindowAgg  (cost=211840.66..243879.48 rows=1165048 width=61) (actual time=14937.541..19354.430 rows=1165043 loops=1)
+                     ->  WindowAgg  (cost=211840.66..243879.48 rows=1165048 width=61) (actual time=4569.032..5365.686 rows=1165043 loops=1)
                            Buffers: shared read=21220, temp read=11984 written=12007
-                           ->  Sort  (cost=211840.66..214753.28 rows=1165048 width=29) (actual time=14921.888..16447.576 rows=1165043 loops=1)
+                           ->  Sort  (cost=211840.66..214753.28 rows=1165048 width=29) (actual time=4568.718..4727.490 rows=1165043 loops=1)
                                  Sort Key: e.deal_nk, e.event_ts
                                  Sort Method: external merge  Disk: 47984kB
                                  Buffers: shared read=21220, temp read=11984 written=12007
-                                 ->  Append  (cost=0.00..38695.67 rows=1165048 width=29) (actual time=0.420..3800.266 rows=1165043 loops=1)
+                                 ->  Append  (cost=0.00..38695.67 rows=1165048 width=29) (actual time=0.041..581.255 rows=1165043 loops=1)
                                        Buffers: shared read=21220
-                                       ->  Seq Scan on fct_deal_stage_event_2020_01 e_1  (cost=0.00..111.22 rows=3922 width=29) (actual time=0.419..6.784 rows=3922 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2020_01 e_1  (cost=0.00..111.22 rows=3922 width=29) (actual time=0.040..1.128 rows=3922 loops=1)
                                              Buffers: shared read=72
-                                       ->  Seq Scan on fct_deal_stage_event_2020_02 e_2  (cost=0.00..232.41 rows=8241 width=29) (actual time=0.103..5.068 rows=8241 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2020_02 e_2  (cost=0.00..232.41 rows=8241 width=29) (actual time=0.051..2.079 rows=8241 loops=1)
                                              Buffers: shared read=150
-                                       ->  Seq Scan on fct_deal_stage_event_2020_03 e_3  (cost=0.00..318.88 rows=11288 width=29) (actual time=0.081..11.209 rows=11288 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2020_03 e_3  (cost=0.00..318.88 rows=11288 width=29) (actual time=0.048..3.562 rows=11288 loops=1)
                                              Buffers: shared read=206
-                                       ->  Seq Scan on fct_deal_stage_event_2020_04 e_4  (cost=0.00..295.58 rows=10458 width=29) (actual time=0.078..3.974 rows=10458 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2020_04 e_4  (cost=0.00..295.58 rows=10458 width=29) (actual time=0.075..4.117 rows=10458 loops=1)
                                              Buffers: shared read=191
-                                       ->  Seq Scan on fct_deal_stage_event_2020_05 e_5  (cost=0.00..305.02 rows=10802 width=29) (actual time=0.081..4.368 rows=10802 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2020_05 e_5  (cost=0.00..305.02 rows=10802 width=29) (actual time=0.047..4.152 rows=10802 loops=1)
                                              Buffers: shared read=197
-                                       ->  Seq Scan on fct_deal_stage_event_2020_06 e_6  (cost=0.00..326.82 rows=11582 width=29) (actual time=0.064..10.783 rows=11582 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2020_06 e_6  (cost=0.00..326.82 rows=11582 width=29) (actual time=0.051..5.523 rows=11582 loops=1)
                                              Buffers: shared read=211
-                                       ->  Seq Scan on fct_deal_stage_event_2020_07 e_7  (cost=0.00..311.35 rows=11035 width=29) (actual time=0.101..6.215 rows=11035 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2020_07 e_7  (cost=0.00..311.35 rows=11035 width=29) (actual time=0.065..4.448 rows=11035 loops=1)
                                              Buffers: shared read=201
-                                       ->  Seq Scan on fct_deal_stage_event_2020_08 e_8  (cost=0.00..334.66 rows=11866 width=29) (actual time=0.072..7.086 rows=11866 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2020_08 e_8  (cost=0.00..334.66 rows=11866 width=29) (actual time=0.088..4.503 rows=11866 loops=1)
                                              Buffers: shared read=216
-                                       ->  Seq Scan on fct_deal_stage_event_2020_09 e_9  (cost=0.00..331.49 rows=11749 width=29) (actual time=0.067..5.786 rows=11749 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2020_09 e_9  (cost=0.00..331.49 rows=11749 width=29) (actual time=0.045..3.778 rows=11749 loops=1)
                                              Buffers: shared read=214
-                                       ->  Seq Scan on fct_deal_stage_event_2020_10 e_10  (cost=0.00..337.77 rows=11977 width=29) (actual time=0.068..6.623 rows=11977 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2020_10 e_10  (cost=0.00..337.77 rows=11977 width=29) (actual time=0.048..4.405 rows=11977 loops=1)
                                              Buffers: shared read=218
-                                       ->  Seq Scan on fct_deal_stage_event_2020_11 e_11  (cost=0.00..346.95 rows=12295 width=29) (actual time=0.929..9.647 rows=12295 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2020_11 e_11  (cost=0.00..346.95 rows=12295 width=29) (actual time=0.065..4.348 rows=12295 loops=1)
                                              Buffers: shared read=224
-                                       ->  Seq Scan on fct_deal_stage_event_2020_12 e_12  (cost=0.00..216.85 rows=7685 width=29) (actual time=0.108..8.175 rows=7685 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2020_12 e_12  (cost=0.00..216.85 rows=7685 width=29) (actual time=0.042..2.955 rows=7685 loops=1)
                                              Buffers: shared read=140
-                                       ->  Seq Scan on fct_deal_stage_event_2021_01 e_13  (cost=0.00..250.71 rows=8871 width=29) (actual time=0.135..10.136 rows=8871 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2021_01 e_13  (cost=0.00..250.71 rows=8871 width=29) (actual time=0.041..3.754 rows=8871 loops=1)
                                              Buffers: shared read=162
-                                       ->  Seq Scan on fct_deal_stage_event_2021_02 e_14  (cost=0.00..342.43 rows=12143 width=29) (actual time=0.117..6.217 rows=12143 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2021_02 e_14  (cost=0.00..342.43 rows=12143 width=29) (actual time=0.041..7.095 rows=12143 loops=1)
                                              Buffers: shared read=221
-                                       ->  Seq Scan on fct_deal_stage_event_2021_03 e_15  (cost=0.00..423.06 rows=15006 width=29) (actual time=0.147..8.913 rows=15006 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2021_03 e_15  (cost=0.00..423.06 rows=15006 width=29) (actual time=0.110..6.954 rows=15006 loops=1)
                                              Buffers: shared read=273
-                                       ->  Seq Scan on fct_deal_stage_event_2021_04 e_16  (cost=0.00..348.66 rows=12366 width=29) (actual time=0.239..8.146 rows=12366 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2021_04 e_16  (cost=0.00..348.66 rows=12366 width=29) (actual time=0.069..5.058 rows=12366 loops=1)
                                              Buffers: shared read=225
-                                       ->  Seq Scan on fct_deal_stage_event_2021_05 e_17  (cost=0.00..376.60 rows=13360 width=29) (actual time=0.111..536.467 rows=13360 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2021_05 e_17  (cost=0.00..376.60 rows=13360 width=29) (actual time=0.041..3.759 rows=13360 loops=1)
                                              Buffers: shared read=243
-                                       ->  Seq Scan on fct_deal_stage_event_2021_06 e_18  (cost=0.00..349.84 rows=12384 width=29) (actual time=2.816..19.037 rows=12384 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2021_06 e_18  (cost=0.00..349.84 rows=12384 width=29) (actual time=0.042..4.695 rows=12384 loops=1)
                                              Buffers: shared read=226
-                                       ->  Seq Scan on fct_deal_stage_event_2021_07 e_19  (cost=0.00..348.30 rows=12330 width=29) (actual time=0.689..30.748 rows=12330 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2021_07 e_19  (cost=0.00..348.30 rows=12330 width=29) (actual time=0.047..12.047 rows=12330 loops=1)
                                              Buffers: shared read=225
-                                       ->  Seq Scan on fct_deal_stage_event_2021_08 e_20  (cost=0.00..376.34 rows=13334 width=29) (actual time=0.130..13.261 rows=13334 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2021_08 e_20  (cost=0.00..376.34 rows=13334 width=29) (actual time=0.068..11.287 rows=13334 loops=1)
                                              Buffers: shared read=243
-                                       ->  Seq Scan on fct_deal_stage_event_2021_09 e_21  (cost=0.00..366.84 rows=12984 width=29) (actual time=0.133..19.782 rows=12984 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2021_09 e_21  (cost=0.00..366.84 rows=12984 width=29) (actual time=0.062..5.275 rows=12984 loops=1)
                                              Buffers: shared read=237
-                                       ->  Seq Scan on fct_deal_stage_event_2021_10 e_22  (cost=0.00..371.49 rows=13149 width=29) (actual time=0.104..13.781 rows=13149 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2021_10 e_22  (cost=0.00..371.49 rows=13149 width=29) (actual time=0.055..5.617 rows=13149 loops=1)
                                              Buffers: shared read=240
-                                       ->  Seq Scan on fct_deal_stage_event_2021_11 e_23  (cost=0.00..388.68 rows=13768 width=29) (actual time=0.138..8.038 rows=13768 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2021_11 e_23  (cost=0.00..388.68 rows=13768 width=29) (actual time=0.049..6.817 rows=13768 loops=1)
                                              Buffers: shared read=251
-                                       ->  Seq Scan on fct_deal_stage_event_2021_12 e_24  (cost=0.00..239.90 rows=8490 width=29) (actual time=0.100..4.959 rows=8490 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2021_12 e_24  (cost=0.00..239.90 rows=8490 width=29) (actual time=0.077..4.652 rows=8490 loops=1)
                                              Buffers: shared read=155
-                                       ->  Seq Scan on fct_deal_stage_event_2022_01 e_25  (cost=0.00..283.25 rows=10025 width=29) (actual time=0.092..6.215 rows=10025 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2022_01 e_25  (cost=0.00..283.25 rows=10025 width=29) (actual time=0.081..4.501 rows=10025 loops=1)
                                              Buffers: shared read=183
-                                       ->  Seq Scan on fct_deal_stage_event_2022_02 e_26  (cost=0.00..384.03 rows=13603 width=29) (actual time=0.143..7.501 rows=13603 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2022_02 e_26  (cost=0.00..384.03 rows=13603 width=29) (actual time=0.047..6.545 rows=13603 loops=1)
                                              Buffers: shared read=248
-                                       ->  Seq Scan on fct_deal_stage_event_2022_03 e_27  (cost=0.00..444.40 rows=15740 width=29) (actual time=0.131..12.680 rows=15740 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2022_03 e_27  (cost=0.00..444.40 rows=15740 width=29) (actual time=0.078..6.370 rows=15740 loops=1)
                                              Buffers: shared read=287
-                                       ->  Seq Scan on fct_deal_stage_event_2022_04 e_28  (cost=0.00..379.74 rows=13474 width=29) (actual time=0.776..14.637 rows=13474 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2022_04 e_28  (cost=0.00..379.74 rows=13474 width=29) (actual time=0.056..4.790 rows=13474 loops=1)
                                              Buffers: shared read=245
-                                       ->  Seq Scan on fct_deal_stage_event_2022_05 e_29  (cost=0.00..425.98 rows=15098 width=29) (actual time=0.524..51.957 rows=15098 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2022_05 e_29  (cost=0.00..425.98 rows=15098 width=29) (actual time=0.057..5.391 rows=15098 loops=1)
                                              Buffers: shared read=275
-                                       ->  Seq Scan on fct_deal_stage_event_2022_06 e_30  (cost=0.00..384.39 rows=13639 width=29) (actual time=0.197..70.327 rows=13639 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2022_06 e_30  (cost=0.00..384.39 rows=13639 width=29) (actual time=0.046..3.722 rows=13639 loops=1)
                                              Buffers: shared read=248
-                                       ->  Seq Scan on fct_deal_stage_event_2022_07 e_31  (cost=0.00..376.30 rows=13330 width=29) (actual time=0.391..17.092 rows=13330 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2022_07 e_31  (cost=0.00..376.30 rows=13330 width=29) (actual time=0.052..4.988 rows=13330 loops=1)
                                              Buffers: shared read=243
-                                       ->  Seq Scan on fct_deal_stage_event_2022_08 e_32  (cost=0.00..421.47 rows=14947 width=29) (actual time=0.553..32.650 rows=14947 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2022_08 e_32  (cost=0.00..421.47 rows=14947 width=29) (actual time=0.060..6.421 rows=14947 loops=1)
                                              Buffers: shared read=272
-                                       ->  Seq Scan on fct_deal_stage_event_2022_09 e_33  (cost=0.00..398.25 rows=14125 width=29) (actual time=0.487..15.368 rows=14125 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2022_09 e_33  (cost=0.00..398.25 rows=14125 width=29) (actual time=0.049..4.739 rows=14125 loops=1)
                                              Buffers: shared read=257
-                                       ->  Seq Scan on fct_deal_stage_event_2022_10 e_34  (cost=0.00..422.63 rows=14963 width=29) (actual time=1.270..12.336 rows=14963 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2022_10 e_34  (cost=0.00..422.63 rows=14963 width=29) (actual time=0.046..5.400 rows=14963 loops=1)
                                              Buffers: shared read=273
-                                       ->  Seq Scan on fct_deal_stage_event_2022_11 e_35  (cost=0.00..402.73 rows=14273 width=29) (actual time=0.133..13.051 rows=14273 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2022_11 e_35  (cost=0.00..402.73 rows=14273 width=29) (actual time=0.058..5.724 rows=14273 loops=1)
                                              Buffers: shared read=260
-                                       ->  Seq Scan on fct_deal_stage_event_2022_12 e_36  (cost=0.00..258.68 rows=9168 width=29) (actual time=0.093..9.019 rows=9168 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2022_12 e_36  (cost=0.00..258.68 rows=9168 width=29) (actual time=0.057..2.912 rows=9168 loops=1)
                                              Buffers: shared read=167
-                                       ->  Seq Scan on fct_deal_stage_event_2023_01 e_37  (cost=0.00..315.77 rows=11177 width=29) (actual time=0.108..7.414 rows=11177 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2023_01 e_37  (cost=0.00..315.77 rows=11177 width=29) (actual time=0.041..4.224 rows=11177 loops=1)
                                              Buffers: shared read=204
-                                       ->  Seq Scan on fct_deal_stage_event_2023_02 e_38  (cost=0.00..411.88 rows=14588 width=29) (actual time=0.104..16.335 rows=14588 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2023_02 e_38  (cost=0.00..411.88 rows=14588 width=29) (actual time=0.041..9.040 rows=14588 loops=1)
                                              Buffers: shared read=266
-                                       ->  Seq Scan on fct_deal_stage_event_2023_03 e_39  (cost=0.00..486.67 rows=17267 width=29) (actual time=0.182..16.820 rows=17267 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2023_03 e_39  (cost=0.00..486.67 rows=17267 width=29) (actual time=0.074..7.103 rows=17267 loops=1)
                                              Buffers: shared read=314
-                                       ->  Seq Scan on fct_deal_stage_event_2023_04 e_40  (cost=0.00..407.37 rows=14437 width=29) (actual time=0.162..10.705 rows=14437 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2023_04 e_40  (cost=0.00..407.37 rows=14437 width=29) (actual time=0.061..7.125 rows=14437 loops=1)
                                              Buffers: shared read=263
-                                       ->  Seq Scan on fct_deal_stage_event_2023_05 e_41  (cost=0.00..474.09 rows=16809 width=29) (actual time=0.100..13.550 rows=16809 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2023_05 e_41  (cost=0.00..474.09 rows=16809 width=29) (actual time=0.076..5.884 rows=16809 loops=1)
                                              Buffers: shared read=306
-                                       ->  Seq Scan on fct_deal_stage_event_2023_06 e_42  (cost=0.00..424.32 rows=15032 width=29) (actual time=0.110..13.254 rows=15032 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2023_06 e_42  (cost=0.00..424.32 rows=15032 width=29) (actual time=0.086..5.811 rows=15032 loops=1)
                                              Buffers: shared read=274
-                                       ->  Seq Scan on fct_deal_stage_event_2023_07 e_43  (cost=0.00..438.51 rows=15551 width=29) (actual time=0.141..9.430 rows=15551 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2023_07 e_43  (cost=0.00..438.51 rows=15551 width=29) (actual time=0.081..9.043 rows=15551 loops=1)
                                              Buffers: shared read=283
-                                       ->  Seq Scan on fct_deal_stage_event_2023_08 e_44  (cost=0.00..435.01 rows=15401 width=29) (actual time=0.160..11.203 rows=15401 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2023_08 e_44  (cost=0.00..435.01 rows=15401 width=29) (actual time=0.058..5.638 rows=15401 loops=1)
                                              Buffers: shared read=281
-                                       ->  Seq Scan on fct_deal_stage_event_2023_09 e_45  (cost=0.00..427.74 rows=15174 width=29) (actual time=0.138..29.342 rows=15174 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2023_09 e_45  (cost=0.00..427.74 rows=15174 width=29) (actual time=0.059..5.579 rows=15174 loops=1)
                                              Buffers: shared read=276
-                                       ->  Seq Scan on fct_deal_stage_event_2023_10 e_46  (cost=0.00..478.94 rows=16994 width=29) (actual time=0.578..22.555 rows=16994 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2023_10 e_46  (cost=0.00..478.94 rows=16994 width=29) (actual time=0.061..6.488 rows=16994 loops=1)
                                              Buffers: shared read=309
-                                       ->  Seq Scan on fct_deal_stage_event_2023_11 e_47  (cost=0.00..440.13 rows=15613 width=29) (actual time=0.144..8.416 rows=15613 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2023_11 e_47  (cost=0.00..440.13 rows=15613 width=29) (actual time=0.104..5.474 rows=15613 loops=1)
                                              Buffers: shared read=284
-                                       ->  Seq Scan on fct_deal_stage_event_2023_12 e_48  (cost=0.00..272.45 rows=9645 width=29) (actual time=0.167..9.002 rows=9645 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2023_12 e_48  (cost=0.00..272.45 rows=9645 width=29) (actual time=0.040..3.341 rows=9645 loops=1)
                                              Buffers: shared read=176
-                                       ->  Seq Scan on fct_deal_stage_event_2024_01 e_49  (cost=0.00..351.72 rows=12472 width=29) (actual time=0.228..18.375 rows=12472 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2024_01 e_49  (cost=0.00..351.72 rows=12472 width=29) (actual time=0.066..3.620 rows=12472 loops=1)
                                              Buffers: shared read=227
-                                       ->  Seq Scan on fct_deal_stage_event_2024_02 e_50  (cost=0.00..464.55 rows=16455 width=29) (actual time=0.316..108.104 rows=16455 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2024_02 e_50  (cost=0.00..464.55 rows=16455 width=29) (actual time=0.032..6.498 rows=16455 loops=1)
                                              Buffers: shared read=300
-                                       ->  Seq Scan on fct_deal_stage_event_2024_03 e_51  (cost=0.00..516.11 rows=18311 width=29) (actual time=0.129..51.722 rows=18311 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2024_03 e_51  (cost=0.00..516.11 rows=18311 width=29) (actual time=0.076..6.025 rows=18311 loops=1)
                                              Buffers: shared read=333
-                                       ->  Seq Scan on fct_deal_stage_event_2024_04 e_52  (cost=0.00..494.39 rows=17539 width=29) (actual time=1.703..34.428 rows=17539 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2024_04 e_52  (cost=0.00..494.39 rows=17539 width=29) (actual time=0.054..7.249 rows=17539 loops=1)
                                              Buffers: shared read=319
-                                       ->  Seq Scan on fct_deal_stage_event_2024_05 e_53  (cost=0.00..491.09 rows=17409 width=29) (actual time=0.452..20.985 rows=17409 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2024_05 e_53  (cost=0.00..491.09 rows=17409 width=29) (actual time=0.061..5.921 rows=17409 loops=1)
                                              Buffers: shared read=317
-                                       ->  Seq Scan on fct_deal_stage_event_2024_06 e_54  (cost=0.00..447.60 rows=15860 width=29) (actual time=0.317..36.105 rows=15860 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2024_06 e_54  (cost=0.00..447.60 rows=15860 width=29) (actual time=0.032..5.433 rows=15860 loops=1)
                                              Buffers: shared read=289
-                                       ->  Seq Scan on fct_deal_stage_event_2024_07 e_55  (cost=0.00..506.33 rows=17933 width=29) (actual time=0.539..36.667 rows=17933 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2024_07 e_55  (cost=0.00..506.33 rows=17933 width=29) (actual time=0.140..12.338 rows=17933 loops=1)
                                              Buffers: shared read=327
-                                       ->  Seq Scan on fct_deal_stage_event_2024_08 e_56  (cost=0.00..477.07 rows=16907 width=29) (actual time=0.133..23.325 rows=16907 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2024_08 e_56  (cost=0.00..477.07 rows=16907 width=29) (actual time=0.058..11.523 rows=16907 loops=1)
                                              Buffers: shared read=308
-                                       ->  Seq Scan on fct_deal_stage_event_2024_09 e_57  (cost=0.00..506.73 rows=17973 width=29) (actual time=0.120..32.831 rows=17973 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2024_09 e_57  (cost=0.00..506.73 rows=17973 width=29) (actual time=0.065..11.514 rows=17973 loops=1)
                                              Buffers: shared read=327
-                                       ->  Seq Scan on fct_deal_stage_event_2024_10 e_58  (cost=0.00..508.33 rows=18033 width=29) (actual time=4.562..25.960 rows=18033 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2024_10 e_58  (cost=0.00..508.33 rows=18033 width=29) (actual time=0.049..4.741 rows=18033 loops=1)
                                              Buffers: shared read=328
-                                       ->  Seq Scan on fct_deal_stage_event_2024_11 e_59  (cost=0.00..477.27 rows=16927 width=29) (actual time=0.178..18.533 rows=16927 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2024_11 e_59  (cost=0.00..477.27 rows=16927 width=29) (actual time=0.101..5.984 rows=16927 loops=1)
                                              Buffers: shared read=308
-                                       ->  Seq Scan on fct_deal_stage_event_2024_12 e_60  (cost=0.00..329.80 rows=11680 width=29) (actual time=0.108..14.910 rows=11680 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2024_12 e_60  (cost=0.00..329.80 rows=11680 width=29) (actual time=0.050..7.406 rows=11680 loops=1)
                                              Buffers: shared read=213
-                                       ->  Seq Scan on fct_deal_stage_event_2025_01 e_61  (cost=0.00..371.89 rows=13189 width=29) (actual time=0.213..21.555 rows=13189 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2025_01 e_61  (cost=0.00..371.89 rows=13189 width=29) (actual time=0.061..4.791 rows=13189 loops=1)
                                              Buffers: shared read=240
-                                       ->  Seq Scan on fct_deal_stage_event_2025_02 e_62  (cost=0.00..503.71 rows=17871 width=29) (actual time=0.265..75.876 rows=17871 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2025_02 e_62  (cost=0.00..503.71 rows=17871 width=29) (actual time=0.170..7.604 rows=17871 loops=1)
                                              Buffers: shared read=325
-                                       ->  Seq Scan on fct_deal_stage_event_2025_03 e_63  (cost=0.00..596.27 rows=21127 width=29) (actual time=0.671..248.306 rows=21127 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2025_03 e_63  (cost=0.00..596.27 rows=21127 width=29) (actual time=0.185..7.496 rows=21127 loops=1)
                                              Buffers: shared read=385
-                                       ->  Seq Scan on fct_deal_stage_event_2025_04 e_64  (cost=0.00..515.61 rows=18261 width=29) (actual time=171.753..367.741 rows=18261 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2025_04 e_64  (cost=0.00..515.61 rows=18261 width=29) (actual time=0.067..7.881 rows=18261 loops=1)
                                              Buffers: shared read=333
-                                       ->  Seq Scan on fct_deal_stage_event_2025_05 e_65  (cost=0.00..527.00 rows=18700 width=29) (actual time=1.533..113.069 rows=18700 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2025_05 e_65  (cost=0.00..527.00 rows=18700 width=29) (actual time=0.063..6.335 rows=18700 loops=1)
                                              Buffers: shared read=340
-                                       ->  Seq Scan on fct_deal_stage_event_2025_06 e_66  (cost=0.00..537.50 rows=19050 width=29) (actual time=6.489..131.270 rows=19050 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2025_06 e_66  (cost=0.00..537.50 rows=19050 width=29) (actual time=0.048..5.975 rows=19050 loops=1)
                                              Buffers: shared read=347
-                                       ->  Seq Scan on fct_deal_stage_event_2025_07 e_67  (cost=0.00..523.76 rows=18576 width=29) (actual time=0.817..212.534 rows=18576 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2025_07 e_67  (cost=0.00..523.76 rows=18576 width=29) (actual time=0.065..6.167 rows=18576 loops=1)
                                              Buffers: shared read=338
-                                       ->  Seq Scan on fct_deal_stage_event_2025_08 e_68  (cost=0.00..517.30 rows=18330 width=29) (actual time=2.409..157.594 rows=18330 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2025_08 e_68  (cost=0.00..517.30 rows=18330 width=29) (actual time=0.078..6.827 rows=18330 loops=1)
                                              Buffers: shared read=334
-                                       ->  Seq Scan on fct_deal_stage_event_2025_09 e_69  (cost=0.00..570.18 rows=20218 width=29) (actual time=0.857..124.017 rows=20218 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2025_09 e_69  (cost=0.00..570.18 rows=20218 width=29) (actual time=0.275..8.405 rows=20218 loops=1)
                                              Buffers: shared read=368
-                                       ->  Seq Scan on fct_deal_stage_event_2025_10 e_70  (cost=0.00..554.64 rows=19664 width=29) (actual time=5.947..54.134 rows=19664 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2025_10 e_70  (cost=0.00..554.64 rows=19664 width=29) (actual time=0.106..8.132 rows=19664 loops=1)
                                              Buffers: shared read=358
-                                       ->  Seq Scan on fct_deal_stage_event_2025_11 e_71  (cost=0.00..517.46 rows=18346 width=29) (actual time=0.331..71.678 rows=18346 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2025_11 e_71  (cost=0.00..517.46 rows=18346 width=29) (actual time=0.073..8.539 rows=18346 loops=1)
                                              Buffers: shared read=334
-                                       ->  Seq Scan on fct_deal_stage_event_2025_12 e_72  (cost=0.00..377.77 rows=13377 width=29) (actual time=0.695..24.858 rows=13377 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2025_12 e_72  (cost=0.00..377.77 rows=13377 width=29) (actual time=0.069..4.917 rows=13377 loops=1)
                                              Buffers: shared read=244
-                                       ->  Seq Scan on fct_deal_stage_event_2026_01 e_73  (cost=0.00..401.17 rows=14217 width=29) (actual time=0.585..20.292 rows=14217 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2026_01 e_73  (cost=0.00..401.17 rows=14217 width=29) (actual time=0.061..5.744 rows=14217 loops=1)
                                              Buffers: shared read=259
-                                       ->  Seq Scan on fct_deal_stage_event_2026_02 e_74  (cost=0.00..547.06 rows=19406 width=29) (actual time=1.697..55.459 rows=19406 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2026_02 e_74  (cost=0.00..547.06 rows=19406 width=29) (actual time=0.078..9.768 rows=19406 loops=1)
                                              Buffers: shared read=353
-                                       ->  Seq Scan on fct_deal_stage_event_2026_03 e_75  (cost=0.00..669.20 rows=23720 width=29) (actual time=1.025..50.639 rows=23720 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2026_03 e_75  (cost=0.00..669.20 rows=23720 width=29) (actual time=0.088..9.659 rows=23720 loops=1)
                                              Buffers: shared read=432
-                                       ->  Seq Scan on fct_deal_stage_event_2026_04 e_76  (cost=0.00..565.70 rows=20070 width=29) (actual time=0.215..45.041 rows=20070 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2026_04 e_76  (cost=0.00..565.70 rows=20070 width=29) (actual time=0.066..8.124 rows=20070 loops=1)
                                              Buffers: shared read=365
-                                       ->  Seq Scan on fct_deal_stage_event_2026_05 e_77  (cost=0.00..574.69 rows=20369 width=29) (actual time=0.222..74.847 rows=20369 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2026_05 e_77  (cost=0.00..574.69 rows=20369 width=29) (actual time=0.071..8.148 rows=20369 loops=1)
                                              Buffers: shared read=371
-                                       ->  Seq Scan on fct_deal_stage_event_2026_06 e_78  (cost=0.00..593.40 rows=21040 width=29) (actual time=0.420..54.468 rows=21040 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2026_06 e_78  (cost=0.00..593.40 rows=21040 width=29) (actual time=0.108..11.170 rows=21040 loops=1)
                                              Buffers: shared read=383
-                                       ->  Seq Scan on fct_deal_stage_event_2026_07 e_79  (cost=0.00..577.86 rows=20486 width=29) (actual time=0.184..52.346 rows=20486 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2026_07 e_79  (cost=0.00..577.86 rows=20486 width=29) (actual time=0.097..7.928 rows=20486 loops=1)
                                              Buffers: shared read=373
-                                       ->  Seq Scan on fct_deal_stage_event_2026_08 e_80  (cost=0.00..0.00 rows=1 width=29) (actual time=1.357..1.359 rows=0 loops=1)
-                                       ->  Seq Scan on fct_deal_stage_event_2026_09 e_81  (cost=0.00..0.00 rows=1 width=29) (actual time=0.081..0.084 rows=0 loops=1)
-                                       ->  Seq Scan on fct_deal_stage_event_2026_10 e_82  (cost=0.00..0.00 rows=1 width=29) (actual time=0.659..0.662 rows=0 loops=1)
-                                       ->  Seq Scan on fct_deal_stage_event_2026_11 e_83  (cost=0.00..0.00 rows=1 width=29) (actual time=0.042..0.045 rows=0 loops=1)
-                                       ->  Seq Scan on fct_deal_stage_event_2026_12 e_84  (cost=0.00..0.00 rows=1 width=29) (actual time=0.036..0.038 rows=0 loops=1)
-                                       ->  Seq Scan on fct_deal_stage_event_default e_85  (cost=0.00..10.69 rows=369 width=29) (actual time=2.990..6.340 rows=369 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2026_08 e_80  (cost=0.00..0.00 rows=1 width=29) (actual time=0.036..0.037 rows=0 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2026_09 e_81  (cost=0.00..0.00 rows=1 width=29) (actual time=0.028..0.029 rows=0 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2026_10 e_82  (cost=0.00..0.00 rows=1 width=29) (actual time=0.016..0.016 rows=0 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2026_11 e_83  (cost=0.00..0.00 rows=1 width=29) (actual time=0.130..0.130 rows=0 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_2026_12 e_84  (cost=0.00..0.00 rows=1 width=29) (actual time=0.006..0.006 rows=0 loops=1)
+                                       ->  Seq Scan on fct_deal_stage_event_default e_85  (cost=0.00..10.69 rows=369 width=29) (actual time=0.145..0.304 rows=369 loops=1)
                                              Buffers: shared read=7
-               ->  Hash  (cost=1.11..1.11 rows=11 width=13) (actual time=234.345..234.350 rows=11 loops=1)
+               ->  Hash  (cost=1.11..1.11 rows=11 width=13) (actual time=78.975..78.976 rows=11 loops=1)
                      Buckets: 1024  Batches: 1  Memory Usage: 9kB
-                     Buffers: shared hit=1
-                     ->  Seq Scan on dim_stage s  (cost=0.00..1.11 rows=11 width=13) (actual time=234.255..234.267 rows=11 loops=1)
-                           Buffers: shared hit=1
+                     Buffers: shared read=1
+                     ->  Seq Scan on dim_stage s  (cost=0.00..1.11 rows=11 width=13) (actual time=78.945..78.950 rows=11 loops=1)
+                           Buffers: shared read=1
  Planning:
-   Buffers: shared hit=4 read=10
- Planning Time: 9.422 ms
+   Buffers: shared read=10
+ Planning Time: 4.859 ms
  JIT:
    Functions: 192
    Options: Inlining false, Optimization false, Expressions true, Deforming true
-   Timing: Generation 44.926 ms, Inlining 0.000 ms, Optimization 40.183 ms, Emission 389.757 ms, Total 474.866 ms
- Execution Time: 24256.226 ms
+   Timing: Generation 12.501 ms, Inlining 0.000 ms, Optimization 5.769 ms, Emission 75.353 ms, Total 93.623 ms
+ Execution Time: 6669.272 ms
 (200 rows)
 

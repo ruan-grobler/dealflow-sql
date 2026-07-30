@@ -23,7 +23,7 @@ ORDER BY d.year_num;
      2026 |          30973 |               1401.32 |          45.81 |               989 |             3.2 |       349 |          1.1
 (7 rows)
 
-Time: 171.509 ms
+Time: 104.171 ms
 WITH entered AS (
     -- Grain: one row per stage. COUNT DISTINCT because a reopened deal enters
     -- the same stage more than once and must still count as one deal reached.
@@ -84,7 +84,7 @@ ORDER BY s.stage_order;
           10 | Stalled       | Terminal    |         95663 |                           |                38.5 |                      |                   |                    |          | 
 (10 rows)
 
-Time: 7092.019 ms (00:07.092)
+Time: 8259.469 ms (00:08.259)
 WITH quarterly AS (
     SELECT d.year_num,
            d.quarter_num,
@@ -147,7 +147,7 @@ ORDER BY m.year_num, m.quarter_num;
      2026 |           3 |  4173 |       185.49 |        12429 |         -66.4 |         -67.2 |         -65.2 | 
 (27 rows)
 
-Time: 177.896 ms
+Time: 174.372 ms
 WITH top_broker AS (
     -- Chosen by measured won value rather than hardcoded, so the query survives
     -- a reload of the warehouse.
@@ -273,7 +273,7 @@ ORDER BY m.won_month;
  2031-09-01 |         1 |     16.81 |             41378.39 |         315.84 |           16.81 |             3 |              1
 (77 rows)
 
-Time: 48.142 ms
+Time: 75.543 ms
 WITH broker_book AS (
     -- Grain: one row per broker. Restricted to the current reporting year,
     -- which prunes to a subset of the received_date index.
@@ -334,7 +334,7 @@ LIMIT 20;
  BRK-000422 | Broker BRK-000422             | Agency 025     | Senior      |   155 |         3 |     69.88 |    3164.94 |           15 |                  6 |         10 |                   0.51 |             1
 (20 rows)
 
-Time: 72.624 ms
+Time: 100.520 ms
 SELECT pr.sector,
        count(*)                                                            AS deals,
        count(*) FILTER (WHERE ds.source_channel = 'Email intake')           AS ch_email,
@@ -372,7 +372,7 @@ ORDER BY deals DESC;
  Unknown     |  2334 |     1087 |       618 |         301 |       249 |         79 |           21.7 |                110 |                 16.94 |                26.29
 (9 rows)
 
-Time: 421.140 ms
+Time: 509.906 ms
 WITH valued AS (
     SELECT p.deal_value_zar,
            log(10, p.deal_value_zar) AS log_value
@@ -427,7 +427,7 @@ ORDER BY b.log_bucket;
          11 |        3162.278 |     10000.000 |     3 |         0.00 |                                                    |      3655.86 |   4024.41 |    3702.80 |       392.39 |            1.013
 (12 rows)
 
-Time: 4024.781 ms (00:04.025)
+Time: 4405.234 ms (00:04.405)
 WITH as_at AS (
     SELECT max(event_date) AS as_at_date FROM mart.fct_deal_stage_event
 ),
@@ -474,7 +474,7 @@ ORDER BY value_at_risk_zar_bn DESC;
  Legal         |       30 |                 60 |                665 |                29.48 |          2144.6 |            4208 |              321 |                  100.0
 (7 rows)
 
-Time: 4445.754 ms (00:04.446)
+Time: 4032.674 ms (00:04.033)
 WITH ranked_entry AS (
     SELECT f.deal_nk,
            f.to_stage_sk,
@@ -518,7 +518,7 @@ ORDER BY s.stage_order;
  Stalled       |           95663 |                    0 |                   0 |            0.00 |             94.38 |               4403.76
 (10 rows)
 
-Time: 5444.417 ms (00:05.444)
+Time: 7633.994 ms (00:07.634)
 WITH open_book AS (
     -- Grain: one row per sector per broker. Open deals only, since a closed
     -- deal carries no forward risk.
@@ -579,7 +579,7 @@ ORDER BY top5_share_pct DESC;
  Retail      |            641 |            128.41 |                |           5.18 |           15.58 |                           |                       59 |  89 | competitive
 (9 rows)
 
-Time: 231.397 ms
+Time: 556.946 ms
 WITH broker_first AS (
     -- Cohort = the quarter of the broker's first ever submission.
     SELECT p.broker_sk,
@@ -683,7 +683,7 @@ ORDER BY c.cohort_quarter;
  2026-04-01     |             12 | 100.0 |  91.7 |       |       |       |       |       |       |      |               0
 (26 rows)
 
-Time: 317.024 ms
+Time: 385.509 ms
 WITH broker_month AS (
     -- DISTINCT collapses many deals in a month to a single activity marker,
     -- which is what makes ROW_NUMBER dense and the arithmetic valid.
@@ -763,7 +763,7 @@ LIMIT 20;
  BRK-000493 | Broker BRK-000493             | Agency 053  | Senior      | 2020-01-01   | 2026-07-01 |            79 |             1 | t              |                           | t
 (20 rows)
 
-Time: 174.480 ms
+Time: 205.474 ms
 WITH RECURSIVE agency_tree AS (
     -- Anchor: the national groups. No parent, and the unknown member at -1 is
     -- excluded because it is a warehouse artefact, not a real company.
@@ -857,7 +857,7 @@ LIMIT 25;
  Agency 003       |     3 | Boutique    | Agency 003 > Agency 001 > Agency 054 |      4361 |           258 |         10.181 |             15 |       62456 |          166.783 |             6.10 | f
 (25 rows)
 
-Time: 142.747 ms
+Time: 92.502 ms
 WITH wins_2022 AS (
     -- to_stage_sk 8 is Closed won. The literal is acceptable in a CTE this small
     -- because dim_stage is joined below to prove it, but a report that filters on
@@ -931,5 +931,5 @@ LIMIT 15;
  Agency 038  |                         39 |                          31 |                 -8 |                 2.998 |                   2.415 |                      -0.583 |              -19.5
 (15 rows)
 
-Time: 122.313 ms
+Time: 121.913 ms
 Timing is off.

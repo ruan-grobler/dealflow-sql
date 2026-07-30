@@ -2,99 +2,109 @@ SET
 SET
  year_num | events | won_events | won_value_zar 
 ----------+--------+------------+---------------
-(0 rows)
+     2020 |    114 |          1 |   32392866.10
+(1 row)
 
 Pager usage is off.
                                                                                                        QUERY PLAN                                                                                                       
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Sort  (cost=3291.44..3291.46 rows=9 width=52) (actual time=0.384..0.413 rows=0 loops=1)
-   Sort Key: d.year_num
-   Sort Method: quicksort  Memory: 25kB
-   Buffers: shared hit=160
-   ->  HashAggregate  (cost=3291.19..3291.30 rows=9 width=52) (actual time=0.378..0.407 rows=0 loops=1)
-         Group Key: d.year_num
-         Batches: 1  Memory Usage: 24kB
-         Buffers: shared hit=160
-         ->  Nested Loop  (cost=106.41..3282.95 rows=824 width=14) (actual time=0.376..0.405 rows=0 loops=1)
-               Buffers: shared hit=160
-               ->  Hash Join  (cost=106.27..3261.48 rows=824 width=17) (actual time=0.376..0.404 rows=0 loops=1)
-                     Hash Cond: (e.event_date_sk = d.date_sk)
-                     Buffers: shared hit=160
-                     ->  Append  (cost=4.31..3157.36 rows=824 width=17) (actual time=0.375..0.402 rows=0 loops=1)
-                           Buffers: shared hit=160
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2020_01 e_1  (cost=4.31..17.53 rows=4 width=17) (actual time=0.009..0.009 rows=0 loops=1)
+ GroupAggregate  (cost=3228.93..3229.62 rows=9 width=52) (actual time=0.680..0.697 rows=1 loops=1)
+   Group Key: d.year_num
+   Buffers: shared hit=615
+   ->  Sort  (cost=3228.93..3229.04 rows=46 width=14) (actual time=0.658..0.681 rows=114 loops=1)
+         Sort Key: d.year_num
+         Sort Method: quicksort  Memory: 29kB
+         Buffers: shared hit=615
+         ->  Nested Loop  (cost=5.84..3227.66 rows=46 width=14) (actual time=0.044..0.649 rows=114 loops=1)
+               Buffers: shared hit=615
+               ->  Hash Join  (cost=5.56..3205.44 rows=46 width=14) (actual time=0.032..0.534 rows=114 loops=1)
+                     Hash Cond: (e.to_stage_sk = ts.stage_sk)
+                     Buffers: shared hit=273
+                     ->  Append  (cost=4.31..3201.94 rows=841 width=17) (actual time=0.012..0.498 rows=114 loops=1)
+                           Buffers: shared hit=272
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2020_01 e_1  (cost=4.31..17.53 rows=4 width=17) (actual time=0.012..0.016 rows=4 loops=1)
                                  Recheck Cond: (broker_sk = 407)
-                                 Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2020_01_broker_sk_event_date_idx  (cost=0.00..4.31 rows=4 width=0) (actual time=0.007..0.007 rows=0 loops=1)
+                                 Heap Blocks: exact=4
+                                 Buffers: shared hit=6
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2020_01_broker_sk_event_date_idx  (cost=0.00..4.31 rows=4 width=0) (actual time=0.009..0.009 rows=4 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2020_02 e_2  (cost=4.33..24.81 rows=6 width=17) (actual time=0.004..0.004 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2020_02 e_2  (cost=4.33..24.81 rows=6 width=17) (actual time=0.009..0.014 rows=6 loops=1)
                                  Recheck Cond: (broker_sk = 407)
-                                 Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2020_02_broker_sk_event_date_idx  (cost=0.00..4.33 rows=6 width=0) (actual time=0.003..0.003 rows=0 loops=1)
+                                 Heap Blocks: exact=6
+                                 Buffers: shared hit=8
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2020_02_broker_sk_event_date_idx  (cost=0.00..4.33 rows=6 width=0) (actual time=0.007..0.007 rows=6 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2020_03 e_3  (cost=4.35..31.72 rows=8 width=17) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2020_03 e_3  (cost=4.48..76.22 rows=25 width=17) (actual time=0.010..0.034 rows=25 loops=1)
                                  Recheck Cond: (broker_sk = 407)
-                                 Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2020_03_broker_sk_event_date_idx  (cost=0.00..4.34 rows=8 width=0) (actual time=0.004..0.004 rows=0 loops=1)
+                                 Heap Blocks: exact=24
+                                 Buffers: shared hit=26
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2020_03_broker_sk_event_date_idx  (cost=0.00..4.47 rows=25 width=0) (actual time=0.007..0.007 rows=25 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2020_04 e_4  (cost=4.34..28.41 rows=7 width=17) (actual time=0.004..0.004 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2020_04 e_4  (cost=4.34..28.41 rows=7 width=17) (actual time=0.007..0.012 rows=6 loops=1)
                                  Recheck Cond: (broker_sk = 407)
-                                 Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2020_04_broker_sk_event_date_idx  (cost=0.00..4.34 rows=7 width=0) (actual time=0.003..0.003 rows=0 loops=1)
+                                 Heap Blocks: exact=6
+                                 Buffers: shared hit=8
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2020_04_broker_sk_event_date_idx  (cost=0.00..4.34 rows=7 width=0) (actual time=0.005..0.006 rows=6 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2020_05 e_5  (cost=4.35..31.61 rows=8 width=17) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2020_05 e_5  (cost=4.35..31.61 rows=8 width=17) (actual time=0.007..0.017 rows=10 loops=1)
                                  Recheck Cond: (broker_sk = 407)
-                                 Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2020_05_broker_sk_event_date_idx  (cost=0.00..4.34 rows=8 width=0) (actual time=0.004..0.004 rows=0 loops=1)
+                                 Heap Blocks: exact=10
+                                 Buffers: shared hit=12
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2020_05_broker_sk_event_date_idx  (cost=0.00..4.34 rows=8 width=0) (actual time=0.005..0.005 rows=10 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2020_06 e_6  (cost=4.35..31.77 rows=8 width=17) (actual time=0.008..0.008 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2020_06 e_6  (cost=4.35..31.77 rows=8 width=17) (actual time=0.007..0.017 rows=11 loops=1)
                                  Recheck Cond: (broker_sk = 407)
-                                 Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2020_06_broker_sk_event_date_idx  (cost=0.00..4.34 rows=8 width=0) (actual time=0.005..0.005 rows=0 loops=1)
+                                 Heap Blocks: exact=11
+                                 Buffers: shared hit=13
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2020_06_broker_sk_event_date_idx  (cost=0.00..4.34 rows=8 width=0) (actual time=0.005..0.005 rows=11 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2020_07 e_7  (cost=4.35..31.66 rows=8 width=17) (actual time=0.004..0.004 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2020_07 e_7  (cost=4.35..31.66 rows=8 width=17) (actual time=0.007..0.017 rows=10 loops=1)
                                  Recheck Cond: (broker_sk = 407)
-                                 Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2020_07_broker_sk_event_date_idx  (cost=0.00..4.34 rows=8 width=0) (actual time=0.004..0.004 rows=0 loops=1)
+                                 Heap Blocks: exact=10
+                                 Buffers: shared hit=12
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2020_07_broker_sk_event_date_idx  (cost=0.00..4.34 rows=8 width=0) (actual time=0.005..0.005 rows=10 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2020_08 e_8  (cost=4.35..31.83 rows=8 width=17) (actual time=0.004..0.004 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2020_08 e_8  (cost=4.35..31.83 rows=8 width=17) (actual time=0.008..0.022 rows=13 loops=1)
                                  Recheck Cond: (broker_sk = 407)
-                                 Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2020_08_broker_sk_event_date_idx  (cost=0.00..4.34 rows=8 width=0) (actual time=0.004..0.004 rows=0 loops=1)
+                                 Heap Blocks: exact=12
+                                 Buffers: shared hit=14
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2020_08_broker_sk_event_date_idx  (cost=0.00..4.34 rows=8 width=0) (actual time=0.006..0.006 rows=13 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2020_09 e_9  (cost=4.35..31.81 rows=8 width=17) (actual time=0.003..0.004 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2020_09 e_9  (cost=4.35..31.81 rows=8 width=17) (actual time=0.008..0.024 rows=14 loops=1)
                                  Recheck Cond: (broker_sk = 407)
-                                 Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2020_09_broker_sk_event_date_idx  (cost=0.00..4.34 rows=8 width=0) (actual time=0.003..0.003 rows=0 loops=1)
+                                 Heap Blocks: exact=14
+                                 Buffers: shared hit=16
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2020_09_broker_sk_event_date_idx  (cost=0.00..4.34 rows=8 width=0) (actual time=0.005..0.006 rows=14 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2020_10 e_10  (cost=4.35..31.85 rows=8 width=17) (actual time=0.003..0.003 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2020_10 e_10  (cost=4.35..31.85 rows=8 width=17) (actual time=0.008..0.024 rows=15 loops=1)
                                  Recheck Cond: (broker_sk = 407)
-                                 Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2020_10_broker_sk_event_date_idx  (cost=0.00..4.34 rows=8 width=0) (actual time=0.003..0.003 rows=0 loops=1)
+                                 Heap Blocks: exact=15
+                                 Buffers: shared hit=17
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2020_10_broker_sk_event_date_idx  (cost=0.00..4.34 rows=8 width=0) (actual time=0.005..0.005 rows=15 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2020_11 e_11  (cost=4.35..31.91 rows=8 width=17) (actual time=0.004..0.004 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2020_11 e_11  (cost=4.35..31.91 rows=8 width=17) (actual time=0.003..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2020_11_broker_sk_event_date_idx  (cost=0.00..4.34 rows=8 width=0) (actual time=0.004..0.004 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2020_11_broker_sk_event_date_idx  (cost=0.00..4.34 rows=8 width=0) (actual time=0.003..0.003 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2020_12 e_12  (cost=4.32..21.55 rows=5 width=17) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2020_12 e_12  (cost=4.32..21.55 rows=5 width=17) (actual time=0.002..0.002 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2020_12_broker_sk_event_date_idx  (cost=0.00..4.32 rows=5 width=0) (actual time=0.005..0.006 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2020_12_broker_sk_event_date_idx  (cost=0.00..4.32 rows=5 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2021_01 e_13  (cost=4.33..24.94 rows=6 width=17) (actual time=0.004..0.004 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2021_01 e_13  (cost=4.33..24.94 rows=6 width=17) (actual time=0.003..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
                                  ->  Bitmap Index Scan on fct_deal_stage_event_2021_01_broker_sk_event_date_idx  (cost=0.00..4.33 rows=6 width=0) (actual time=0.003..0.003 rows=0 loops=1)
@@ -103,97 +113,97 @@ Pager usage is off.
                            ->  Bitmap Heap Scan on fct_deal_stage_event_2021_02 e_14  (cost=4.35..35.02 rows=9 width=17) (actual time=0.003..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2021_02_broker_sk_event_date_idx  (cost=0.00..4.35 rows=9 width=0) (actual time=0.003..0.003 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2021_02_broker_sk_event_date_idx  (cost=0.00..4.35 rows=9 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
                            ->  Bitmap Heap Scan on fct_deal_stage_event_2021_03 e_15  (cost=4.36..38.75 rows=10 width=17) (actual time=0.003..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2021_03_broker_sk_event_date_idx  (cost=0.00..4.36 rows=10 width=0) (actual time=0.002..0.002 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2021_03_broker_sk_event_date_idx  (cost=0.00..4.36 rows=10 width=0) (actual time=0.003..0.003 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2021_04 e_16  (cost=4.35..35.07 rows=9 width=17) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2021_04 e_16  (cost=4.35..35.07 rows=9 width=17) (actual time=0.003..0.004 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2021_04_broker_sk_event_date_idx  (cost=0.00..4.35 rows=9 width=0) (actual time=0.004..0.004 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2021_04_broker_sk_event_date_idx  (cost=0.00..4.35 rows=9 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2021_05 e_17  (cost=4.35..35.27 rows=9 width=17) (actual time=0.006..0.007 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2021_05 e_17  (cost=4.35..35.27 rows=9 width=17) (actual time=0.003..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2021_05_broker_sk_event_date_idx  (cost=0.00..4.35 rows=9 width=0) (actual time=0.006..0.006 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2021_05_broker_sk_event_date_idx  (cost=0.00..4.35 rows=9 width=0) (actual time=0.003..0.003 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2021_06 e_18  (cost=4.35..35.08 rows=9 width=17) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2021_06 e_18  (cost=4.35..35.08 rows=9 width=17) (actual time=0.004..0.004 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2021_06_broker_sk_event_date_idx  (cost=0.00..4.35 rows=9 width=0) (actual time=0.005..0.005 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2021_06_broker_sk_event_date_idx  (cost=0.00..4.35 rows=9 width=0) (actual time=0.003..0.003 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2021_07 e_19  (cost=4.35..35.07 rows=9 width=17) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2021_07 e_19  (cost=4.35..35.07 rows=9 width=17) (actual time=0.002..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2021_07_broker_sk_event_date_idx  (cost=0.00..4.35 rows=9 width=0) (actual time=0.005..0.005 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2021_07_broker_sk_event_date_idx  (cost=0.00..4.35 rows=9 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2021_08 e_20  (cost=4.35..35.27 rows=9 width=17) (actual time=0.004..0.004 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2021_08 e_20  (cost=4.35..35.27 rows=9 width=17) (actual time=0.003..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2021_08_broker_sk_event_date_idx  (cost=0.00..4.35 rows=9 width=0) (actual time=0.003..0.003 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2021_08_broker_sk_event_date_idx  (cost=0.00..4.35 rows=9 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2021_09 e_21  (cost=4.35..35.21 rows=9 width=17) (actual time=0.004..0.004 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2021_09 e_21  (cost=4.35..35.21 rows=9 width=17) (actual time=0.002..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2021_09_broker_sk_event_date_idx  (cost=0.00..4.35 rows=9 width=0) (actual time=0.003..0.003 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2021_09_broker_sk_event_date_idx  (cost=0.00..4.35 rows=9 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2021_10 e_22  (cost=4.35..35.24 rows=9 width=17) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2021_10 e_22  (cost=4.35..35.24 rows=9 width=17) (actual time=0.003..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
                                  ->  Bitmap Index Scan on fct_deal_stage_event_2021_10_broker_sk_event_date_idx  (cost=0.00..4.35 rows=9 width=0) (actual time=0.003..0.003 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2021_11 e_23  (cost=4.36..38.50 rows=10 width=17) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2021_11 e_23  (cost=4.36..38.50 rows=10 width=17) (actual time=0.002..0.002 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2021_11_broker_sk_event_date_idx  (cost=0.00..4.36 rows=10 width=0) (actual time=0.004..0.004 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2021_11_broker_sk_event_date_idx  (cost=0.00..4.36 rows=10 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2021_12 e_24  (cost=4.33..24.87 rows=6 width=17) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2021_12 e_24  (cost=4.33..24.87 rows=6 width=17) (actual time=0.004..0.004 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2021_12_broker_sk_event_date_idx  (cost=0.00..4.33 rows=6 width=0) (actual time=0.005..0.005 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2021_12_broker_sk_event_date_idx  (cost=0.00..4.33 rows=6 width=0) (actual time=0.004..0.004 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
                            ->  Bitmap Heap Scan on fct_deal_stage_event_2022_01 e_25  (cost=4.34..28.32 rows=7 width=17) (actual time=0.003..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2022_01_broker_sk_event_date_idx  (cost=0.00..4.34 rows=7 width=0) (actual time=0.003..0.003 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2022_01_broker_sk_event_date_idx  (cost=0.00..4.34 rows=7 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2022_02 e_26  (cost=4.36..38.46 rows=10 width=17) (actual time=0.003..0.003 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2022_02 e_26  (cost=4.36..38.46 rows=10 width=17) (actual time=0.002..0.002 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2022_02_broker_sk_event_date_idx  (cost=0.00..4.36 rows=10 width=0) (actual time=0.003..0.003 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2022_02_broker_sk_event_date_idx  (cost=0.00..4.36 rows=10 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2022_03 e_27  (cost=4.37..42.05 rows=11 width=17) (actual time=0.006..0.007 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2022_03 e_27  (cost=4.37..42.05 rows=11 width=17) (actual time=0.003..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2022_03_broker_sk_event_date_idx  (cost=0.00..4.37 rows=11 width=0) (actual time=0.004..0.004 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2022_03_broker_sk_event_date_idx  (cost=0.00..4.37 rows=11 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2022_04 e_28  (cost=4.35..35.29 rows=9 width=17) (actual time=0.003..0.003 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2022_04 e_28  (cost=4.35..35.29 rows=9 width=17) (actual time=0.002..0.002 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2022_04_broker_sk_event_date_idx  (cost=0.00..4.35 rows=9 width=0) (actual time=0.002..0.003 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2022_04_broker_sk_event_date_idx  (cost=0.00..4.35 rows=9 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2022_05 e_29  (cost=4.37..41.91 rows=11 width=17) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2022_05 e_29  (cost=4.37..41.91 rows=11 width=17) (actual time=0.003..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2022_05_broker_sk_event_date_idx  (cost=0.00..4.37 rows=11 width=0) (actual time=0.004..0.004 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2022_05_broker_sk_event_date_idx  (cost=0.00..4.37 rows=11 width=0) (actual time=0.003..0.003 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
                            ->  Bitmap Heap Scan on fct_deal_stage_event_2022_06 e_30  (cost=4.35..35.32 rows=9 width=17) (actual time=0.003..0.003 rows=0 loops=1)
@@ -202,7 +212,7 @@ Pager usage is off.
                                  ->  Bitmap Index Scan on fct_deal_stage_event_2022_06_broker_sk_event_date_idx  (cost=0.00..4.35 rows=9 width=0) (actual time=0.003..0.003 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2022_07 e_31  (cost=4.35..35.27 rows=9 width=17) (actual time=0.003..0.004 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2022_07 e_31  (cost=4.35..35.27 rows=9 width=17) (actual time=0.003..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
                                  ->  Bitmap Index Scan on fct_deal_stage_event_2022_07_broker_sk_event_date_idx  (cost=0.00..4.35 rows=9 width=0) (actual time=0.003..0.003 rows=0 loops=1)
@@ -214,55 +224,55 @@ Pager usage is off.
                                  ->  Bitmap Index Scan on fct_deal_stage_event_2022_08_broker_sk_event_date_idx  (cost=0.00..4.36 rows=10 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2022_09 e_33  (cost=4.36..38.57 rows=10 width=17) (actual time=0.004..0.004 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2022_09 e_33  (cost=4.36..38.57 rows=10 width=17) (actual time=0.002..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2022_09_broker_sk_event_date_idx  (cost=0.00..4.36 rows=10 width=0) (actual time=0.003..0.003 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2022_09_broker_sk_event_date_idx  (cost=0.00..4.36 rows=10 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2022_10 e_34  (cost=4.37..41.88 rows=11 width=17) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2022_10 e_34  (cost=4.37..41.88 rows=11 width=17) (actual time=0.003..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2022_10_broker_sk_event_date_idx  (cost=0.00..4.37 rows=11 width=0) (actual time=0.004..0.004 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2022_10_broker_sk_event_date_idx  (cost=0.00..4.37 rows=11 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2022_11 e_35  (cost=4.36..38.60 rows=10 width=17) (actual time=0.005..0.006 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2022_11 e_35  (cost=4.36..38.60 rows=10 width=17) (actual time=0.002..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2022_11_broker_sk_event_date_idx  (cost=0.00..4.36 rows=10 width=0) (actual time=0.005..0.005 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2022_11_broker_sk_event_date_idx  (cost=0.00..4.36 rows=10 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2022_12 e_36  (cost=4.34..28.13 rows=7 width=17) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2022_12 e_36  (cost=4.34..28.13 rows=7 width=17) (actual time=0.004..0.004 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
                                  ->  Bitmap Index Scan on fct_deal_stage_event_2022_12_broker_sk_event_date_idx  (cost=0.00..4.34 rows=7 width=0) (actual time=0.003..0.003 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2023_01 e_37  (cost=4.35..31.69 rows=8 width=17) (actual time=0.003..0.003 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2023_01 e_37  (cost=4.35..31.69 rows=8 width=17) (actual time=0.002..0.002 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2023_01_broker_sk_event_date_idx  (cost=0.00..4.34 rows=8 width=0) (actual time=0.002..0.003 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2023_01_broker_sk_event_date_idx  (cost=0.00..4.34 rows=8 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2023_02 e_38  (cost=4.36..38.67 rows=10 width=17) (actual time=0.003..0.003 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2023_02 e_38  (cost=4.36..38.67 rows=10 width=17) (actual time=0.010..0.010 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2023_02_broker_sk_event_date_idx  (cost=0.00..4.36 rows=10 width=0) (actual time=0.002..0.003 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2023_02_broker_sk_event_date_idx  (cost=0.00..4.36 rows=10 width=0) (actual time=0.010..0.010 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2023_03 e_39  (cost=4.38..45.49 rows=12 width=17) (actual time=0.002..0.002 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2023_03 e_39  (cost=4.38..45.49 rows=12 width=17) (actual time=0.002..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
                                  ->  Bitmap Index Scan on fct_deal_stage_event_2023_03_broker_sk_event_date_idx  (cost=0.00..4.38 rows=12 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2023_04 e_40  (cost=4.36..38.64 rows=10 width=17) (actual time=0.003..0.004 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2023_04 e_40  (cost=4.36..38.64 rows=10 width=17) (actual time=0.002..0.002 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2023_04_broker_sk_event_date_idx  (cost=0.00..4.36 rows=10 width=0) (actual time=0.003..0.003 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2023_04_broker_sk_event_date_idx  (cost=0.00..4.36 rows=10 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2023_05 e_41  (cost=4.38..45.40 rows=12 width=17) (actual time=0.003..0.004 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2023_05 e_41  (cost=4.38..45.40 rows=12 width=17) (actual time=0.004..0.004 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
                                  ->  Bitmap Index Scan on fct_deal_stage_event_2023_05_broker_sk_event_date_idx  (cost=0.00..4.38 rows=12 width=0) (actual time=0.003..0.003 rows=0 loops=1)
@@ -271,67 +281,67 @@ Pager usage is off.
                            ->  Bitmap Heap Scan on fct_deal_stage_event_2023_06 e_42  (cost=4.37..41.90 rows=11 width=17) (actual time=0.003..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2023_06_broker_sk_event_date_idx  (cost=0.00..4.37 rows=11 width=0) (actual time=0.002..0.002 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2023_06_broker_sk_event_date_idx  (cost=0.00..4.37 rows=11 width=0) (actual time=0.003..0.003 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2023_07 e_43  (cost=4.37..42.00 rows=11 width=17) (actual time=0.006..0.007 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2023_07 e_43  (cost=4.37..42.00 rows=11 width=17) (actual time=0.003..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2023_07_broker_sk_event_date_idx  (cost=0.00..4.37 rows=11 width=0) (actual time=0.004..0.004 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2023_07_broker_sk_event_date_idx  (cost=0.00..4.37 rows=11 width=0) (actual time=0.003..0.003 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2023_08 e_44  (cost=4.37..41.98 rows=11 width=17) (actual time=0.003..0.004 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2023_08 e_44  (cost=4.37..41.98 rows=11 width=17) (actual time=0.002..0.002 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2023_08_broker_sk_event_date_idx  (cost=0.00..4.37 rows=11 width=0) (actual time=0.003..0.003 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2023_08_broker_sk_event_date_idx  (cost=0.00..4.37 rows=11 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2023_09 e_45  (cost=4.37..41.92 rows=11 width=17) (actual time=0.004..0.004 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2023_09 e_45  (cost=4.37..41.92 rows=11 width=17) (actual time=0.009..0.009 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2023_09_broker_sk_event_date_idx  (cost=0.00..4.37 rows=11 width=0) (actual time=0.003..0.003 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2023_09_broker_sk_event_date_idx  (cost=0.00..4.37 rows=11 width=0) (actual time=0.009..0.009 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
                            ->  Bitmap Heap Scan on fct_deal_stage_event_2023_10 e_46  (cost=4.38..45.44 rows=12 width=17) (actual time=0.003..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2023_10_broker_sk_event_date_idx  (cost=0.00..4.38 rows=12 width=0) (actual time=0.003..0.003 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2023_10_broker_sk_event_date_idx  (cost=0.00..4.38 rows=12 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2023_11 e_47  (cost=4.37..42.01 rows=11 width=17) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2023_11 e_47  (cost=4.37..42.01 rows=11 width=17) (actual time=0.002..0.002 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2023_11_broker_sk_event_date_idx  (cost=0.00..4.37 rows=11 width=0) (actual time=0.004..0.004 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2023_11_broker_sk_event_date_idx  (cost=0.00..4.37 rows=11 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2023_12 e_48  (cost=4.34..28.24 rows=7 width=17) (actual time=0.005..0.006 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2023_12 e_48  (cost=4.34..28.24 rows=7 width=17) (actual time=0.008..0.008 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2023_12_broker_sk_event_date_idx  (cost=0.00..4.34 rows=7 width=0) (actual time=0.003..0.003 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2023_12_broker_sk_event_date_idx  (cost=0.00..4.34 rows=7 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2024_01 e_49  (cost=4.35..35.09 rows=9 width=17) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2024_01 e_49  (cost=4.35..35.09 rows=9 width=17) (actual time=0.002..0.002 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2024_01_broker_sk_event_date_idx  (cost=0.00..4.35 rows=9 width=0) (actual time=0.004..0.004 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2024_01_broker_sk_event_date_idx  (cost=0.00..4.35 rows=9 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2024_02 e_50  (cost=4.37..42.19 rows=11 width=17) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2024_02 e_50  (cost=4.37..42.19 rows=11 width=17) (actual time=0.003..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
                                  ->  Bitmap Index Scan on fct_deal_stage_event_2024_02_broker_sk_event_date_idx  (cost=0.00..4.37 rows=11 width=0) (actual time=0.003..0.003 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2024_03 e_51  (cost=4.39..48.85 rows=13 width=17) (actual time=0.003..0.003 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2024_03 e_51  (cost=4.39..48.85 rows=13 width=17) (actual time=0.002..0.002 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2024_03_broker_sk_event_date_idx  (cost=0.00..4.38 rows=13 width=0) (actual time=0.003..0.003 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2024_03_broker_sk_event_date_idx  (cost=0.00..4.38 rows=13 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2024_04 e_52  (cost=4.38..45.55 rows=12 width=17) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2024_04 e_52  (cost=4.38..45.55 rows=12 width=17) (actual time=0.007..0.007 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2024_04_broker_sk_event_date_idx  (cost=0.00..4.38 rows=12 width=0) (actual time=0.004..0.004 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2024_04_broker_sk_event_date_idx  (cost=0.00..4.38 rows=12 width=0) (actual time=0.007..0.007 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
                            ->  Bitmap Heap Scan on fct_deal_stage_event_2024_05 e_53  (cost=4.38..45.53 rows=12 width=17) (actual time=0.004..0.004 rows=0 loops=1)
@@ -340,106 +350,106 @@ Pager usage is off.
                                  ->  Bitmap Index Scan on fct_deal_stage_event_2024_05_broker_sk_event_date_idx  (cost=0.00..4.38 rows=12 width=0) (actual time=0.003..0.003 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2024_06 e_54  (cost=4.37..42.07 rows=11 width=17) (actual time=0.009..0.009 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2024_06 e_54  (cost=4.37..42.07 rows=11 width=17) (actual time=0.002..0.002 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2024_06_broker_sk_event_date_idx  (cost=0.00..4.37 rows=11 width=0) (actual time=0.008..0.008 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2024_06_broker_sk_event_date_idx  (cost=0.00..4.37 rows=11 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2024_07 e_55  (cost=4.38..45.63 rows=12 width=17) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2024_07 e_55  (cost=4.38..45.63 rows=12 width=17) (actual time=0.011..0.011 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2024_07_broker_sk_event_date_idx  (cost=0.00..4.38 rows=12 width=0) (actual time=0.004..0.004 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2024_07_broker_sk_event_date_idx  (cost=0.00..4.38 rows=12 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2024_08 e_56  (cost=4.38..45.42 rows=12 width=17) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2024_08 e_56  (cost=4.38..45.42 rows=12 width=17) (actual time=0.002..0.002 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2024_08_broker_sk_event_date_idx  (cost=0.00..4.38 rows=12 width=0) (actual time=0.006..0.006 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2024_08_broker_sk_event_date_idx  (cost=0.00..4.38 rows=12 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2024_09 e_57  (cost=4.38..45.63 rows=12 width=17) (actual time=0.003..0.004 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2024_09 e_57  (cost=4.38..45.63 rows=12 width=17) (actual time=0.003..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
                                  ->  Bitmap Index Scan on fct_deal_stage_event_2024_09_broker_sk_event_date_idx  (cost=0.00..4.38 rows=12 width=0) (actual time=0.003..0.003 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2024_10 e_58  (cost=4.39..48.79 rows=13 width=17) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2024_10 e_58  (cost=4.39..48.79 rows=13 width=17) (actual time=0.002..0.002 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2024_10_broker_sk_event_date_idx  (cost=0.00..4.38 rows=13 width=0) (actual time=0.004..0.004 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2024_10_broker_sk_event_date_idx  (cost=0.00..4.38 rows=13 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2024_11 e_59  (cost=4.38..45.42 rows=12 width=17) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2024_11 e_59  (cost=4.38..45.42 rows=12 width=17) (actual time=0.007..0.007 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2024_11_broker_sk_event_date_idx  (cost=0.00..4.38 rows=12 width=0) (actual time=0.002..0.002 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2024_11_broker_sk_event_date_idx  (cost=0.00..4.38 rows=12 width=0) (actual time=0.006..0.006 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2024_12 e_60  (cost=4.35..31.80 rows=8 width=17) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2024_12 e_60  (cost=4.35..31.80 rows=8 width=17) (actual time=0.003..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2024_12_broker_sk_event_date_idx  (cost=0.00..4.34 rows=8 width=0) (actual time=0.004..0.004 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2024_12_broker_sk_event_date_idx  (cost=0.00..4.34 rows=8 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2025_01 e_61  (cost=4.35..35.24 rows=9 width=17) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2025_01 e_61  (cost=4.35..35.24 rows=9 width=17) (actual time=0.002..0.002 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2025_01_broker_sk_event_date_idx  (cost=0.00..4.35 rows=9 width=0) (actual time=0.005..0.005 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2025_01_broker_sk_event_date_idx  (cost=0.00..4.35 rows=9 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2025_02 e_62  (cost=4.39..48.75 rows=13 width=17) (actual time=0.003..0.003 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2025_02 e_62  (cost=4.39..48.75 rows=13 width=17) (actual time=0.007..0.007 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2025_02_broker_sk_event_date_idx  (cost=0.00..4.38 rows=13 width=0) (actual time=0.003..0.003 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2025_02_broker_sk_event_date_idx  (cost=0.00..4.38 rows=13 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2025_03 e_63  (cost=4.40..55.71 rows=15 width=17) (actual time=0.003..0.003 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2025_03 e_63  (cost=4.40..55.71 rows=15 width=17) (actual time=0.002..0.002 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2025_03_broker_sk_event_date_idx  (cost=0.00..4.40 rows=15 width=0) (actual time=0.003..0.003 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2025_03_broker_sk_event_date_idx  (cost=0.00..4.40 rows=15 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
                            ->  Bitmap Heap Scan on fct_deal_stage_event_2025_04 e_64  (cost=4.39..48.85 rows=13 width=17) (actual time=0.003..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2025_04_broker_sk_event_date_idx  (cost=0.00..4.38 rows=13 width=0) (actual time=0.002..0.002 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2025_04_broker_sk_event_date_idx  (cost=0.00..4.38 rows=13 width=0) (actual time=0.003..0.003 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
                            ->  Bitmap Heap Scan on fct_deal_stage_event_2025_05 e_65  (cost=4.40..52.05 rows=14 width=17) (actual time=0.003..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2025_05_broker_sk_event_date_idx  (cost=0.00..4.39 rows=14 width=0) (actual time=0.002..0.002 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2025_05_broker_sk_event_date_idx  (cost=0.00..4.39 rows=14 width=0) (actual time=0.003..0.003 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2025_06 e_66  (cost=4.39..49.00 rows=13 width=17) (actual time=0.007..0.007 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2025_06 e_66  (cost=4.39..49.00 rows=13 width=17) (actual time=0.008..0.008 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2025_06_broker_sk_event_date_idx  (cost=0.00..4.38 rows=13 width=0) (actual time=0.002..0.002 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2025_06_broker_sk_event_date_idx  (cost=0.00..4.38 rows=13 width=0) (actual time=0.008..0.008 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2025_07 e_67  (cost=4.39..48.90 rows=13 width=17) (actual time=0.004..0.004 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2025_07 e_67  (cost=4.39..48.90 rows=13 width=17) (actual time=0.002..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2025_07_broker_sk_event_date_idx  (cost=0.00..4.38 rows=13 width=0) (actual time=0.004..0.004 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2025_07_broker_sk_event_date_idx  (cost=0.00..4.38 rows=13 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2025_08 e_68  (cost=4.39..48.86 rows=13 width=17) (actual time=0.005..0.005 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2025_08 e_68  (cost=4.39..48.86 rows=13 width=17) (actual time=0.003..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2025_08_broker_sk_event_date_idx  (cost=0.00..4.38 rows=13 width=0) (actual time=0.004..0.004 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2025_08_broker_sk_event_date_idx  (cost=0.00..4.38 rows=13 width=0) (actual time=0.003..0.003 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2025_09 e_69  (cost=4.40..52.38 rows=14 width=17) (actual time=0.003..0.003 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2025_09 e_69  (cost=4.40..52.38 rows=14 width=17) (actual time=0.007..0.008 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
                                  ->  Bitmap Index Scan on fct_deal_stage_event_2025_09_broker_sk_event_date_idx  (cost=0.00..4.39 rows=14 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2025_10 e_70  (cost=4.40..52.27 rows=14 width=17) (actual time=0.004..0.004 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2025_10 e_70  (cost=4.40..52.27 rows=14 width=17) (actual time=0.002..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2025_10_broker_sk_event_date_idx  (cost=0.00..4.39 rows=14 width=0) (actual time=0.003..0.004 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2025_10_broker_sk_event_date_idx  (cost=0.00..4.39 rows=14 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
                            ->  Bitmap Heap Scan on fct_deal_stage_event_2025_11 e_71  (cost=4.39..48.86 rows=13 width=17) (actual time=0.003..0.003 rows=0 loops=1)
@@ -448,31 +458,31 @@ Pager usage is off.
                                  ->  Bitmap Index Scan on fct_deal_stage_event_2025_11_broker_sk_event_date_idx  (cost=0.00..4.38 rows=13 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2025_12 e_72  (cost=4.35..35.28 rows=9 width=17) (actual time=0.003..0.003 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2025_12 e_72  (cost=4.35..35.28 rows=9 width=17) (actual time=0.002..0.002 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2025_12_broker_sk_event_date_idx  (cost=0.00..4.35 rows=9 width=0) (actual time=0.003..0.003 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2025_12_broker_sk_event_date_idx  (cost=0.00..4.35 rows=9 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2026_01 e_73  (cost=4.36..38.59 rows=10 width=17) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2026_01 e_73  (cost=4.36..38.59 rows=10 width=17) (actual time=0.010..0.010 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2026_01_broker_sk_event_date_idx  (cost=0.00..4.36 rows=10 width=0) (actual time=0.003..0.003 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2026_01_broker_sk_event_date_idx  (cost=0.00..4.36 rows=10 width=0) (actual time=0.009..0.009 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2026_02 e_74  (cost=4.40..52.21 rows=14 width=17) (actual time=0.006..0.006 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2026_02 e_74  (cost=4.40..52.21 rows=14 width=17) (actual time=0.002..0.002 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2026_02_broker_sk_event_date_idx  (cost=0.00..4.39 rows=14 width=0) (actual time=0.006..0.006 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2026_02_broker_sk_event_date_idx  (cost=0.00..4.39 rows=14 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2026_03 e_75  (cost=4.42..62.51 rows=17 width=17) (actual time=0.005..0.006 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2026_03 e_75  (cost=4.42..62.51 rows=17 width=17) (actual time=0.002..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2026_03_broker_sk_event_date_idx  (cost=0.00..4.42 rows=17 width=0) (actual time=0.005..0.005 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2026_03_broker_sk_event_date_idx  (cost=0.00..4.42 rows=17 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2026_04 e_76  (cost=4.40..52.35 rows=14 width=17) (actual time=0.003..0.003 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2026_04 e_76  (cost=4.40..52.35 rows=14 width=17) (actual time=0.010..0.010 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
                                  ->  Bitmap Index Scan on fct_deal_stage_event_2026_04_broker_sk_event_date_idx  (cost=0.00..4.39 rows=14 width=0) (actual time=0.002..0.002 rows=0 loops=1)
@@ -481,10 +491,10 @@ Pager usage is off.
                            ->  Bitmap Heap Scan on fct_deal_stage_event_2026_05 e_77  (cost=4.40..52.41 rows=14 width=17) (actual time=0.003..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2026_05_broker_sk_event_date_idx  (cost=0.00..4.39 rows=14 width=0) (actual time=0.003..0.003 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2026_05_broker_sk_event_date_idx  (cost=0.00..4.39 rows=14 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Bitmap Heap Scan on fct_deal_stage_event_2026_06 e_78  (cost=4.40..55.69 rows=15 width=17) (actual time=0.003..0.003 rows=0 loops=1)
+                           ->  Bitmap Heap Scan on fct_deal_stage_event_2026_06 e_78  (cost=4.40..55.69 rows=15 width=17) (actual time=0.010..0.010 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
                                  ->  Bitmap Index Scan on fct_deal_stage_event_2026_06_broker_sk_event_date_idx  (cost=0.00..4.40 rows=15 width=0) (actual time=0.002..0.002 rows=0 loops=1)
@@ -493,32 +503,33 @@ Pager usage is off.
                            ->  Bitmap Heap Scan on fct_deal_stage_event_2026_07 e_79  (cost=4.40..52.43 rows=14 width=17) (actual time=0.003..0.003 rows=0 loops=1)
                                  Recheck Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                                 ->  Bitmap Index Scan on fct_deal_stage_event_2026_07_broker_sk_event_date_idx  (cost=0.00..4.39 rows=14 width=0) (actual time=0.002..0.003 rows=0 loops=1)
+                                 ->  Bitmap Index Scan on fct_deal_stage_event_2026_07_broker_sk_event_date_idx  (cost=0.00..4.39 rows=14 width=0) (actual time=0.002..0.002 rows=0 loops=1)
                                        Index Cond: (broker_sk = 407)
                                        Buffers: shared hit=2
-                           ->  Seq Scan on fct_deal_stage_event_2026_08 e_80  (cost=0.00..0.00 rows=1 width=28) (actual time=0.004..0.004 rows=0 loops=1)
+                           ->  Seq Scan on fct_deal_stage_event_2026_08 e_80  (cost=0.00..0.00 rows=1 width=28) (actual time=0.007..0.007 rows=0 loops=1)
                                  Filter: (broker_sk = 407)
-                           ->  Seq Scan on fct_deal_stage_event_2026_09 e_81  (cost=0.00..0.00 rows=1 width=28) (actual time=0.004..0.004 rows=0 loops=1)
+                           ->  Seq Scan on fct_deal_stage_event_2026_09 e_81  (cost=0.00..0.00 rows=1 width=28) (actual time=0.001..0.001 rows=0 loops=1)
                                  Filter: (broker_sk = 407)
                            ->  Seq Scan on fct_deal_stage_event_2026_10 e_82  (cost=0.00..0.00 rows=1 width=28) (actual time=0.001..0.001 rows=0 loops=1)
                                  Filter: (broker_sk = 407)
-                           ->  Seq Scan on fct_deal_stage_event_2026_11 e_83  (cost=0.00..0.00 rows=1 width=28) (actual time=0.003..0.003 rows=0 loops=1)
+                           ->  Seq Scan on fct_deal_stage_event_2026_11 e_83  (cost=0.00..0.00 rows=1 width=28) (actual time=0.001..0.001 rows=0 loops=1)
                                  Filter: (broker_sk = 407)
-                           ->  Seq Scan on fct_deal_stage_event_2026_12 e_84  (cost=0.00..0.00 rows=1 width=28) (actual time=0.002..0.002 rows=0 loops=1)
+                           ->  Seq Scan on fct_deal_stage_event_2026_12 e_84  (cost=0.00..0.00 rows=1 width=28) (actual time=0.001..0.001 rows=0 loops=1)
                                  Filter: (broker_sk = 407)
-                           ->  Index Scan using fct_deal_stage_event_default_broker_sk_event_date_idx on fct_deal_stage_event_default e_85  (cost=0.27..8.29 rows=1 width=17) (actual time=0.011..0.011 rows=0 loops=1)
+                           ->  Index Scan using fct_deal_stage_event_default_broker_sk_event_date_idx on fct_deal_stage_event_default e_85  (cost=0.27..8.29 rows=1 width=17) (actual time=0.007..0.007 rows=0 loops=1)
                                  Index Cond: (broker_sk = 407)
                                  Buffers: shared hit=2
-                     ->  Hash  (cost=60.87..60.87 rows=3287 width=8) (never executed)
-                           ->  Seq Scan on dim_date d  (cost=0.00..60.87 rows=3287 width=8) (never executed)
-               ->  Memoize  (cost=0.15..0.18 rows=1 width=5) (never executed)
-                     Cache Key: e.to_stage_sk
-                     Cache Mode: logical
-                     ->  Index Scan using dim_stage_pkey on dim_stage ts  (cost=0.14..0.17 rows=1 width=5) (never executed)
-                           Index Cond: (stage_sk = e.to_stage_sk)
+                     ->  Hash  (cost=1.11..1.11 rows=11 width=5) (actual time=0.013..0.013 rows=11 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                           Buffers: shared hit=1
+                           ->  Seq Scan on dim_stage ts  (cost=0.00..1.11 rows=11 width=5) (actual time=0.007..0.008 rows=11 loops=1)
+                                 Buffers: shared hit=1
+               ->  Index Scan using dim_date_pkey on dim_date d  (cost=0.28..0.48 rows=1 width=8) (actual time=0.001..0.001 rows=1 loops=114)
+                     Index Cond: (date_sk = e.event_date_sk)
+                     Buffers: shared hit=342
  Planning:
-   Buffers: shared hit=22
- Planning Time: 2.449 ms
- Execution Time: 1.201 ms
-(513 rows)
+   Buffers: shared hit=15
+ Planning Time: 2.535 ms
+ Execution Time: 1.627 ms
+(523 rows)
 

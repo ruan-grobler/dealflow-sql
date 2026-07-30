@@ -3,348 +3,348 @@ SET
 Pager usage is off.
                                                                                         QUERY PLAN                                                                                        
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Finalize Aggregate  (cost=32599.65..32599.66 rows=1 width=40) (actual time=170.122..174.876 rows=1 loops=1)
+ Finalize Aggregate  (cost=32599.65..32599.66 rows=1 width=40) (actual time=184.584..189.852 rows=1 loops=1)
    Buffers: shared read=21220
-   ->  Gather  (cost=32599.42..32599.63 rows=2 width=40) (actual time=169.460..174.854 rows=3 loops=1)
+   ->  Gather  (cost=32599.42..32599.63 rows=2 width=40) (actual time=184.074..189.823 rows=3 loops=1)
          Workers Planned: 2
          Workers Launched: 2
          Buffers: shared read=21220
-         ->  Partial Aggregate  (cost=31599.42..31599.43 rows=1 width=40) (actual time=150.073..150.138 rows=1 loops=3)
+         ->  Partial Aggregate  (cost=31599.42..31599.43 rows=1 width=40) (actual time=146.879..146.955 rows=1 loops=3)
                Buffers: shared read=21220
-               ->  Parallel Append  (cost=0.00..31549.60 rows=9965 width=9) (actual time=102.028..148.552 rows=7907 loops=3)
+               ->  Parallel Append  (cost=0.00..31549.60 rows=9965 width=9) (actual time=102.967..146.018 rows=7907 loops=3)
                      Buffers: shared read=21220
-                     ->  Seq Scan on fct_deal_stage_event_2026_08 fct_deal_stage_event_80  (cost=0.00..0.00 rows=1 width=20) (actual time=0.074..0.074 rows=0 loops=1)
+                     ->  Seq Scan on fct_deal_stage_event_2026_08 fct_deal_stage_event_80  (cost=0.00..0.00 rows=1 width=20) (actual time=0.016..0.017 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
-                     ->  Seq Scan on fct_deal_stage_event_2026_09 fct_deal_stage_event_81  (cost=0.00..0.00 rows=1 width=20) (actual time=0.008..0.008 rows=0 loops=1)
+                     ->  Seq Scan on fct_deal_stage_event_2026_09 fct_deal_stage_event_81  (cost=0.00..0.00 rows=1 width=20) (actual time=0.005..0.005 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
-                     ->  Seq Scan on fct_deal_stage_event_2026_10 fct_deal_stage_event_82  (cost=0.00..0.00 rows=1 width=20) (actual time=0.024..0.024 rows=0 loops=1)
+                     ->  Seq Scan on fct_deal_stage_event_2026_10 fct_deal_stage_event_82  (cost=0.00..0.00 rows=1 width=20) (actual time=0.010..0.011 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
-                     ->  Seq Scan on fct_deal_stage_event_2026_11 fct_deal_stage_event_83  (cost=0.00..0.00 rows=1 width=20) (actual time=0.010..0.010 rows=0 loops=1)
+                     ->  Seq Scan on fct_deal_stage_event_2026_11 fct_deal_stage_event_83  (cost=0.00..0.00 rows=1 width=20) (actual time=0.033..0.034 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
-                     ->  Seq Scan on fct_deal_stage_event_2026_12 fct_deal_stage_event_84  (cost=0.00..0.00 rows=1 width=20) (actual time=0.010..0.010 rows=0 loops=1)
+                     ->  Seq Scan on fct_deal_stage_event_2026_12 fct_deal_stage_event_84  (cost=0.00..0.00 rows=1 width=20) (actual time=0.018..0.019 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2026_03 fct_deal_stage_event_75  (cost=0.00..641.29 rows=13950 width=9) (actual time=0.068..31.059 rows=23720 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2026_03 fct_deal_stage_event_75  (cost=0.00..641.29 rows=13950 width=9) (actual time=0.044..11.542 rows=23720 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Buffers: shared read=432
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2025_03 fct_deal_stage_event_63  (cost=0.00..571.41 rows=1 width=9) (actual time=16.190..16.190 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2025_03 fct_deal_stage_event_63  (cost=0.00..571.41 rows=1 width=9) (actual time=6.443..6.444 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 21127
                            Buffers: shared read=385
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2026_06 fct_deal_stage_event_78  (cost=0.00..568.65 rows=1 width=9) (actual time=11.664..11.665 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2026_06 fct_deal_stage_event_78  (cost=0.00..568.65 rows=1 width=9) (actual time=7.641..7.641 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 21040
                            Buffers: shared read=383
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2026_07 fct_deal_stage_event_79  (cost=0.00..553.76 rows=1 width=9) (actual time=15.270..15.270 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2026_07 fct_deal_stage_event_79  (cost=0.00..553.76 rows=1 width=9) (actual time=6.627..6.627 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 20486
                            Buffers: shared read=373
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2026_05 fct_deal_stage_event_77  (cost=0.00..550.73 rows=1 width=9) (actual time=17.018..17.018 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2026_05 fct_deal_stage_event_77  (cost=0.00..550.73 rows=1 width=9) (actual time=6.313..6.313 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 20369
                            Buffers: shared read=371
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2025_09 fct_deal_stage_event_69  (cost=0.00..546.39 rows=1 width=9) (actual time=14.625..14.625 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2025_09 fct_deal_stage_event_69  (cost=0.00..546.39 rows=1 width=9) (actual time=4.608..4.609 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 20218
                            Buffers: shared read=368
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2026_04 fct_deal_stage_event_76  (cost=0.00..542.09 rows=1 width=9) (actual time=13.660..13.660 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2026_04 fct_deal_stage_event_76  (cost=0.00..542.09 rows=1 width=9) (actual time=4.481..4.481 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 20070
                            Buffers: shared read=365
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2025_10 fct_deal_stage_event_70  (cost=0.00..531.51 rows=1 width=9) (actual time=9.216..9.216 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2025_10 fct_deal_stage_event_70  (cost=0.00..531.51 rows=1 width=9) (actual time=4.277..4.277 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 19664
                            Buffers: shared read=358
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2026_02 fct_deal_stage_event_74  (cost=0.00..524.23 rows=1 width=9) (actual time=5.890..5.890 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2026_02 fct_deal_stage_event_74  (cost=0.00..524.23 rows=1 width=9) (actual time=5.440..5.440 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 19406
                            Buffers: shared read=353
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2025_06 fct_deal_stage_event_66  (cost=0.00..515.09 rows=1 width=9) (actual time=5.343..5.343 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2025_06 fct_deal_stage_event_66  (cost=0.00..515.09 rows=1 width=9) (actual time=8.095..8.096 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 19050
                            Buffers: shared read=347
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2025_05 fct_deal_stage_event_65  (cost=0.00..505.00 rows=1 width=9) (actual time=7.173..7.173 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2025_05 fct_deal_stage_event_65  (cost=0.00..505.00 rows=1 width=9) (actual time=6.806..6.806 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 18700
                            Buffers: shared read=340
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2025_07 fct_deal_stage_event_67  (cost=0.00..501.91 rows=1 width=9) (actual time=7.463..7.463 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2025_07 fct_deal_stage_event_67  (cost=0.00..501.91 rows=1 width=9) (actual time=4.114..4.114 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 18576
                            Buffers: shared read=338
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2025_11 fct_deal_stage_event_71  (cost=0.00..495.88 rows=1 width=9) (actual time=5.567..5.567 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2025_11 fct_deal_stage_event_71  (cost=0.00..495.88 rows=1 width=9) (actual time=4.149..4.149 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 18346
                            Buffers: shared read=334
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2025_08 fct_deal_stage_event_68  (cost=0.00..495.74 rows=1 width=9) (actual time=5.089..5.089 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2025_08 fct_deal_stage_event_68  (cost=0.00..495.74 rows=1 width=9) (actual time=4.066..4.067 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 18330
                            Buffers: shared read=334
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2024_03 fct_deal_stage_event_51  (cost=0.00..494.57 rows=1 width=9) (actual time=6.071..6.071 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2024_03 fct_deal_stage_event_51  (cost=0.00..494.57 rows=1 width=9) (actual time=5.111..5.111 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 18311
                            Buffers: shared read=333
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2025_04 fct_deal_stage_event_64  (cost=0.00..494.13 rows=1 width=9) (actual time=5.899..5.900 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2025_04 fct_deal_stage_event_64  (cost=0.00..494.13 rows=1 width=9) (actual time=3.810..3.810 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 18261
                            Buffers: shared read=333
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2024_10 fct_deal_stage_event_58  (cost=0.00..487.11 rows=1 width=9) (actual time=4.280..4.280 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2024_10 fct_deal_stage_event_58  (cost=0.00..487.11 rows=1 width=9) (actual time=5.887..5.887 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 18033
                            Buffers: shared read=328
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2024_09 fct_deal_stage_event_57  (cost=0.00..485.59 rows=1 width=9) (actual time=4.500..4.500 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2024_09 fct_deal_stage_event_57  (cost=0.00..485.59 rows=1 width=9) (actual time=6.127..6.128 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 17973
                            Buffers: shared read=327
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2024_07 fct_deal_stage_event_55  (cost=0.00..485.23 rows=1 width=9) (actual time=6.035..6.036 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2024_07 fct_deal_stage_event_55  (cost=0.00..485.23 rows=1 width=9) (actual time=5.182..5.182 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 17933
                            Buffers: shared read=327
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2025_02 fct_deal_stage_event_62  (cost=0.00..482.69 rows=1 width=9) (actual time=5.907..5.907 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2025_02 fct_deal_stage_event_62  (cost=0.00..482.69 rows=1 width=9) (actual time=5.303..5.303 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 17871
                            Buffers: shared read=325
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2024_04 fct_deal_stage_event_52  (cost=0.00..473.76 rows=1 width=9) (actual time=3.475..3.475 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2024_04 fct_deal_stage_event_52  (cost=0.00..473.76 rows=1 width=9) (actual time=3.484..3.484 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 17539
                            Buffers: shared read=319
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2024_05 fct_deal_stage_event_53  (cost=0.00..470.61 rows=1 width=9) (actual time=3.528..3.528 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2024_05 fct_deal_stage_event_53  (cost=0.00..470.61 rows=1 width=9) (actual time=4.006..4.006 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 17409
                            Buffers: shared read=317
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2023_03 fct_deal_stage_event_39  (cost=0.00..466.36 rows=1 width=9) (actual time=13.977..13.977 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2023_03 fct_deal_stage_event_39  (cost=0.00..466.36 rows=1 width=9) (actual time=6.951..6.951 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 17267
                            Buffers: shared read=314
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2023_10 fct_deal_stage_event_46  (cost=0.00..458.95 rows=1 width=9) (actual time=10.210..10.211 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2023_10 fct_deal_stage_event_46  (cost=0.00..458.95 rows=1 width=9) (actual time=7.061..7.061 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 16994
                            Buffers: shared read=309
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2024_11 fct_deal_stage_event_59  (cost=0.00..457.36 rows=1 width=9) (actual time=3.672..3.672 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2024_11 fct_deal_stage_event_59  (cost=0.00..457.36 rows=1 width=9) (actual time=4.416..4.417 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 16927
                            Buffers: shared read=308
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2024_08 fct_deal_stage_event_56  (cost=0.00..457.18 rows=1 width=9) (actual time=3.261..3.261 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2024_08 fct_deal_stage_event_56  (cost=0.00..457.18 rows=1 width=9) (actual time=3.751..3.751 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 16907
                            Buffers: shared read=308
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2023_05 fct_deal_stage_event_41  (cost=0.00..454.31 rows=1 width=9) (actual time=3.303..3.303 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2023_05 fct_deal_stage_event_41  (cost=0.00..454.31 rows=1 width=9) (actual time=3.721..3.722 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 16809
                            Buffers: shared read=306
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2024_02 fct_deal_stage_event_50  (cost=0.00..445.19 rows=1 width=9) (actual time=3.156..3.156 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2024_02 fct_deal_stage_event_50  (cost=0.00..445.19 rows=1 width=9) (actual time=5.113..5.113 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 16455
                            Buffers: shared read=300
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2024_06 fct_deal_stage_event_54  (cost=0.00..428.94 rows=1 width=9) (actual time=3.158..3.158 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2024_06 fct_deal_stage_event_54  (cost=0.00..428.94 rows=1 width=9) (actual time=6.998..6.999 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 15860
                            Buffers: shared read=289
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2022_03 fct_deal_stage_event_27  (cost=0.00..425.88 rows=1 width=9) (actual time=3.217..3.217 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2022_03 fct_deal_stage_event_27  (cost=0.00..425.88 rows=1 width=9) (actual time=6.724..6.725 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 15740
                            Buffers: shared read=287
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2023_11 fct_deal_stage_event_47  (cost=0.00..421.76 rows=1 width=9) (actual time=2.863..2.863 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2023_11 fct_deal_stage_event_47  (cost=0.00..421.76 rows=1 width=9) (actual time=4.257..4.258 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 15613
                            Buffers: shared read=284
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2023_07 fct_deal_stage_event_43  (cost=0.00..420.21 rows=1 width=9) (actual time=2.804..2.807 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2023_07 fct_deal_stage_event_43  (cost=0.00..420.21 rows=1 width=9) (actual time=3.057..3.057 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 15551
                            Buffers: shared read=283
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2023_08 fct_deal_stage_event_44  (cost=0.00..416.89 rows=1 width=9) (actual time=2.594..2.594 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2023_08 fct_deal_stage_event_44  (cost=0.00..416.89 rows=1 width=9) (actual time=3.108..3.108 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 15401
                            Buffers: shared read=281
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2023_09 fct_deal_stage_event_45  (cost=0.00..409.89 rows=1 width=9) (actual time=2.773..2.773 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2023_09 fct_deal_stage_event_45  (cost=0.00..409.89 rows=1 width=9) (actual time=3.028..3.028 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 15174
                            Buffers: shared read=276
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2022_05 fct_deal_stage_event_29  (cost=0.00..408.22 rows=1 width=9) (actual time=2.882..2.882 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2022_05 fct_deal_stage_event_29  (cost=0.00..408.22 rows=1 width=9) (actual time=4.112..4.112 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 15098
                            Buffers: shared read=275
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2023_06 fct_deal_stage_event_42  (cost=0.00..406.64 rows=1 width=9) (actual time=2.758..2.758 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2023_06 fct_deal_stage_event_42  (cost=0.00..406.64 rows=1 width=9) (actual time=4.272..4.272 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 15032
                            Buffers: shared read=274
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2021_03 fct_deal_stage_event_15  (cost=0.00..405.41 rows=1 width=9) (actual time=2.640..2.641 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2021_03 fct_deal_stage_event_15  (cost=0.00..405.41 rows=1 width=9) (actual time=3.143..3.144 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 15006
                            Buffers: shared read=273
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2022_10 fct_deal_stage_event_34  (cost=0.00..405.03 rows=1 width=9) (actual time=2.666..2.667 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2022_10 fct_deal_stage_event_34  (cost=0.00..405.03 rows=1 width=9) (actual time=5.243..5.243 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 14963
                            Buffers: shared read=273
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2022_08 fct_deal_stage_event_32  (cost=0.00..403.89 rows=1 width=9) (actual time=0.923..0.925 rows=0 loops=3)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2022_08 fct_deal_stage_event_32  (cost=0.00..403.89 rows=1 width=9) (actual time=3.480..3.480 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
-                           Rows Removed by Filter: 4982
+                           Rows Removed by Filter: 14947
                            Buffers: shared read=272
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2023_02 fct_deal_stage_event_38  (cost=0.00..394.72 rows=1 width=9) (actual time=1.382..1.382 rows=0 loops=2)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2023_02 fct_deal_stage_event_38  (cost=0.00..394.72 rows=1 width=9) (actual time=3.133..3.133 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
-                           Rows Removed by Filter: 7294
+                           Rows Removed by Filter: 14588
                            Buffers: shared read=266
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2023_04 fct_deal_stage_event_40  (cost=0.00..390.39 rows=1 width=9) (actual time=2.450..2.451 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2023_04 fct_deal_stage_event_40  (cost=0.00..390.39 rows=1 width=9) (actual time=3.394..3.394 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 14437
                            Buffers: shared read=263
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2022_11 fct_deal_stage_event_35  (cost=0.00..385.94 rows=1 width=9) (actual time=2.519..2.520 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2022_11 fct_deal_stage_event_35  (cost=0.00..385.94 rows=1 width=9) (actual time=2.837..2.837 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 14273
                            Buffers: shared read=260
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2026_01 fct_deal_stage_event_73  (cost=0.00..384.44 rows=1 width=9) (actual time=2.346..2.346 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2026_01 fct_deal_stage_event_73  (cost=0.00..384.44 rows=1 width=9) (actual time=2.856..2.856 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 14217
                            Buffers: shared read=259
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2022_09 fct_deal_stage_event_33  (cost=0.00..381.63 rows=1 width=9) (actual time=2.418..2.418 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2022_09 fct_deal_stage_event_33  (cost=0.00..381.63 rows=1 width=9) (actual time=3.148..3.148 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 14125
                            Buffers: shared read=257
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2021_11 fct_deal_stage_event_23  (cost=0.00..372.48 rows=1 width=9) (actual time=2.368..2.369 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2021_11 fct_deal_stage_event_23  (cost=0.00..372.48 rows=1 width=9) (actual time=10.782..10.782 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 13768
                            Buffers: shared read=251
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2022_06 fct_deal_stage_event_30  (cost=0.00..368.34 rows=1 width=9) (actual time=2.585..2.586 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2022_06 fct_deal_stage_event_30  (cost=0.00..368.34 rows=1 width=9) (actual time=6.365..6.365 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 13639
                            Buffers: shared read=248
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2022_02 fct_deal_stage_event_26  (cost=0.00..368.03 rows=1 width=9) (actual time=2.560..2.561 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2022_02 fct_deal_stage_event_26  (cost=0.00..368.03 rows=1 width=9) (actual time=4.202..4.202 rows=0 loops=3)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
-                           Rows Removed by Filter: 13603
+                           Rows Removed by Filter: 4534
                            Buffers: shared read=248
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2022_04 fct_deal_stage_event_28  (cost=0.00..363.89 rows=1 width=9) (actual time=2.648..2.649 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2022_04 fct_deal_stage_event_28  (cost=0.00..363.89 rows=1 width=9) (actual time=6.818..6.818 rows=0 loops=2)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
-                           Rows Removed by Filter: 13474
+                           Rows Removed by Filter: 6737
                            Buffers: shared read=245
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2025_12 fct_deal_stage_event_72  (cost=0.00..362.03 rows=1 width=9) (actual time=2.748..2.748 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2025_12 fct_deal_stage_event_72  (cost=0.00..362.03 rows=1 width=9) (actual time=3.743..3.743 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 13377
                            Buffers: shared read=244
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2021_05 fct_deal_stage_event_17  (cost=0.00..360.88 rows=1 width=9) (actual time=4.367..4.367 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2021_05 fct_deal_stage_event_17  (cost=0.00..360.88 rows=1 width=9) (actual time=7.796..7.796 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 13360
                            Buffers: shared read=243
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2021_08 fct_deal_stage_event_20  (cost=0.00..360.65 rows=1 width=9) (actual time=4.195..4.195 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2021_08 fct_deal_stage_event_20  (cost=0.00..360.65 rows=1 width=9) (actual time=8.610..8.610 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 13334
                            Buffers: shared read=243
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2022_07 fct_deal_stage_event_31  (cost=0.00..360.62 rows=1 width=9) (actual time=2.799..2.800 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2022_07 fct_deal_stage_event_31  (cost=0.00..360.62 rows=1 width=9) (actual time=4.901..4.938 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 13330
                            Buffers: shared read=243
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2025_01 fct_deal_stage_event_61  (cost=0.00..356.37 rows=1 width=9) (actual time=2.478..2.478 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2025_01 fct_deal_stage_event_61  (cost=0.00..356.37 rows=1 width=9) (actual time=5.715..5.715 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 13189
                            Buffers: shared read=240
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2021_10 fct_deal_stage_event_22  (cost=0.00..356.02 rows=1 width=9) (actual time=4.294..4.294 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2021_10 fct_deal_stage_event_22  (cost=0.00..356.02 rows=1 width=9) (actual time=7.671..7.671 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 13149
                            Buffers: shared read=240
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2021_09 fct_deal_stage_event_21  (cost=0.00..351.56 rows=1 width=9) (actual time=3.166..3.166 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2021_09 fct_deal_stage_event_21  (cost=0.00..351.56 rows=1 width=9) (actual time=7.056..7.056 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 12984
                            Buffers: shared read=237
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2024_01 fct_deal_stage_event_49  (cost=0.00..337.05 rows=1 width=9) (actual time=2.631..2.634 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2024_01 fct_deal_stage_event_49  (cost=0.00..337.05 rows=1 width=9) (actual time=8.017..8.017 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 12472
                            Buffers: shared read=227
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2021_06 fct_deal_stage_event_18  (cost=0.00..335.27 rows=1 width=9) (actual time=3.124..3.124 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2021_06 fct_deal_stage_event_18  (cost=0.00..335.27 rows=1 width=9) (actual time=11.277..11.277 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 12384
                            Buffers: shared read=226
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2021_04 fct_deal_stage_event_16  (cost=0.00..334.11 rows=1 width=9) (actual time=4.026..4.026 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2021_04 fct_deal_stage_event_16  (cost=0.00..334.11 rows=1 width=9) (actual time=4.410..4.411 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 12366
                            Buffers: shared read=225
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2021_07 fct_deal_stage_event_19  (cost=0.00..333.79 rows=1 width=9) (actual time=3.447..3.447 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2021_07 fct_deal_stage_event_19  (cost=0.00..333.79 rows=1 width=9) (actual time=8.676..8.676 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 12330
                            Buffers: shared read=225
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2020_11 fct_deal_stage_event_11  (cost=0.00..332.49 rows=1 width=9) (actual time=5.298..5.298 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2020_11 fct_deal_stage_event_11  (cost=0.00..332.49 rows=1 width=9) (actual time=3.060..3.060 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 12295
                            Buffers: shared read=224
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2021_02 fct_deal_stage_event_14  (cost=0.00..328.14 rows=1 width=9) (actual time=3.427..3.427 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2021_02 fct_deal_stage_event_14  (cost=0.00..328.14 rows=1 width=9) (actual time=4.957..4.957 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 12143
                            Buffers: shared read=221
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2020_10 fct_deal_stage_event_10  (cost=0.00..323.68 rows=1 width=9) (actual time=3.060..3.060 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2020_10 fct_deal_stage_event_10  (cost=0.00..323.68 rows=1 width=9) (actual time=3.268..3.268 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 11977
                            Buffers: shared read=218
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2020_08 fct_deal_stage_event_8  (cost=0.00..320.70 rows=1 width=9) (actual time=3.335..3.335 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2020_08 fct_deal_stage_event_8  (cost=0.00..320.70 rows=1 width=9) (actual time=3.304..3.305 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 11866
                            Buffers: shared read=216
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2020_09 fct_deal_stage_event_9  (cost=0.00..317.67 rows=1 width=9) (actual time=7.897..7.897 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2020_09 fct_deal_stage_event_9  (cost=0.00..317.67 rows=1 width=9) (actual time=6.210..6.211 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 11749
                            Buffers: shared read=214
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2024_12 fct_deal_stage_event_60  (cost=0.00..316.06 rows=1 width=9) (actual time=8.894..8.895 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2024_12 fct_deal_stage_event_60  (cost=0.00..316.06 rows=1 width=9) (actual time=2.359..2.359 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 11680
                            Buffers: shared read=213
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2020_06 fct_deal_stage_event_6  (cost=0.00..313.19 rows=1 width=9) (actual time=7.688..7.688 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2020_06 fct_deal_stage_event_6  (cost=0.00..313.19 rows=1 width=9) (actual time=4.060..4.061 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 11582
                            Buffers: shared read=211
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2020_03 fct_deal_stage_event_3  (cost=0.00..305.60 rows=1 width=9) (actual time=8.148..8.148 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2020_03 fct_deal_stage_event_3  (cost=0.00..305.60 rows=1 width=9) (actual time=3.151..3.151 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 11288
                            Buffers: shared read=206
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2023_01 fct_deal_stage_event_37  (cost=0.00..302.62 rows=1 width=9) (actual time=4.606..4.606 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2023_01 fct_deal_stage_event_37  (cost=0.00..302.62 rows=1 width=9) (actual time=6.260..6.261 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 11177
                            Buffers: shared read=204
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2020_07 fct_deal_stage_event_7  (cost=0.00..298.37 rows=1 width=9) (actual time=4.225..4.226 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2020_07 fct_deal_stage_event_7  (cost=0.00..298.37 rows=1 width=9) (actual time=9.888..9.888 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 11035
                            Buffers: shared read=201
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2020_05 fct_deal_stage_event_5  (cost=0.00..292.31 rows=1 width=9) (actual time=6.736..6.736 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2020_05 fct_deal_stage_event_5  (cost=0.00..292.31 rows=1 width=9) (actual time=8.170..8.171 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 10802
                            Buffers: shared read=197
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2020_04 fct_deal_stage_event_4  (cost=0.00..283.28 rows=1 width=9) (actual time=6.043..6.043 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2020_04 fct_deal_stage_event_4  (cost=0.00..283.28 rows=1 width=9) (actual time=6.128..6.128 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 10458
                            Buffers: shared read=191
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2022_01 fct_deal_stage_event_25  (cost=0.00..271.46 rows=1 width=9) (actual time=7.532..7.532 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2022_01 fct_deal_stage_event_25  (cost=0.00..271.46 rows=1 width=9) (actual time=3.503..3.503 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 10025
                            Buffers: shared read=183
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2023_12 fct_deal_stage_event_48  (cost=0.00..261.10 rows=1 width=9) (actual time=6.969..6.969 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2023_12 fct_deal_stage_event_48  (cost=0.00..261.10 rows=1 width=9) (actual time=5.749..5.749 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 9645
                            Buffers: shared read=176
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2022_12 fct_deal_stage_event_36  (cost=0.00..247.89 rows=1 width=9) (actual time=4.132..4.132 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2022_12 fct_deal_stage_event_36  (cost=0.00..247.89 rows=1 width=9) (actual time=5.215..5.215 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 9168
                            Buffers: shared read=167
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2021_01 fct_deal_stage_event_13  (cost=0.00..240.27 rows=1 width=9) (actual time=5.306..5.306 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2021_01 fct_deal_stage_event_13  (cost=0.00..240.27 rows=1 width=9) (actual time=5.665..5.666 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 8871
                            Buffers: shared read=162
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2021_12 fct_deal_stage_event_24  (cost=0.00..229.91 rows=1 width=9) (actual time=4.651..4.651 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2021_12 fct_deal_stage_event_24  (cost=0.00..229.91 rows=1 width=9) (actual time=6.912..6.912 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 8490
                            Buffers: shared read=155
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2020_02 fct_deal_stage_event_2  (cost=0.00..222.71 rows=1 width=9) (actual time=2.596..2.597 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2020_02 fct_deal_stage_event_2  (cost=0.00..222.71 rows=1 width=9) (actual time=3.684..3.685 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 8241
                            Buffers: shared read=150
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2020_12 fct_deal_stage_event_12  (cost=0.00..207.81 rows=1 width=9) (actual time=2.513..2.513 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2020_12 fct_deal_stage_event_12  (cost=0.00..207.81 rows=1 width=9) (actual time=3.555..3.555 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 7685
                            Buffers: shared read=140
-                     ->  Parallel Seq Scan on fct_deal_stage_event_2020_01 fct_deal_stage_event_1  (cost=0.00..106.61 rows=1 width=9) (actual time=3.077..3.077 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_2020_01 fct_deal_stage_event_1  (cost=0.00..106.61 rows=1 width=9) (actual time=1.204..1.205 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 3922
                            Buffers: shared read=72
-                     ->  Parallel Seq Scan on fct_deal_stage_event_default fct_deal_stage_event_85  (cost=0.00..10.26 rows=1 width=9) (actual time=1.251..1.251 rows=0 loops=1)
+                     ->  Parallel Seq Scan on fct_deal_stage_event_default fct_deal_stage_event_85  (cost=0.00..10.26 rows=1 width=9) (actual time=0.175..0.176 rows=0 loops=1)
                            Filter: ((event_ts >= '2026-03-01 00:00:00+02'::timestamp with time zone) AND (event_ts < '2026-04-01 00:00:00+02'::timestamp with time zone))
                            Rows Removed by Filter: 369
                            Buffers: shared read=7
  Planning:
    Buffers: shared read=15
- Planning Time: 7.260 ms
- Execution Time: 175.284 ms
+ Planning Time: 6.645 ms
+ Execution Time: 190.439 ms
 (343 rows)
 

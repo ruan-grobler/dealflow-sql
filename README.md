@@ -21,11 +21,17 @@ database in **about 7 and a half minutes** with one command.
 
 Docker is the only prerequisite. That single command creates the container, builds seven
 schemas, generates and loads 1.54 million raw rows, runs both loaders, builds the star,
-runs the quality gates, and executes the 14 analysis queries. **Measured end to end: 7m 08s
-and 7m 42s** on two full rebuilds of an 8 vCPU laptop container, of which 48 s is data
-generation and loading. Both runs produced identical row counts, identical quality gate
-observations and an anomaly loop that converged in the same two passes, because the
-generator is deterministic and every write is idempotent.
+runs the quality gates, and executes the 14 analysis queries. **Measured end to end: 6m 52s,
+7m 08s and 7m 42s** on three full rebuilds of an 8 vCPU laptop container.
+
+**Running it twice is safe, and that was checked rather than assumed.** Every row count in all
+31 tables across the six schemas was compared before and after a second full run. Twenty-nine
+came back byte identical. The two that moved are `dq.assertion_run` and `dq.assertion_result`,
+and they moved *down*, because `01_staging.sql` drops and recreates the `dq` schema so the
+append-only assertion history restarts at run 1. That is the rebuild doing what it says, not a
+loss of idempotence: the quality gate then re-observed the same findings it observed the first
+time. The generator is deterministic and every write is idempotent, so the anomaly loop
+converged in the same two passes both times.
 
 ```bash
 ./run.sh --scale 0.05   # the same pipeline on 5% of the volume, for a fast smoke test
@@ -111,9 +117,10 @@ live query results by `./run.sh results`.
 | **Generated column kills a whole defect class** | [`02_warehouse.sql`](sql/02_warehouse.sql) | `is_current GENERATED ALWAYS AS (valid_to = 'infinity') STORED`. The most common Type 2 defect in production is `is_current` drifting out of step with the window after a manual backfill. This makes it unreachable rather than unlikely. |
 | **Declarative range partitioning** | [`02_warehouse.sql`](sql/02_warehouse.sql) section 4 | 84 monthly partitions plus a DEFAULT, created by a function so the load can make a month it has never seen at 3am without a human editing DDL. Pruning takes case 1 from 85 partitions in the plan to 3. |
 | **Extended statistics, per partition** | [`fn_ensure_month_partition`](sql/02_warehouse.sql) | `from_stage_sk` and `to_stage_sk` are near functionally dependent, so the planner multiplies independent selectivities and underestimates every funnel query. Measured: the object on the **parent** changed nothing; on the **child** it corrected an estimate of 96 to exactly 924 against an actual 924. |
-| **BRIN where it belongs, and only there** | [`01_staging.sql`](sql/01_staging.sql), [`PERFORMANCE.md`](PERFORMANCE.md#case-5-brin-measured-and-then-rejected) | 24 kB against 25 MB for the equivalent btree on the landing table, and the planner chose it. On the partitioned fact it was built, measured and **deleted**: a free query rewrite beat it by a further 5.1x. |
+| **BRIN where it belongs, and only there** | [`01_staging.sql`](sql/01_staging.sql), [`PERFORMANCE.md`](PERFORMANCE.md#case-5-brin-measured-and-then-rejected) | 24 kB against 25 MB for the equivalent btree on the landing table, and the planner chose it. On the partitioned fact it was built, measured and **deleted**: a free query rewrite beat it by a further 5x to 7x across three runs. |
 | **Partial and covering indexes** | [`02_warehouse.sql`](sql/02_warehouse.sql) | The open-pipeline index tracks the working set instead of growing with history: 728 kB against 12 MB. `INCLUDE` on the returned columns gives `Heap Fetches: 0`, an index-only scan. |
 | **`MERGE` for idempotent upsert** | [`03_load.sql`](sql/03_load.sql), [`04_facts.sql`](sql/04_facts.sql) | Four staging tables and the snapshot fact are `MERGE`d on their source key, so a retried load updates instead of duplicating. Verified: re-running both loaders leaves every row count byte identical. |
+| **A cache key that is actually the source** | [`06_performance.sql`](sql/06_performance.sql) preflight block `010_fixture_provenance` | The benchmark fixture takes 68 s to build and 3 s to verify, so it is cached. It used to cache on `broker_sk`, a surrogate key assigned by an identity sequence, and a warehouse rebuild that renumbered it made a second benchmark run die on the SCD2 exclusion constraint. Now the fixture records a checksum of every warehouse column it copied and rebuilds when that moves. **Three consecutive runs, no manual reset, all clean.** |
 | **Window functions that earn their place** | [`03_load.sql`](sql/03_load.sql) step 10, [`05_analytics.sql`](sql/05_analytics.sql) | `LAG` derives `from_stage` and dwell once at load time instead of every report re-running a window over 1.1M rows. `ROWS` vs `RANGE` frames are contrasted on the same series (Q04), and gaps-and-islands finds unbroken activity runs (Q12). |
 | **Recursive CTE over a real hierarchy** | [`05_analytics.sql`](sql/05_analytics.sql) Q13 | A three-level agency group rolled up with cycle detection, producing `Agency 002 > Agency 028 > Agency 060` paths and each node's share of its group. |
 | **Error-tolerant loading that reconciles** | [`03_load.sql`](sql/03_load.sql) steps 2, 3 | One unparseable value must not cost the other 262,499 rows their load. Bad rows are diverted with a reason code and the original text, and **DQ-001 proves nothing was lost**: raw offered equals staged plus rejected plus quarantined, exactly. |
@@ -129,17 +136,25 @@ live query results by `./run.sh results`.
 **Six case studies, every number measured, worst outcome reported alongside the best.**
 Full write-up with plans and buffer counts: **[PERFORMANCE.md](PERFORMANCE.md)**.
 
-| Case | Fix | Before | After | Change |
-|---|---|---:|---:|---:|
-| 1 | Rewrite `to_char(ts,'YYYY-MM')` as a half-open range on the partition key | 362.8 ms | 22.3 ms | **16.3x** |
-| 2 | Composite index leading with the equality column | 99.9 ms | 4.1 ms | **24.5x** |
-| 3 | Ordered index feeds the window, eliminating a 48 MB disk sort | 6,967.6 ms | 5,588.4 ms | 1.2x |
-| 4 | Partial index plus `INCLUDE`, giving an index-only scan | 45.2 ms | 7.8 ms | **5.8x** |
-| 5b | Query rewrite beats the BRIN index it was compared against | 29.6 ms | 5.8 ms | **5.1x** |
+Ranges are across **five runs of the suite**, each the median of 5 timed runs after one warmup.
+The bolded figure is the *lowest* speedup observed on any run, because that is the one worth
+quoting.
 
-Case 1 alone: **85 partitions in the plan down to 3**, planning time 6.902 ms to 0.373 ms,
-buffers 21,220 read to 1,098 hit. Case 4: **33,965 buffers down to 202** with
-`Heap Fetches: 0`.
+| Case | Fix | Before | After | Speedup, 5 runs |
+|---|---|---:|---:|---:|
+| 1 | Rewrite `to_char(ts,'YYYY-MM')` as a half-open range on the partition key | 220 to 412 ms | 12 to 52 ms | **~8x** to 24x |
+| 2 | Composite index leading with the equality column | 61 to 116 ms | 3.1 to 6.5 ms | **~13x** to 23x |
+| 3 | Ordered index feeds the window, eliminating a 48 MB disk sort | 5.8 to 8.4 s | 3.5 to 6.2 s | **~1.3x** to 1.7x |
+| 4 | Partial index plus `INCLUDE`, giving an index-only scan | 21 to 62 ms | 4.9 to 8.6 ms | **~3.4x** to 9.7x |
+| 5b | Query rewrite beats the BRIN index it was compared against | 16 to 33 ms | 3.2 to 5.6 ms | **~4x** to 9.1x |
+
+**The plan facts are what reproduce, and they reproduce exactly.** Case 1: **85 partitions in
+the plan down to 3**, buffers 21,220 read to 1,098 hit, identical on every run. Case 4:
+**33,965 buffers down to 202** with `Heap Fetches: 0`, byte identical every run. Case 3: temp
+blocks written **20,713 down to 8,706**, byte identical every run. Over those same runs the
+case 1 wall clock speedup moved between 7.7x and 24x. That gap is the reason this table quotes
+ranges and minimums, and why [PERFORMANCE.md](PERFORMANCE.md) leads with the buffer evidence
+rather than the milliseconds.
 
 Case 3 is in the table because it is the one that **mostly did not work**. The plan win is
 unambiguous (temp blocks written fall from 20,713 to 8,706) and the clock win is marginal,
